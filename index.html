@@ -1,0 +1,3538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Team Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Polyfill to enable HTML5 drag and drop on Mobile Touchscreens -->
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
+
+    <!-- Favicon -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="favicons/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="favicons/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="favicons/favicon-16x16.png"
+    />
+    <link rel="manifest" href="favicons/site.webmanifest" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              mono: ['"Fira Code"', "monospace"],
+            },
+            colors: {
+              zinc: {
+                950: "#161714",
+                900: "#1E1F1C",
+                850: "#232420",
+                800: "#272822",
+                700: "#3E3D32",
+                600: "#49483E",
+                500: "#75715E",
+                400: "#A59F85",
+                300: "#F8F8F2",
+                200: "#FFFFFF",
+              },
+              monokai: {
+                pink: "#F92672",
+                green: "#A6E22E",
+                cyan: "#66D9EF",
+                orange: "#FD971F",
+                yellow: "#E6DB74",
+                purple: "#AE81FF",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif !important;
+        background-color: #272822;
+        color: #f8f8f2;
+        height: 100vh;
+        height: 100dvh;
+      }
+
+      :root {
+        --card-bg: #272822;
+        --member-bg: #1e1f1c;
+        --member-text: #f8f8f2;
+        --member-border: #3e3d32;
+        --canvas-bg: #272822;
+        --canvas-dots: #3e3d32;
+        --x-btn-hover: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Hide number input spin buttons */
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+
+      .team-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        box-sizing: border-box;
+      }
+
+      .team-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+        margin: 0;
+        padding: 0;
+        flex: 1;
+        margin-right: 8px;
+      }
+
+      .team-tally {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        padding: 0 8px;
+        height: 22px;
+        line-height: 22px;
+        text-align: center;
+        flex-shrink: 0;
+        font-family: "Fira Code", monospace;
+      }
+
+      .member-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 10px;
+        line-height: 1.4;
+        box-sizing: border-box;
+      }
+
+      .member-name-text {
+        word-break: break-word;
+        line-height: 1.2;
+        margin: 0;
+        padding: 0;
+      }
+
+      .bg-grid {
+        background-color: var(--canvas-bg);
+        background-image:
+          linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px),
+          linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+
+      .hide {
+        display: none !important;
+      }
+
+      .team-card {
+        touch-action: none;
+        transition:
+          background-color 0.2s,
+          border-color 0.2s;
+        box-sizing: border-box;
+      }
+
+      .member-item {
+        background-color: var(--member-bg);
+        color: var(--member-text);
+        border-color: var(--member-border);
+        transition:
+          background-color 0.2s,
+          color 0.2s,
+          border-color 0.2s;
+        box-sizing: border-box;
+      }
+
+      .member-item[draggable="true"] {
+        cursor: grab;
+      }
+
+      .member-item[draggable="true"]:active {
+        cursor: grabbing;
+      }
+
+      .member-item .x-btn {
+        height: 20px;
+        width: 20px;
+        line-height: 20px;
+        text-align: center;
+      }
+
+      .member-item .x-btn:hover {
+        background-color: var(--x-btn-hover);
+      }
+
+      .drop-zone.drag-over {
+        background-color: var(--member-border);
+        border-color: #a59f85;
+        border-style: dashed;
+      }
+
+      ::-webkit-scrollbar {
+        height: 10px;
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #1e1f1c;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #49483e;
+        border: 2px solid #1e1f1c;
+        border-radius: 6px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #75715e;
+      }
+
+      #exit-fullscreen-btn {
+        display: none;
+      }
+
+      :fullscreen #exit-fullscreen-btn {
+        display: flex;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+      }
+
+      :fullscreen {
+        background-color: var(--canvas-bg);
+      }
+
+      #picker-container {
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .editor-tab {
+        border-bottom: 2px solid transparent;
+        border-top: 2px solid transparent;
+        margin-bottom: -1px;
+        outline: none !important;
+      }
+
+      .editor-tab:focus {
+        outline: none !important;
+      }
+
+      .editor-tab.active {
+        background-color: #272822;
+        border-bottom: 2px solid #f92672;
+        color: #f8f8f2;
+      }
+
+      /* Combined Mobile Setup: Portrait OR Landscape on smaller screens */
+      @media (max-width: 768px) and (orientation: portrait),
+        (max-width: 950px) and (max-height: 550px) and (orientation: landscape) {
+        #tab2 {
+          flex-direction: column !important;
+        }
+
+        #left-sidebar {
+          width: 100% !important;
+          height: 50dvh !important;
+          border-right: none !important;
+          border-bottom: 1px solid #3e3d32;
+        }
+      }
+
+      /* Hide sidebar and header in fullscreen on mobile */
+      @media (max-width: 768px) {
+        :fullscreen #left-sidebar {
+          display: none !important;
+        }
+
+        :fullscreen header {
+          display: none !important;
+        }
+      }
+
+      /* ===== MOBILE TEAMS VIEW ===== */
+      #mobile-tab2-ui {
+        display: none;
+      }
+
+      @media (max-width: 767px) {
+        #left-sidebar,
+        #canvas-container {
+          display: none !important;
+        }
+        #mobile-tab2-ui {
+          display: flex;
+          flex-direction: column;
+          position: absolute;
+          inset: 0;
+        }
+      }
+
+      /* Fullscreen: hide top bar, lock cards to screen */
+      #mobile-tab2-ui:fullscreen #mobile-top-bar,
+      #mobile-tab2-ui:-webkit-full-screen #mobile-top-bar {
+        display: none !important;
+      }
+      #mobile-tab2-ui:fullscreen #mobile-team-cards,
+      #mobile-tab2-ui:-webkit-full-screen #mobile-team-cards {
+        overflow: hidden !important;
+        padding: 6px !important;
+      }
+      #mobile-tab2-ui:fullscreen #mobile-team-cards-inner,
+      #mobile-tab2-ui:-webkit-full-screen #mobile-team-cards-inner {
+        height: 100%;
+        gap: 4px !important;
+      }
+      /* In fullscreen, each card fills its grid cell and clips overflow */
+      #mobile-tab2-ui:fullscreen .mobile-team-card,
+      #mobile-tab2-ui:-webkit-full-screen .mobile-team-card {
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      #mobile-tab2-ui:fullscreen .mobile-card-members,
+      #mobile-tab2-ui:-webkit-full-screen .mobile-card-members {
+        flex: 1;
+        overflow: hidden;
+      }
+      /* Member items — bigger touch targets on mobile */
+      @media (max-width: 767px) {
+        .member-item {
+          padding: 10px 12px;
+          min-height: 44px;
+        }
+      }
+      /* Safe area padding for notched phones */
+      #mobile-team-cards {
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+      }
+      /* Bottom sheet animation */
+      #mobile-member-sheet-inner {
+        transition: transform 0.2s ease-out;
+      }
+
+      /* ===== MOBILE PROJECTOR MODE (CSS overlay, no Fullscreen API needed) ===== */
+      #mobile-tab2-ui.projector-mode {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 9000 !important;
+        background: #272822 !important;
+      }
+      #mobile-tab2-ui.projector-mode #mobile-top-bar {
+        display: none !important;
+      }
+      #mobile-tab2-ui.projector-mode #mobile-team-cards {
+        padding: 6px !important;
+      }
+      #mobile-tab2-ui.projector-mode #mobile-team-cards-inner {
+        gap: 6px !important;
+      }
+      #mobile-tab2-ui.projector-mode #mobile-projector-exit {
+        display: flex !important;
+      }
+
+      /* ===== FILES MODAL ===== */
+      #files-modal {
+        display: none;
+      }
+      #files-modal.open {
+        display: flex;
+      }
+      .file-item:hover .file-actions {
+        opacity: 1;
+      }
+      .file-actions {
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      @media (max-width: 767px) {
+        .file-actions {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="flex flex-col overflow-hidden">
+    <!-- Header & Navigation -->
+    <header
+      class="bg-zinc-900 border-b border-zinc-700 z-10 flex-shrink-0 shadow-md w-full relative"
+    >
+      <div class="max-w-[1400px] mx-auto px-2 sm:px-6 lg:px-8">
+        <div
+          class="flex flex-col sm:flex-row justify-between pt-3 sm:pt-0 sm:h-[65px]"
+        >
+          <!-- Branding / Title Area -->
+          <div class="flex items-center gap-3 px-2 mb-2 sm:mb-0">
+            <div class="flex flex-col justify-center">
+              <span
+                class="text-xl sm:text-[22px] font-bold tracking-tight text-[#F8F8F2] leading-none uppercase"
+                >TEAM MAKER</span
+              >
+              <span
+                class="text-[11px] sm:text-xs text-[#F92672] font-mono mt-1 font-bold leading-none"
+                >&gt; Jonathan Kung</span
+              >
+            </div>
+            <a
+              href="https://ko-fi.com/coolpuddytat"
+              target="_blank"
+              rel="noopener"
+              title="Buy me a coffee ☕"
+              class="flex items-center gap-1 px-2 py-1 rounded-md border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:border-zinc-600 transition text-zinc-400 hover:text-[#F8F8F2] text-[11px] font-medium whitespace-nowrap flex-shrink-0"
+            >
+              ☕ <span class="hidden sm:inline">Tip me</span>
+            </a>
+          </div>
+
+          <!-- Navigation Tabs Area -->
+          <div
+            class="flex items-end w-full sm:w-auto overflow-x-auto overflow-y-hidden no-scrollbar pb-0"
+          >
+            <nav class="flex space-x-1 px-1 sm:px-2 pt-2 sm:pt-0">
+              <button
+                onclick="switchTab('tab1')"
+                id="nav-tab1"
+                class="editor-tab active px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 transition bg-zinc-850 whitespace-nowrap"
+              >
+                Roster
+              </button>
+              <button
+                onclick="switchTab('tab2')"
+                id="nav-tab2"
+                class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap"
+              >
+                Teams
+              </button>
+              <button
+                onclick="switchTab('tab3')"
+                id="nav-tab3"
+                class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap"
+              >
+                Export
+              </button>
+              <button
+                onclick="switchTab('tab4')"
+                id="nav-tab4"
+                class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap"
+              >
+                About
+              </button>
+            </nav>
+            <div
+              class="ml-auto pb-1.5 pl-2 pr-2 flex items-center gap-2 flex-shrink-0"
+            >
+              <!-- Files Manager Button -->
+              <button
+                onclick="openFilesModal()"
+                class="h-7 sm:h-8 px-2.5 rounded text-[10px] sm:text-xs font-medium bg-zinc-800 text-[#66D9EF] hover:text-[#F8F8F2] hover:bg-zinc-700 transition flex items-center gap-1.5 border border-zinc-700 whitespace-nowrap"
+              >
+                <svg
+                  class="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
+                  ></path>
+                </svg>
+                <span
+                  id="active-file-label"
+                  class="max-w-[80px] sm:max-w-[120px] truncate"
+                  >Files</span
+                >
+              </button>
+              <button
+                id="save-btn"
+                onclick="saveData()"
+                class="w-20 sm:w-24 h-7 sm:h-8 rounded text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition flex items-center justify-center border border-zinc-700 whitespace-nowrap"
+              >
+                Saved
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 relative overflow-hidden bg-zinc-800">
+      <!-- ================= TAB 1: ROSTER ================= -->
+      <div
+        id="tab1"
+        class="tab-content absolute inset-0 overflow-y-auto p-4 sm:p-6 max-w-5xl mx-auto"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <!-- Input Area -->
+          <div
+            class="bg-zinc-900 p-5 sm:p-6 rounded-xl border border-zinc-700 shadow-xl"
+          >
+            <div class="flex justify-between items-start mb-4">
+              <h2 class="text-lg font-semibold text-[#66D9EF]">
+                Import Members
+              </h2>
+              <div class="flex items-center">
+                <button
+                  onclick="document.getElementById('import-json').click()"
+                  class="text-xs bg-zinc-800 text-[#E6DB74] px-3 py-1.5 rounded border border-zinc-700 hover:bg-zinc-700 transition flex items-center"
+                >
+                  Load Backup (.json)
+                </button>
+                <input
+                  type="file"
+                  id="import-json"
+                  accept=".json"
+                  class="hidden"
+                  onchange="importJSON(event)"
+                />
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-sm text-zinc-500 mb-1.5"
+                >Paste names (one per line)</label
+              >
+              <textarea
+                id="paste-area"
+                rows="6"
+                class="w-full bg-zinc-950 border border-zinc-700 text-[#E6DB74] rounded-md p-3 focus:border-[#F92672] placeholder-zinc-600 transition outline-none"
+                placeholder="Eleven&#10;Mike Wheeler&#10;Henderson, Dustin&#10;Lucas Sinclair&#10;Byers, Will&#10;Max Mayfield"
+              ></textarea>
+            </div>
+
+            <div class="flex items-center space-x-4 mb-5">
+              <span class="text-sm text-zinc-500">OR</span>
+              <input
+                type="file"
+                id="csv-file"
+                accept=".csv"
+                class="block w-full text-sm text-zinc-400 file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:bg-zinc-700 file:text-[#A6E22E] hover:file:bg-zinc-600 cursor-pointer transition"
+              />
+            </div>
+
+            <button
+              onclick="loadMembers()"
+              class="w-full bg-[#F92672] text-[#F8F8F2] py-2.5 rounded hover:bg-[#E91662] transition font-bold border border-transparent"
+            >
+              Load List
+            </button>
+
+            <div class="mt-4 text-sm text-zinc-500">
+              Total Loaded:
+              <span
+                id="total-loaded-count"
+                class="text-[#AE81FF] font-mono font-bold ml-1"
+                >0</span
+              >
+            </div>
+          </div>
+
+          <!-- Random Picker Area -->
+          <div
+            class="bg-zinc-900 p-5 sm:p-6 rounded-xl border border-zinc-700 shadow-xl flex flex-col"
+          >
+            <h2 class="text-lg font-semibold text-[#66D9EF] mb-4">
+              Random Picker
+            </h2>
+
+            <div
+              class="flex-1 flex flex-col items-center justify-center border border-zinc-700 rounded-lg p-6 bg-zinc-950 mb-4 shadow-inner"
+            >
+              <div id="picker-container" class="h-[60px]">
+                <div
+                  id="picker-display"
+                  class="font-bold text-[#A6E22E] text-center leading-none"
+                  style="font-size: 36px"
+                >
+                  Ready
+                </div>
+              </div>
+              <div class="text-sm text-zinc-500 mt-3">
+                Members Remaining:
+                <span
+                  id="pool-count"
+                  class="text-[#AE81FF] font-mono font-bold ml-1"
+                  >0</span
+                >
+              </div>
+            </div>
+
+            <div
+              class="flex items-center mb-5 bg-zinc-850 p-3 rounded-md border border-zinc-700"
+            >
+              <input
+                id="toss-checkbox"
+                type="checkbox"
+                class="h-4 w-4 text-[#F92672] focus:ring-[#F92672] bg-zinc-950 border-zinc-600 rounded cursor-pointer accent-[#F92672]"
+              />
+              <label
+                for="toss-checkbox"
+                class="ml-3 block text-sm text-zinc-400 cursor-pointer select-none"
+              >
+                Remove member from pool after selection
+              </label>
+            </div>
+
+            <div class="flex space-x-3">
+              <button
+                onclick="pickRandomMember()"
+                class="flex-1 bg-[#66D9EF] text-zinc-900 py-2.5 rounded hover:bg-[#5bc0de] transition font-bold text-lg"
+              >
+                Select
+              </button>
+              <button
+                onclick="resetPool()"
+                class="bg-zinc-800 border border-zinc-700 text-[#FD971F] px-4 py-2.5 rounded hover:bg-zinc-700 transition"
+                title="Reset Pool"
+              >
+                Reset Pool
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Member Roster Area -->
+        <div
+          class="mt-4 sm:mt-6 bg-zinc-900 p-5 sm:p-6 rounded-xl border border-zinc-700 shadow-xl"
+        >
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-[#66D9EF]">Member Roster</h2>
+            <button
+              onclick="clearAllMembers()"
+              class="text-xs text-[#F92672] hover:text-[#E91662] transition bg-zinc-800 px-3 py-1.5 rounded border border-zinc-700"
+            >
+              Clear All
+            </button>
+          </div>
+          <div id="member-roster" class="flex flex-wrap gap-2">
+            <div class="text-zinc-500 text-sm">Empty</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 2: TEAMS ================= -->
+      <div
+        id="tab2"
+        class="tab-content hide absolute inset-0 flex flex-col md:flex-row"
+      >
+        <!-- ===== MOBILE-ONLY TEAMS UI ===== -->
+        <div id="mobile-tab2-ui">
+          <!-- Floating projector-mode exit button -->
+          <button
+            id="mobile-projector-exit"
+            onclick="exitMobileProjector()"
+            style="display: none"
+            class="fixed top-3 right-3 z-[9999] bg-zinc-900/90 border border-zinc-600 text-[#F8F8F2] px-3 py-2 rounded-lg shadow-xl font-bold text-sm flex items-center gap-2 backdrop-blur-sm"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+            Exit
+          </button>
+
+          <!-- Top control bar (hidden in fullscreen via CSS) -->
+          <div
+            id="mobile-top-bar"
+            class="bg-zinc-900 border-b border-zinc-700 flex-shrink-0"
+          >
+            <!-- Main action row -->
+            <div class="flex items-center gap-2 p-3">
+              <button
+                onclick="
+                  syncMobileToDesktop();
+                  generateTeams();
+                "
+                class="flex-1 bg-[#A6E22E] text-zinc-900 py-3 rounded font-bold text-sm flex items-center justify-center gap-2 active:bg-[#8cc026]"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                  ></path>
+                </svg>
+                Generate
+              </button>
+              <button
+                onclick="toggleMobilePanel('settings')"
+                id="mobile-settings-btn"
+                class="bg-zinc-800 border border-zinc-700 text-[#66D9EF] h-11 px-3 rounded text-sm flex items-center gap-1.5 active:bg-zinc-700"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  ></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  ></path>
+                </svg>
+                <span>Settings</span>
+              </button>
+              <button
+                onclick="toggleMobilePanel('constraints')"
+                id="mobile-constraints-btn"
+                class="bg-zinc-800 border border-zinc-700 text-[#AE81FF] h-11 px-3 rounded text-sm flex items-center gap-1.5 active:bg-zinc-700"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  ></path>
+                </svg>
+                <span>Rules</span>
+              </button>
+              <button
+                onclick="enterMobileProjector()"
+                class="bg-zinc-800 border border-zinc-700 text-[#FD971F] h-11 w-11 rounded flex items-center justify-center active:bg-zinc-700 flex-shrink-0"
+                title="Projector Mode"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Collapsible: Settings -->
+            <div
+              id="mobile-panel-settings"
+              class="hidden border-t border-zinc-700 p-3 bg-zinc-950"
+            >
+              <div class="flex gap-3 items-end">
+                <div class="flex-1">
+                  <label class="block text-xs text-zinc-400 mb-1.5"
+                    >Team Method</label
+                  >
+                  <select
+                    id="mobile-team-method"
+                    class="w-full bg-zinc-900 border border-zinc-700 text-[#E6DB74] rounded text-sm p-2.5 outline-none"
+                  >
+                    <option value="membersPerTeam">Members per Team</option>
+                    <option value="numTeams">Number of Teams</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-zinc-400 mb-1.5"
+                    >Amount</label
+                  >
+                  <div class="flex items-center gap-1">
+                    <button
+                      onclick="changeMobileAmount(-1)"
+                      class="bg-zinc-800 border border-zinc-700 text-[#F8F8F2] w-10 h-10 rounded font-bold text-lg flex items-center justify-center active:bg-zinc-700"
+                    >
+                      &minus;
+                    </button>
+                    <input
+                      type="number"
+                      id="mobile-team-amount"
+                      min="1"
+                      value="4"
+                      class="w-14 bg-zinc-900 border border-zinc-700 text-[#AE81FF] font-mono rounded text-sm p-2 outline-none text-center"
+                    />
+                    <button
+                      onclick="changeMobileAmount(1)"
+                      class="bg-zinc-800 border border-zinc-700 text-[#F8F8F2] w-10 h-10 rounded font-bold text-lg flex items-center justify-center active:bg-zinc-700"
+                    >
+                      &plus;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Collapsible: Constraints -->
+            <div
+              id="mobile-panel-constraints"
+              class="hidden border-t border-zinc-700 p-3 bg-zinc-950 space-y-2"
+            >
+              <p
+                class="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-2"
+              >
+                Constraints
+              </p>
+              <div class="flex gap-2">
+                <select
+                  id="mobile-const-s1"
+                  class="flex-1 min-w-0 bg-zinc-900 border border-zinc-700 text-[#E6DB74] text-xs rounded p-2 outline-none"
+                ></select>
+                <select
+                  id="mobile-const-s2"
+                  class="flex-1 min-w-0 bg-zinc-900 border border-zinc-700 text-[#E6DB74] text-xs rounded p-2 outline-none"
+                ></select>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  onclick="addMobileConstraint('together')"
+                  class="flex-1 bg-zinc-800 border border-zinc-700 text-[#A6E22E] text-sm py-2 rounded active:bg-zinc-700 font-medium"
+                >
+                  + Together
+                </button>
+                <button
+                  onclick="addMobileConstraint('apart')"
+                  class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F92672] text-sm py-2 rounded active:bg-zinc-700 font-medium"
+                >
+                  + Apart
+                </button>
+              </div>
+              <ul
+                id="mobile-constraint-list"
+                class="text-xs space-y-1 mt-1 max-h-32 overflow-y-auto"
+              ></ul>
+            </div>
+          </div>
+
+          <!-- Team cards area (scrollable normally, locked to screen in fullscreen) -->
+          <div
+            id="mobile-team-cards"
+            class="flex-1 overflow-y-auto p-2 bg-zinc-800"
+          >
+            <div id="mobile-team-cards-inner" class="grid grid-cols-1 gap-2">
+              <div class="col-span-full text-center text-zinc-500 py-16">
+                <div class="text-5xl mb-4">👥</div>
+                <p class="font-medium text-zinc-400">No teams yet</p>
+                <p class="text-sm mt-2 text-zinc-600">
+                  Tap "Generate" to get started
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ===== END MOBILE UI ===== -->
+
+        <!-- Member Action Bottom Sheet (mobile) -->
+        <div
+          id="mobile-member-sheet"
+          onclick="closeMemberSheet(event)"
+          class="fixed inset-0 z-[9800] bg-black/60 backdrop-blur-sm hidden items-end justify-center"
+          style="display: none"
+        >
+          <div
+            id="mobile-member-sheet-inner"
+            class="bg-zinc-900 border border-zinc-700 rounded-t-2xl w-full max-w-lg p-4 pb-8 shadow-2xl"
+            onclick="event.stopPropagation()"
+          >
+            <div class="w-10 h-1 bg-zinc-600 rounded-full mx-auto mb-4"></div>
+            <p
+              id="mobile-sheet-name"
+              class="text-[#F8F8F2] font-bold text-base mb-1 truncate"
+            ></p>
+            <p id="mobile-sheet-team" class="text-zinc-500 text-xs mb-4"></p>
+            <div class="space-y-2">
+              <p
+                class="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-2"
+              >
+                Move to…
+              </p>
+              <div
+                id="mobile-sheet-move-buttons"
+                class="flex flex-wrap gap-2"
+              ></div>
+              <div class="border-t border-zinc-700 pt-3 mt-3">
+                <button
+                  id="mobile-sheet-remove-btn"
+                  class="w-full bg-zinc-800 border border-[#F92672]/50 text-[#F92672] py-3 rounded-lg text-sm font-bold active:bg-zinc-700"
+                >
+                  Remove from Team
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Controls -->
+        <div
+          id="left-sidebar"
+          class="border-r border-zinc-700 flex flex-col h-[48dvh] md:h-full z-10 bg-zinc-900 shadow-xl relative flex-shrink-0 w-full md:w-[320px]"
+        >
+          <!-- TOP SECTION: Settings -->
+          <div
+            id="panel-settings"
+            class="flex flex-col overflow-y-auto border-b border-zinc-700"
+            style="flex: 1 1 auto"
+          >
+            <div class="p-4 sm:p-5">
+              <h2
+                class="text-xs font-bold text-[#FD971F] uppercase tracking-wider mb-4"
+              >
+                Settings
+              </h2>
+
+              <button
+                onclick="generateTeams()"
+                class="w-full bg-[#A6E22E] text-zinc-900 py-2 rounded font-bold hover:bg-[#8cc026] transition mb-4"
+              >
+                Generate Teams
+              </button>
+
+              <button
+                onclick="toggleProjector()"
+                class="w-full bg-zinc-800 border border-zinc-700 text-[#66D9EF] py-1.5 rounded hover:bg-zinc-700 transition text-sm flex items-center justify-center space-x-2"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                  ></path>
+                </svg>
+                <span>Projector Mode</span>
+              </button>
+
+              <div class="mb-4 mt-4">
+                <label class="block text-xs text-zinc-400 mb-1.5"
+                  >Team Method</label
+                >
+                <select
+                  id="team-method"
+                  class="w-full bg-zinc-950 border border-zinc-700 text-[#E6DB74] rounded text-sm p-2 outline-none focus:border-[#F92672]"
+                >
+                  <option value="membersPerTeam">Members per Team</option>
+                  <option value="numTeams">Number of Teams</option>
+                </select>
+              </div>
+
+              <div class="mb-2">
+                <label class="block text-xs text-zinc-400 mb-1.5">Amount</label>
+                <div class="flex items-center space-x-2">
+                  <button
+                    onclick="changeAmount(-1)"
+                    class="bg-zinc-800 border border-zinc-700 text-[#F8F8F2] w-10 h-10 rounded hover:bg-zinc-700 transition font-bold text-lg flex items-center justify-center"
+                  >
+                    &minus;
+                  </button>
+                  <input
+                    type="number"
+                    id="team-amount"
+                    min="1"
+                    value="4"
+                    class="flex-1 bg-zinc-950 border border-zinc-700 text-[#AE81FF] font-mono rounded text-sm p-2 outline-none focus:border-[#F92672] text-center"
+                  />
+                  <button
+                    onclick="changeAmount(1)"
+                    class="bg-zinc-800 border border-zinc-700 text-[#F8F8F2] w-10 h-10 rounded hover:bg-zinc-700 transition font-bold text-lg flex items-center justify-center"
+                  >
+                    &plus;
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MIDDLE SECTION: Constraints -->
+          <div
+            class="flex flex-col bg-zinc-900 border-b border-zinc-700 overflow-hidden"
+            style="height: 220px; flex: 0 0 220px"
+          >
+            <div
+              class="p-2.5 bg-zinc-850 border-b border-zinc-700 text-xs font-bold text-[#FD971F] flex items-center space-x-2 flex-shrink-0"
+            >
+              <span class="uppercase tracking-wider">Constraints</span>
+              <span
+                id="tally-constraints"
+                class="text-[10px] text-zinc-400 bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-700 font-mono"
+                >0</span
+              >
+            </div>
+            <div id="panel-constraints" class="p-4 overflow-y-auto flex-1">
+              <div class="flex space-x-2 mb-2 w-full">
+                <select
+                  id="const-s1"
+                  class="flex-1 min-w-0 w-1/2 bg-zinc-950 border border-zinc-700 text-[#E6DB74] text-xs rounded p-1.5 outline-none truncate"
+                ></select>
+                <select
+                  id="const-s2"
+                  class="flex-1 min-w-0 w-1/2 bg-zinc-950 border border-zinc-700 text-[#E6DB74] text-xs rounded p-1.5 outline-none truncate"
+                ></select>
+              </div>
+              <div class="flex space-x-2 mb-3 w-full">
+                <button
+                  onclick="addConstraint('together')"
+                  class="flex-1 bg-zinc-800 border border-zinc-700 text-[#A6E22E] text-xs py-1.5 rounded hover:bg-zinc-700"
+                >
+                  + Together
+                </button>
+                <button
+                  onclick="addConstraint('apart')"
+                  class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F92672] text-xs py-1.5 rounded hover:bg-zinc-700"
+                >
+                  + Apart
+                </button>
+              </div>
+              <ul id="constraint-list" class="text-xs space-y-1.5 mt-2"></ul>
+            </div>
+          </div>
+
+          <!-- BOTTOM SECTION: Staging Area -->
+          <div
+            class="flex flex-col bg-zinc-900 overflow-hidden"
+            style="height: 200px; flex: 0 0 200px"
+          >
+            <div
+              class="p-2.5 bg-zinc-850 border-b border-zinc-700 text-xs font-bold text-[#FD971F] flex items-center space-x-2 flex-shrink-0"
+            >
+              <span class="uppercase tracking-wider">Staging Area</span>
+              <span
+                id="tally-staging"
+                class="text-[10px] text-zinc-400 bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-700 font-mono"
+                >0</span
+              >
+            </div>
+            <div
+              id="panel-staging"
+              class="p-3 overflow-y-auto flex-1 drop-zone flex flex-col gap-1.5 bg-zinc-900"
+              data-zone-id="staging"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Draggable Canvas Area -->
+        <div
+          id="canvas-container"
+          class="flex-1 w-full relative overflow-auto bg-grid select-none touch-none lg:touch-auto"
+        >
+          <!-- Floating Exit Projector Button -->
+          <button
+            id="exit-fullscreen-btn"
+            onclick="document.exitFullscreen()"
+            class="bg-[#F8F8F2] text-zinc-900 px-4 py-2 rounded shadow-lg font-bold items-center space-x-2 hover:bg-white transition"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+            <span>Exit Fullscreen</span>
+          </button>
+
+          <!-- Zoom Controls -->
+          <div
+            class="fixed bottom-4 right-4 z-40 flex items-center bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 overflow-hidden"
+          >
+            <button
+              onclick="setCanvasZoom(canvasZoom - 0.1)"
+              class="px-3 py-1.5 text-zinc-300 hover:text-[#F8F8F2] hover:bg-zinc-700 transition font-bold outline-none text-lg"
+            >
+              &minus;
+            </button>
+            <div
+              id="canvas-zoom-label"
+              class="px-2 text-xs font-mono text-zinc-400 w-12 text-center cursor-pointer hover:text-zinc-200"
+              onclick="setCanvasZoom(1)"
+              title="Reset to 100%"
+            >
+              100%
+            </div>
+            <button
+              onclick="setCanvasZoom(canvasZoom + 0.1)"
+              class="px-3 py-1.5 text-zinc-300 hover:text-[#F8F8F2] hover:bg-zinc-700 transition font-bold outline-none text-lg"
+            >
+              &plus;
+            </button>
+          </div>
+
+          <div
+            id="canvas-area"
+            class="relative w-[2400px] h-[2400px] transform origin-top-left transition-transform duration-75"
+          >
+            <!-- Teams will be injected here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: EXPORT ================= -->
+      <div
+        id="tab3"
+        class="tab-content hide absolute inset-0 overflow-y-auto p-4 sm:p-6 flex flex-col"
+      >
+        <div class="max-w-5xl mx-auto w-full flex-1 flex flex-col">
+          <div
+            class="bg-zinc-900 p-5 sm:p-6 rounded-xl border border-zinc-700 shadow-xl mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+          >
+            <div class="transform -translate-y-[3px]">
+              <h2 class="text-lg font-semibold text-[#66D9EF]">
+                Export Layout
+              </h2>
+              <p class="text-sm text-zinc-400 mt-1">
+                Clean, standard layout designed perfectly for sharing and
+                printing.
+              </p>
+            </div>
+            <div
+              class="flex items-center space-x-3 w-full sm:w-auto text-sm transform -translate-y-[3px]"
+            >
+              <button
+                onclick="downloadImage()"
+                class="flex-1 sm:flex-none bg-zinc-800 text-[#A6E22E] px-4 py-2 rounded hover:bg-zinc-700 transition border border-zinc-700"
+              >
+                Save JPG
+              </button>
+              <button
+                onclick="downloadPDF()"
+                class="flex-1 sm:flex-none bg-zinc-800 text-[#FD971F] px-4 py-2 rounded hover:bg-zinc-700 transition border border-zinc-700"
+              >
+                Save PDF
+              </button>
+              <div class="w-px h-8 bg-zinc-700 mx-1 hidden sm:block"></div>
+              <button
+                onclick="exportJSON()"
+                class="flex-1 sm:flex-none bg-[#F92672] text-[#F8F8F2] px-4 py-2 rounded border border-transparent hover:bg-[#E91662] transition font-bold"
+              >
+                Save Backup
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="export-preview-container"
+            class="flex-1 bg-zinc-950 rounded-xl border-2 border-dashed border-zinc-700 overflow-hidden flex items-center justify-center shadow-inner relative min-h-[400px] touch-none lg:touch-auto"
+          >
+            <!-- Zoom Controls -->
+            <div
+              class="absolute bottom-4 right-4 z-40 flex items-center bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 overflow-hidden"
+            >
+              <button
+                onclick="setExportZoom(exportZoom - 0.1)"
+                class="px-3 py-1.5 text-zinc-300 hover:text-[#F8F8F2] hover:bg-zinc-700 transition font-bold outline-none text-lg"
+              >
+                &minus;
+              </button>
+              <div
+                id="export-zoom-label"
+                class="px-2 text-xs font-mono text-zinc-400 w-12 text-center cursor-pointer hover:text-zinc-200"
+                onclick="setExportZoom(1)"
+                title="Reset to 100%"
+              >
+                100%
+              </div>
+              <button
+                onclick="setExportZoom(exportZoom + 0.1)"
+                class="px-3 py-1.5 text-zinc-300 hover:text-[#F8F8F2] hover:bg-zinc-700 transition font-bold outline-none text-lg"
+              >
+                &plus;
+              </button>
+            </div>
+
+            <div
+              id="export-preview"
+              class="transition-transform duration-75 origin-center"
+            >
+              <div
+                class="text-zinc-500 p-10 text-center transform -translate-y-[3px]"
+              >
+                Generating preview...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 4: ABOUT ================= -->
+      <div
+        id="tab4"
+        class="tab-content hide absolute inset-0 overflow-y-auto p-4 sm:p-10 flex justify-center items-start"
+      >
+        <div
+          class="w-full max-w-4xl bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl overflow-hidden mt-2 sm:mt-4"
+        >
+          <div class="p-6 sm:p-12 text-[#F8F8F2]">
+            <h1
+              class="text-3xl sm:text-4xl font-bold mb-4 tracking-tight uppercase"
+            >
+              Team Maker
+            </h1>
+            <p class="text-zinc-400 text-base sm:text-lg mb-10 leading-relaxed">
+              A quick and flexible tool for generating and managing teams,
+              seating arrangements, or any kind of group assignment — works
+              great on desktop and phone.
+            </p>
+
+            <div class="space-y-10">
+              <!-- Step 1 -->
+              <div>
+                <h3
+                  class="text-xl sm:text-2xl font-semibold mb-3 text-[#F92672]"
+                >
+                  1. Add Your Members
+                </h3>
+                <div
+                  class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base"
+                >
+                  <p>
+                    Go to the
+                    <span
+                      class="text-[#A6E22E] font-medium bg-zinc-800 px-2 py-1 rounded border border-zinc-700"
+                      >Roster</span
+                    >
+                    tab. Paste a list of names (one per line) or upload a CSV
+                    file. The tool automatically strips quotes, converts "Last,
+                    First" format to "First Last", and skips duplicate names.
+                  </p>
+                  <p>
+                    The
+                    <span class="text-[#66D9EF] font-medium"
+                      >Random Picker</span
+                    >
+                    on the same tab lets you call on someone at random from your
+                    full list, with an option to remove picked members from the
+                    pool so nobody gets picked twice.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Step 2 -->
+              <div>
+                <h3
+                  class="text-xl sm:text-2xl font-semibold mb-3 text-[#FD971F]"
+                >
+                  2. Generate &amp; Edit Teams
+                </h3>
+                <div
+                  class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base"
+                >
+                  <p>
+                    Go to the
+                    <span
+                      class="text-[#A6E22E] font-medium bg-zinc-800 px-2 py-1 rounded border border-zinc-700"
+                      >Teams</span
+                    >
+                    tab. Choose whether to set the number of
+                    <em>members per team</em> or the <em>number of teams</em>,
+                    set the amount, then tap <strong>Generate Teams</strong>.
+                  </p>
+                  <p>
+                    Use <strong>Constraints</strong> to lock pairs together or
+                    force them apart before generating — the algorithm will try
+                    to respect every constraint across up to 500 attempts.
+                  </p>
+
+                  <!-- Desktop callout -->
+                  <div
+                    class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
+                  >
+                    <p
+                      class="text-xs font-bold text-[#66D9EF] uppercase tracking-wider"
+                    >
+                      💻 On Desktop
+                    </p>
+                    <p class="text-sm text-zinc-300">
+                      Drag individual member chips between team cards to
+                      reassign them. Drag a team card's header to reposition it
+                      on the canvas — useful for mapping out a physical room
+                      layout. Use the zoom controls or pinch-to-zoom on a
+                      trackpad to fit everything on screen. Click
+                      <span class="text-[#66D9EF] font-medium"
+                        >Projector Mode</span
+                      >
+                      to go fullscreen.
+                    </p>
+                  </div>
+
+                  <!-- Phone callout -->
+                  <div
+                    class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
+                  >
+                    <p
+                      class="text-xs font-bold text-[#E6DB74] uppercase tracking-wider"
+                    >
+                      📱 On Phone
+                    </p>
+                    <p class="text-sm text-zinc-300">
+                      Teams are shown as scrollable cards. Tap any member's name
+                      to open a panel where you can move them to another team or
+                      remove them. Tap the <strong>fullscreen</strong> button
+                      (⤢) to enter Projector Mode — all teams fill the screen
+                      with no scrolling, portrait or landscape. You can still
+                      tap members to reassign them while in Projector Mode. Tap
+                      <strong>Exit</strong> when done.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 3 -->
+              <div>
+                <h3
+                  class="text-xl sm:text-2xl font-semibold mb-3 text-[#AE81FF]"
+                >
+                  3. Export
+                </h3>
+                <div
+                  class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base"
+                >
+                  <p>
+                    Go to the
+                    <span
+                      class="text-[#66D9EF] font-medium bg-zinc-800 px-2 py-1 rounded border border-zinc-700"
+                      >Export</span
+                    >
+                    tab to see a clean print-ready preview of your teams.
+                    Download it as a <strong>PDF</strong> or
+                    <strong>JPG</strong> to share or print.
+                  </p>
+                  <p
+                    class="text-zinc-400 text-sm border-l-2 border-zinc-700 pl-4 py-1 italic"
+                  >
+                    The export automatically converts the dark canvas into a
+                    clean, light-background layout so it prints clearly.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Step 4 -->
+              <div>
+                <h3
+                  class="text-xl sm:text-2xl font-semibold mb-3 text-[#66D9EF]"
+                >
+                  4. Files &amp; Saving
+                </h3>
+                <div
+                  class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base"
+                >
+                  <p>
+                    Your work is auto-saved in your browser. Click the
+                    <span
+                      class="text-[#66D9EF] font-medium bg-zinc-800 px-2 py-1 rounded border border-zinc-700"
+                      >Files</span
+                    >
+                    button in the header to manage multiple saved files — handy
+                    if you run several groups or sessions and want to keep them
+                    separate.
+                  </p>
+                  <p>
+                    Use <strong>Backup All Files</strong> inside the Files panel
+                    to download a
+                    <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded"
+                      >.json</code
+                    >
+                    file containing everything. If you ever clear your browser
+                    storage or switch devices, you can restore everything from
+                    that backup with <strong>Restore from Backup</strong>.
+                  </p>
+                  <p
+                    class="text-zinc-400 text-sm border-l-2 border-zinc-700 pl-4 py-1 italic"
+                  >
+                    Tip: export a backup regularly — browser storage can be
+                    cleared by the browser when disk space is low.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Support / Ko-Fi Section -->
+            <div
+              class="mt-16 bg-zinc-950 rounded-2xl p-6 sm:p-10 border border-zinc-800 shadow-inner flex flex-col lg:flex-row gap-8 items-center"
+            >
+              <div class="flex-1 text-center lg:text-left">
+                <h3 class="text-2xl sm:text-3xl font-bold mb-4 text-[#F92672]">
+                  ☕ Support My Work
+                </h3>
+                <p
+                  class="text-zinc-300 text-base sm:text-lg leading-relaxed mb-6"
+                >
+                  I'm a full-time teacher who builds tools like this in my free
+                  time. If Team Maker saves you even a few minutes, I'd really
+                  appreciate a coffee — it keeps me motivated to keep improving
+                  it!
+                </p>
+                <a
+                  href="https://ko-fi.com/coolpuddytat"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-block bg-[#ff38b8] text-white font-bold px-6 py-3 rounded-lg hover:opacity-90 transition text-sm"
+                >
+                  ☕ Buy me a coffee on Ko-fi
+                </a>
+              </div>
+              <div
+                class="w-full sm:w-[350px] flex-shrink-0 bg-[#f9f9f9] rounded-xl overflow-hidden border-[6px] border-zinc-800 shadow-2xl mx-auto"
+              >
+                <iframe
+                  id="kofiframe"
+                  src="https://ko-fi.com/coolpuddytat/?hidefeed=true&widget=true&embed=true&preview=true"
+                  style="
+                    border: none;
+                    width: 100%;
+                    padding: 4px;
+                    background: #f9f9f9;
+                    display: block;
+                  "
+                  height="712"
+                  title="coolpuddytat"
+                ></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================= FILES MANAGER MODAL ================= -->
+    <div
+      id="files-modal"
+      class="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm items-start justify-center p-4 pt-[10vh] overflow-y-auto"
+    >
+      <div
+        class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg"
+      >
+        <!-- Header -->
+        <div
+          class="flex items-center justify-between p-5 border-b border-zinc-700"
+        >
+          <div>
+            <h2 class="text-lg font-bold text-[#66D9EF]">Files</h2>
+            <p class="text-xs text-zinc-500 mt-0.5">
+              Each file holds a roster and its team arrangements
+            </p>
+          </div>
+          <button
+            onclick="closeFilesModal()"
+            class="text-zinc-500 hover:text-[#F8F8F2] transition text-2xl leading-none font-bold"
+          >
+            &times;
+          </button>
+        </div>
+
+        <!-- File list -->
+        <div
+          id="files-list"
+          class="divide-y divide-zinc-800 max-h-[45vh] overflow-y-auto"
+        >
+          <!-- Populated by renderFilesList() -->
+        </div>
+
+        <!-- New file input -->
+        <div class="p-4 border-t border-zinc-700">
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="new-file-name"
+              placeholder="New file name (e.g. Group A, Period 3…)"
+              class="flex-1 bg-zinc-950 border border-zinc-700 text-[#F8F8F2] rounded text-sm px-3 py-2 outline-none focus:border-[#A6E22E] placeholder-zinc-600"
+            />
+            <button
+              onclick="createNewFile()"
+              class="bg-[#A6E22E] text-zinc-900 px-4 py-2 rounded font-bold text-sm hover:bg-[#8cc026] transition flex-shrink-0"
+            >
+              + New File
+            </button>
+          </div>
+        </div>
+
+        <!-- Backup section -->
+        <div class="p-4 pt-0 flex flex-col sm:flex-row gap-2">
+          <button
+            onclick="exportAllFilesJSON()"
+            class="flex-1 bg-zinc-800 border border-zinc-700 text-[#FD971F] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5"
+          >
+            <svg
+              class="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              ></path>
+            </svg>
+            Backup All Files (.json)
+          </button>
+          <button
+            onclick="document.getElementById('restore-all-json').click()"
+            class="flex-1 bg-zinc-800 border border-zinc-700 text-[#E6DB74] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5"
+          >
+            <svg
+              class="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"
+              ></path>
+            </svg>
+            Restore from Backup
+          </button>
+          <input
+            type="file"
+            id="restore-all-json"
+            accept=".json"
+            class="hidden"
+            onchange="restoreFromBackup(event)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Modal for Alerts & Confirms -->
+    <div
+      id="custom-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4"
+    >
+      <div
+        class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full border border-zinc-700 shadow-2xl transform transition-all"
+      >
+        <h3 id="modal-title" class="text-lg font-bold text-[#F92672] mb-2">
+          Notice
+        </h3>
+        <p
+          id="modal-message"
+          class="text-zinc-300 mb-6 text-sm leading-relaxed"
+        ></p>
+        <div class="flex justify-end space-x-3 text-sm">
+          <button
+            id="modal-cancel"
+            class="px-4 py-2 bg-zinc-800 text-zinc-400 rounded hover:bg-zinc-700 transition border border-zinc-700 hide"
+          >
+            Cancel
+          </button>
+          <button
+            id="modal-confirm"
+            class="px-4 py-2 bg-[#F92672] text-[#F8F8F2] rounded hover:bg-[#E91662] border border-transparent transition font-bold"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ================= STATE MANAGEMENT =================
+      let allMembers = [];
+      let pool = [];
+      let teams = [];
+      let staging = [];
+      let constraints = { together: [], apart: [] };
+
+      let hasUnsavedChanges = false;
+
+      // Zoom states
+      let canvasZoom = 1;
+      let exportZoom = 1;
+
+      // Monokai Theme Colors for Teams
+      const teamColors = [
+        {
+          bg: "#F9267230",
+          border: "#F9267280",
+          text: "#F92672",
+          cardBg: "#F9267210",
+        }, // Pink
+        {
+          bg: "#A6E22E30",
+          border: "#A6E22E80",
+          text: "#A6E22E",
+          cardBg: "#A6E22E10",
+        }, // Green
+        {
+          bg: "#66D9EF30",
+          border: "#66D9EF80",
+          text: "#66D9EF",
+          cardBg: "#66D9EF10",
+        }, // Cyan
+        {
+          bg: "#FD971F30",
+          border: "#FD971F80",
+          text: "#FD971F",
+          cardBg: "#FD971F10",
+        }, // Orange
+        {
+          bg: "#AE81FF30",
+          border: "#AE81FF80",
+          text: "#AE81FF",
+          cardBg: "#AE81FF10",
+        }, // Purple
+        {
+          bg: "#F4433630",
+          border: "#F4433680",
+          text: "#F44336",
+          cardBg: "#F4433610",
+        }, // Red
+        {
+          bg: "#00BCD430",
+          border: "#00BCD480",
+          text: "#00BCD4",
+          cardBg: "#00BCD410",
+        }, // Teal
+        {
+          bg: "#8BC34A30",
+          border: "#8BC34A80",
+          text: "#8BC34A",
+          cardBg: "#8BC34A10",
+        }, // Light Green
+      ];
+
+      // Light/High-Contrast versions for printing/export
+      const exportTeamColors = [
+        { text: "#D81B60", bg: "#FCE4EC", border: "#F48FB1" }, // Pink
+        { text: "#33691E", bg: "#F1F8E9", border: "#C5E1A5" }, // Green
+        { text: "#006064", bg: "#E0F7FA", border: "#80DEEA" }, // Cyan
+        { text: "#E65100", bg: "#FFF3E0", border: "#FFCC80" }, // Orange
+        { text: "#4A148C", bg: "#F3E5F5", border: "#CE93D8" }, // Purple
+        { text: "#B71C1C", bg: "#FFEBEE", border: "#EF9A9A" }, // Red
+        { text: "#004D40", bg: "#E0F2F1", border: "#80CBC4" }, // Teal
+        { text: "#33691E", bg: "#F1F8E9", border: "#C5E1A5" }, // Light Green
+      ];
+
+      // ================= ZOOM & AUTO-FIT CONTROLS =================
+      function setCanvasZoom(z) {
+        canvasZoom = Math.min(Math.max(0.2, z), 2.5);
+        document.getElementById("canvas-area").style.transform =
+          `scale(${canvasZoom})`;
+        document.getElementById("canvas-zoom-label").innerText =
+          Math.round(canvasZoom * 100) + "%";
+      }
+
+      function setExportZoom(z) {
+        exportZoom = Math.min(Math.max(0.1, z), 2.5);
+        const preview = document.getElementById("export-preview");
+        if (preview) {
+          preview.style.transform = `scale(${exportZoom})`;
+        }
+        document.getElementById("export-zoom-label").innerText =
+          Math.round(exportZoom * 100) + "%";
+      }
+
+      function setupPinchZoom(containerId, isCanvas) {
+        const container = document.getElementById(containerId);
+        let initDist = 0;
+        let initZoom = 1;
+        let currentZoom = 1;
+        let rafId = null;
+
+        // Touch-based pinch-to-zoom (Mobile)
+        container.addEventListener(
+          "touchstart",
+          (e) => {
+            if (e.touches.length === 2) {
+              e.preventDefault();
+              initDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY,
+              );
+              initZoom = isCanvas ? canvasZoom : exportZoom;
+              currentZoom = initZoom;
+            }
+          },
+          { passive: false },
+        );
+
+        container.addEventListener(
+          "touchmove",
+          (e) => {
+            if (e.touches.length === 2) {
+              e.preventDefault();
+              const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY,
+              );
+              const scale = dist / initDist;
+              currentZoom = initZoom * scale;
+
+              // Use requestAnimationFrame for smooth updates
+              if (rafId) cancelAnimationFrame(rafId);
+              rafId = requestAnimationFrame(() => {
+                if (isCanvas) setCanvasZoom(currentZoom);
+                else setExportZoom(currentZoom);
+              });
+            }
+          },
+          { passive: false },
+        );
+
+        container.addEventListener("touchend", (e) => {
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+        });
+
+        // Trackpad pinch-to-zoom (Desktop/Laptop)
+        container.addEventListener(
+          "wheel",
+          (e) => {
+            // Trackpad pinches are recognized as 'wheel' events with ctrlKey set to true
+            if (e.ctrlKey) {
+              e.preventDefault();
+              const zoomSensitivity = 0.005;
+              const delta = -e.deltaY * zoomSensitivity;
+              const currentZ = isCanvas ? canvasZoom : exportZoom;
+
+              if (rafId) cancelAnimationFrame(rafId);
+              rafId = requestAnimationFrame(() => {
+                if (isCanvas) setCanvasZoom(currentZ + delta);
+                else setExportZoom(currentZ + delta);
+              });
+            }
+          },
+          { passive: false },
+        );
+      }
+
+      setupPinchZoom("canvas-container", true);
+      setupPinchZoom("export-preview-container", false);
+
+      function fitTeamsToScreen() {
+        if (teams.length === 0) return;
+        const container = document.getElementById("canvas-container");
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+
+        let minX = Infinity,
+          minY = Infinity,
+          maxX = -Infinity,
+          maxY = -Infinity;
+        teams.forEach((g) => {
+          if (g.x < minX) minX = g.x;
+          if (g.y < minY) minY = g.y;
+          const estHeight = 62 + g.members.length * 34;
+          if (g.x + 240 > maxX) maxX = g.x + 240;
+          if (g.y + estHeight > maxY) maxY = g.y + estHeight;
+        });
+
+        if (minX === Infinity) return;
+
+        const padding = 60; // Safe area padding around the edges
+        const boundsWidth = maxX - minX;
+        const boundsHeight = maxY - minY;
+
+        const scaleX = (cw - padding * 2) / boundsWidth;
+        const scaleY = (ch - padding * 2) / boundsHeight;
+        const newScale = Math.min(scaleX, scaleY, 1.5); // Max out zoom at 1.5x to prevent absurd sizing
+
+        setCanvasZoom(newScale);
+
+        // Wait a split second for scale transform to apply, then smoothly scroll to center
+        setTimeout(() => {
+          const scaledMinX = minX * newScale;
+          const scaledMinY = minY * newScale;
+          const scaledBoundsWidth = boundsWidth * newScale;
+          const scaledBoundsHeight = boundsHeight * newScale;
+
+          const targetScrollLeft = scaledMinX - (cw - scaledBoundsWidth) / 2;
+          const targetScrollTop = scaledMinY - (ch - scaledBoundsHeight) / 2;
+
+          container.scrollTo({
+            left: Math.max(0, targetScrollLeft),
+            top: Math.max(0, targetScrollTop),
+            behavior: "smooth",
+          });
+        }, 50);
+      }
+
+      // Adjust layout when entering Projector view
+      document.addEventListener("fullscreenchange", () => {
+        if (document.fullscreenElement) {
+          setTimeout(fitTeamsToScreen, 150);
+        }
+      });
+
+      // ================= MULTI-FILE SYSTEM =================
+
+      const FILES_KEY = "teamMakerFiles";
+      const ACTIVE_KEY = "teamMakerActiveFile";
+
+      function getAllFiles() {
+        try {
+          return JSON.parse(localStorage.getItem(FILES_KEY)) || [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveAllFiles(files) {
+        localStorage.setItem(FILES_KEY, JSON.stringify(files));
+      }
+
+      function getActiveFileId() {
+        return localStorage.getItem(ACTIVE_KEY);
+      }
+
+      function setActiveFileId(id) {
+        localStorage.setItem(ACTIVE_KEY, id);
+      }
+
+      function getActiveFile() {
+        const files = getAllFiles();
+        const id = getActiveFileId();
+        return files.find((f) => f.id === id) || files[0] || null;
+      }
+
+      function updateActiveFileLabel() {
+        const f = getActiveFile();
+        const lbl = document.getElementById("active-file-label");
+        if (lbl) lbl.textContent = f ? f.name : "Files";
+      }
+
+      // ================= SAVE & LOAD =================
+      function markUnsaved() {
+        hasUnsavedChanges = true;
+        const btn = document.getElementById("save-btn");
+        if (btn) {
+          btn.innerHTML = `<span class="text-[#FD971F] mr-1 text-lg leading-none transform translate-y-[-1px]">&bull;</span> Unsaved`;
+          btn.classList.remove("text-zinc-500", "bg-zinc-800");
+          btn.classList.add(
+            "text-[#FD971F]",
+            "bg-[#FD971F]/10",
+            "border-[#FD971F]/30",
+          );
+        }
+      }
+
+      function saveData() {
+        let files = getAllFiles();
+        let id = getActiveFileId();
+
+        // If no active file yet, create a default one
+        if (!id || !files.find((f) => f.id === id)) {
+          id = generateId();
+          files.push({
+            id,
+            name: "Default",
+            allMembers: [],
+            pool: [],
+            teams: [],
+            staging: [],
+            constraints: { together: [], apart: [] },
+            updatedAt: Date.now(),
+          });
+          saveAllFiles(files);
+          setActiveFileId(id);
+        }
+
+        const idx = files.findIndex((f) => f.id === id);
+        files[idx] = {
+          ...files[idx],
+          allMembers,
+          pool,
+          teams,
+          staging,
+          constraints,
+          updatedAt: Date.now(),
+        };
+        saveAllFiles(files);
+
+        hasUnsavedChanges = false;
+        const btn = document.getElementById("save-btn");
+        if (btn) {
+          btn.innerHTML = `Saved`;
+          btn.classList.add("text-zinc-500", "bg-zinc-800");
+          btn.classList.remove(
+            "text-[#FD971F]",
+            "bg-[#FD971F]/10",
+            "border-[#FD971F]/30",
+          );
+        }
+        updateActiveFileLabel();
+      }
+
+      function loadData() {
+        // Migration: if old single-file data exists but no new files, migrate it
+        const oldData = localStorage.getItem("teamMakerData");
+        let files = getAllFiles();
+
+        if (files.length === 0 && oldData) {
+          try {
+            const d = JSON.parse(oldData);
+            const id = generateId();
+            files = [
+              {
+                id,
+                name: "Default",
+                allMembers: d.allMembers || d.allStudents || [],
+                pool: d.pool || [],
+                teams: d.teams || d.groups || [],
+                staging: d.staging || [],
+                constraints: d.constraints || { together: [], apart: [] },
+                updatedAt: Date.now(),
+              },
+            ];
+            saveAllFiles(files);
+            setActiveFileId(id);
+            localStorage.removeItem("teamMakerData");
+          } catch {}
+        }
+
+        const f = getActiveFile();
+        if (f) {
+          allMembers = f.allMembers || [];
+          pool = f.pool || allMembers.map((s) => s.id);
+          teams = f.teams || [];
+          staging = f.staging || [];
+          constraints = f.constraints || { together: [], apart: [] };
+          if (f.id) setActiveFileId(f.id);
+        }
+
+        updateTab1UI();
+        updateConstraintSelects();
+        renderTeams();
+        updateActiveFileLabel();
+      }
+
+      window.addEventListener("DOMContentLoaded", loadData);
+
+      const generateId = () => Math.random().toString(36).substring(2, 9);
+
+      // ================= FILES MANAGER =================
+
+      function openFilesModal() {
+        saveData(); // auto-save before browsing files
+        renderFilesList();
+        document.getElementById("files-modal").classList.add("open");
+      }
+
+      function closeFilesModal() {
+        document.getElementById("files-modal").classList.remove("open");
+      }
+
+      function renderFilesList() {
+        const files = getAllFiles();
+        const activeId = getActiveFileId();
+        const container = document.getElementById("files-list");
+        if (!container) return;
+
+        if (files.length === 0) {
+          container.innerHTML = `<div class="p-6 text-center text-zinc-500 text-sm">No files yet. Create one below.</div>`;
+          return;
+        }
+
+        container.innerHTML = "";
+        files.forEach((f) => {
+          const isActive = f.id === activeId;
+          const date = f.updatedAt
+            ? new Date(f.updatedAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "";
+          const row = document.createElement("div");
+          row.className = `file-item flex items-center gap-3 px-4 py-3 ${isActive ? "bg-zinc-800" : "hover:bg-zinc-800/50"} transition cursor-pointer group`;
+
+          row.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            ${isActive ? '<span class="w-2 h-2 rounded-full bg-[#A6E22E] flex-shrink-0"></span>' : '<span class="w-2 h-2 rounded-full bg-zinc-700 flex-shrink-0"></span>'}
+                            <span class="file-name-display text-sm font-medium text-[#F8F8F2] truncate">${escapeHtml(f.name)}</span>
+                        </div>
+                        <div class="text-xs text-zinc-500 mt-0.5 ml-4">${f.allMembers ? f.allMembers.length : 0} members · ${f.teams ? f.teams.length : 0} teams${date ? " · " + date : ""}</div>
+                    </div>
+                    <div class="file-actions flex items-center gap-1 flex-shrink-0">
+                        <button onclick="renameFilePrompt('${f.id}')" title="Rename"
+                            class="p-1.5 rounded text-zinc-500 hover:text-[#E6DB74] hover:bg-zinc-700 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </button>
+                        <button onclick="deleteFile('${f.id}')" title="Delete"
+                            class="p-1.5 rounded text-zinc-500 hover:text-[#F92672] hover:bg-zinc-700 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                        ${!isActive ? `<button onclick="loadFile('${f.id}')" class="ml-1 bg-zinc-700 hover:bg-[#66D9EF] hover:text-zinc-900 text-zinc-300 text-xs px-3 py-1.5 rounded font-medium transition">Open</button>` : `<span class="ml-1 bg-[#A6E22E]/20 text-[#A6E22E] border border-[#A6E22E]/30 text-xs px-3 py-1.5 rounded font-medium">Active</span>`}
+                    </div>`;
+          container.appendChild(row);
+        });
+      }
+
+      function createNewFile() {
+        const input = document.getElementById("new-file-name");
+        const name = input.value.trim() || "New File";
+        const id = generateId();
+        const files = getAllFiles();
+
+        // Save current state into current file first
+        const activeId = getActiveFileId();
+        if (activeId) {
+          const idx = files.findIndex((f) => f.id === activeId);
+          if (idx >= 0)
+            files[idx] = {
+              ...files[idx],
+              allMembers,
+              pool,
+              teams,
+              staging,
+              constraints,
+              updatedAt: Date.now(),
+            };
+        }
+
+        files.push({
+          id,
+          name,
+          allMembers: [],
+          pool: [],
+          teams: [],
+          staging: [],
+          constraints: { together: [], apart: [] },
+          updatedAt: Date.now(),
+        });
+        saveAllFiles(files);
+        setActiveFileId(id);
+
+        // Load empty state
+        allMembers = [];
+        pool = [];
+        teams = [];
+        staging = [];
+        constraints = { together: [], apart: [] };
+        updateTab1UI();
+        updateConstraintSelects();
+        renderTeams();
+        updateActiveFileLabel();
+
+        input.value = "";
+        hasUnsavedChanges = false;
+        renderFilesList();
+
+        const btn = document.getElementById("save-btn");
+        if (btn) {
+          btn.innerHTML = "Saved";
+          btn.classList.add("text-zinc-500", "bg-zinc-800");
+          btn.classList.remove(
+            "text-[#FD971F]",
+            "bg-[#FD971F]/10",
+            "border-[#FD971F]/30",
+          );
+        }
+      }
+
+      function loadFile(id) {
+        // Save current state first
+        saveData();
+
+        const files = getAllFiles();
+        const f = files.find((fl) => fl.id === id);
+        if (!f) return;
+
+        setActiveFileId(id);
+        allMembers = f.allMembers || [];
+        pool = f.pool || allMembers.map((s) => s.id);
+        teams = f.teams || [];
+        staging = f.staging || [];
+        constraints = f.constraints || { together: [], apart: [] };
+
+        updateTab1UI();
+        updateConstraintSelects();
+        renderTeams();
+        updateActiveFileLabel();
+        hasUnsavedChanges = false;
+
+        const btn = document.getElementById("save-btn");
+        if (btn) {
+          btn.innerHTML = "Saved";
+          btn.classList.add("text-zinc-500", "bg-zinc-800");
+          btn.classList.remove(
+            "text-[#FD971F]",
+            "bg-[#FD971F]/10",
+            "border-[#FD971F]/30",
+          );
+        }
+
+        renderFilesList();
+        closeFilesModal();
+      }
+
+      function deleteFile(id) {
+        const files = getAllFiles();
+        const f = files.find((fl) => fl.id === id);
+        if (!f) return;
+        showModal(`Delete "${f.name}"? This cannot be undone.`, true, () => {
+          const updated = files.filter((fl) => fl.id !== id);
+          saveAllFiles(updated);
+
+          // If we deleted the active file, load another
+          if (getActiveFileId() === id) {
+            if (updated.length > 0) {
+              loadFile(updated[0].id);
+            } else {
+              // No files left — reset to blank
+              setActiveFileId("");
+              allMembers = [];
+              pool = [];
+              teams = [];
+              staging = [];
+              constraints = { together: [], apart: [] };
+              updateTab1UI();
+              updateConstraintSelects();
+              renderTeams();
+              updateActiveFileLabel();
+            }
+          }
+          renderFilesList();
+        });
+      }
+
+      function renameFilePrompt(id) {
+        const files = getAllFiles();
+        const f = files.find((fl) => fl.id === id);
+        if (!f) return;
+
+        // Inline rename using a temporary input
+        const container = document.getElementById("files-list");
+        const rows = container.querySelectorAll(".file-item");
+        const allFiles = getAllFiles();
+
+        // Find which row this is
+        const idx = allFiles.findIndex((fl) => fl.id === id);
+        if (idx < 0 || idx >= rows.length) return;
+        const row = rows[idx];
+        const nameSpan = row.querySelector(".file-name-display");
+        const oldName = nameSpan.textContent;
+
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.value = oldName;
+        inp.className =
+          "bg-zinc-950 border border-[#66D9EF] text-[#F8F8F2] rounded text-sm px-2 py-0.5 outline-none w-full";
+        nameSpan.replaceWith(inp);
+        inp.focus();
+        inp.select();
+
+        const commit = () => {
+          const newName = inp.value.trim() || oldName;
+          const updated = getAllFiles();
+          const i = updated.findIndex((fl) => fl.id === id);
+          if (i >= 0) {
+            updated[i].name = newName;
+            saveAllFiles(updated);
+          }
+          updateActiveFileLabel();
+          renderFilesList();
+        };
+        inp.addEventListener("blur", commit);
+        inp.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") inp.blur();
+          if (e.key === "Escape") {
+            inp.value = oldName;
+            inp.blur();
+          }
+        });
+      }
+
+      function escapeHtml(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      // ================= BACKUP (multi-file) =================
+
+      function exportAllFilesJSON() {
+        // Save current state first
+        saveData();
+        const files = getAllFiles();
+        const backup = {
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          activeFileId: getActiveFileId(),
+          files,
+          // Legacy single-file fields for backward compat
+          allMembers,
+          pool,
+          teams,
+          staging,
+          constraints,
+        };
+        const a = document.createElement("a");
+        a.href =
+          "data:text/json;charset=utf-8," +
+          encodeURIComponent(JSON.stringify(backup, null, 2));
+        a.download =
+          "teammaker_backup_" + new Date().toISOString().slice(0, 10) + ".json";
+        a.click();
+      }
+
+      // Keep old exportJSON working (now exports all files)
+      function exportJSON() {
+        exportAllFilesJSON();
+      }
+
+      function restoreFromBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+
+            if (
+              data.version === 2 &&
+              Array.isArray(data.files) &&
+              data.files.length > 0
+            ) {
+              // Multi-file backup
+              showModal(
+                `Restore ${data.files.length} file(s) from backup? This will replace all current files.`,
+                true,
+                () => {
+                  saveAllFiles(data.files);
+                  const activeId = data.activeFileId || data.files[0].id;
+                  setActiveFileId(activeId);
+                  loadData();
+                  renderFilesList();
+                  showModal(
+                    `Restored ${data.files.length} file(s) successfully!`,
+                  );
+                },
+              );
+            } else if (data.allMembers || data.allStudents) {
+              // Legacy single-file backup
+              showModal("Restore this backup as a new file?", true, () => {
+                const id = generateId();
+                const f = {
+                  id,
+                  name: file.name.replace(/\.json$/i, "") || "Imported",
+                  allMembers: data.allMembers || data.allStudents || [],
+                  pool: data.pool || [],
+                  teams: data.teams || data.groups || [],
+                  staging: data.staging || [],
+                  constraints: data.constraints || { together: [], apart: [] },
+                  updatedAt: Date.now(),
+                };
+                const files = getAllFiles();
+                files.push(f);
+                saveAllFiles(files);
+                loadFile(id);
+                showModal("Imported successfully as a new file!");
+              });
+            } else {
+              showModal("Invalid backup file format.");
+            }
+          } catch {
+            showModal("Error reading backup file.");
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = "";
+      }
+
+      // importJSON now delegates to restoreFromBackup logic
+      function importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (data.version === 2 && Array.isArray(data.files)) {
+              showModal(
+                `This backup contains ${data.files.length} file(s). Restore all? (Replaces current files)`,
+                true,
+                () => {
+                  saveAllFiles(data.files);
+                  setActiveFileId(data.activeFileId || data.files[0].id);
+                  loadData();
+                  showModal("All files restored!");
+                },
+              );
+            } else if (data.allMembers || data.allStudents) {
+              allMembers = data.allMembers || data.allStudents;
+              pool = data.pool || allMembers.map((s) => s.id);
+              teams = data.teams || data.groups || [];
+              staging = data.staging || [];
+              constraints = data.constraints || { together: [], apart: [] };
+              updateTab1UI();
+              updateConstraintSelects();
+              renderTeams();
+              showModal("Data restored to current file!");
+              markUnsaved();
+            } else {
+              showModal("Invalid file format.");
+            }
+          } catch {
+            showModal("Error parsing file.");
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = "";
+      }
+
+      // ================= UI & UTILS =================
+      function showModal(message, isConfirm = false, onConfirm = null) {
+        const modal = document.getElementById("custom-modal");
+        const msgEl = document.getElementById("modal-message");
+        const btnCancel = document.getElementById("modal-cancel");
+        const btnConfirm = document.getElementById("modal-confirm");
+
+        msgEl.innerText = message;
+        modal.classList.remove("hide");
+
+        const newConfirm = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(newConfirm, btnConfirm);
+        const newCancel = btnCancel.cloneNode(true);
+        btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+
+        if (isConfirm) {
+          newCancel.classList.remove("hide");
+          newCancel.addEventListener("click", () => {
+            modal.classList.add("hide");
+          });
+          newConfirm.addEventListener("click", () => {
+            modal.classList.add("hide");
+            if (onConfirm) onConfirm();
+          });
+        } else {
+          newCancel.classList.add("hide");
+          newConfirm.addEventListener("click", () => {
+            modal.classList.add("hide");
+            if (onConfirm) onConfirm();
+          });
+        }
+      }
+
+      function toggleProjector() {
+        const container = document.getElementById("canvas-container");
+        if (!document.fullscreenElement) {
+          container
+            .requestFullscreen()
+            .catch(() => showModal("Error entering fullscreen."));
+        } else {
+          document.exitFullscreen();
+        }
+      }
+
+      function changeAmount(delta) {
+        const input = document.getElementById("team-amount");
+        let value = parseInt(input.value) || 1;
+        value += delta;
+        if (value < 1) value = 1;
+        input.value = value;
+      }
+
+      // ================= TAB 1 LOGIC =================
+
+      function loadMembers() {
+        const textArea = document.getElementById("paste-area").value;
+        const fileInput = document.getElementById("csv-file");
+        let rawText = textArea;
+
+        if (fileInput.files.length > 0) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            parseMemberText(e.target.result + "\n" + rawText);
+            fileInput.value = "";
+          };
+          reader.readAsText(fileInput.files[0]);
+        } else {
+          parseMemberText(rawText);
+        }
+      }
+
+      function parseMemberText(text) {
+        const lines = text
+          .split(/\r?\n/)
+          .map((n) => n.trim())
+          .filter((n) => n.length > 0);
+
+        if (lines.length === 0) {
+          showModal("No valid names found!");
+          return;
+        }
+
+        let duplicatesFound = 0;
+        const newMembers = [];
+
+        // Create a set of existing names for quick lookup (case-insensitive)
+        const existingNames = new Set(
+          allMembers.map((m) => m.name.toLowerCase()),
+        );
+
+        lines.forEach((line) => {
+          let cleanName = line.replace(/^["']+|["']+$/g, "").trim();
+
+          // Convert "Last, First" to "First Last"
+          if (cleanName.includes(",")) {
+            let parts = cleanName.split(",");
+            if (parts.length >= 2) {
+              cleanName = parts[1].trim() + " " + parts[0].trim();
+            }
+          }
+
+          cleanName = cleanName.replace(/["']/g, "").trim();
+
+          if (cleanName.length > 0) {
+            const lowerName = cleanName.toLowerCase();
+            if (existingNames.has(lowerName)) {
+              duplicatesFound++;
+            } else {
+              existingNames.add(lowerName); // Add to set to catch duplicates within the same paste batch
+              newMembers.push({ id: generateId(), name: cleanName });
+            }
+          }
+        });
+
+        if (newMembers.length > 0) {
+          allMembers = [...allMembers, ...newMembers];
+          pool = [...pool, ...newMembers.map((s) => s.id)];
+          updateTab1UI();
+          updateConstraintSelects();
+          markUnsaved();
+        }
+
+        document.getElementById("paste-area").value = "";
+
+        // Notify user about duplicates
+        if (duplicatesFound > 0) {
+          const msg =
+            duplicatesFound === 1
+              ? "1 duplicate name was found and skipped."
+              : `${duplicatesFound} duplicate names were found and skipped.`;
+          showModal(msg);
+        }
+      }
+
+      function deleteMember(id) {
+        allMembers = allMembers.filter((s) => s.id !== id);
+        pool = pool.filter((pId) => pId !== id);
+        staging = staging.filter((sId) => sId !== id);
+        teams.forEach(
+          (g) => (g.members = g.members.filter((mId) => mId !== id)),
+        );
+        constraints.together = constraints.together.filter(
+          (pair) => pair[0] !== id && pair[1] !== id,
+        );
+        constraints.apart = constraints.apart.filter(
+          (pair) => pair[0] !== id && pair[1] !== id,
+        );
+
+        updateTab1UI();
+        updateConstraintSelects();
+        renderTeams();
+        markUnsaved();
+      }
+
+      function clearAllMembers() {
+        showModal("Are you sure you want to delete all members?", true, () => {
+          allMembers = [];
+          pool = [];
+          teams = [];
+          staging = [];
+          constraints = { together: [], apart: [] };
+          updateTab1UI();
+          updateConstraintSelects();
+          renderTeams();
+          markUnsaved();
+        });
+      }
+
+      function updateTab1UI() {
+        document.getElementById("total-loaded-count").innerText =
+          allMembers.length;
+        document.getElementById("pool-count").innerText = pool.length;
+        renderMemberRoster();
+      }
+
+      function renderMemberRoster() {
+        const container = document.getElementById("member-roster");
+        if (allMembers.length === 0) {
+          container.innerHTML =
+            '<div class="text-zinc-500 text-sm">Empty</div>';
+          return;
+        }
+        container.innerHTML = "";
+        allMembers.forEach((s) => {
+          const el = document.createElement("div");
+          el.className =
+            "bg-zinc-800 text-[#F8F8F2] px-3 py-1.5 rounded-full flex items-center space-x-2 text-sm border border-zinc-700 shadow-sm";
+          el.innerHTML = `
+                    <span class="max-w-[150px] truncate">${s.name}</span>
+                    <button onclick="deleteMember('${s.id}')" class="text-zinc-500 hover:text-[#F92672] focus:outline-none font-bold text-lg leading-none transition-colors">&times;</button>
+                `;
+          container.appendChild(el);
+        });
+      }
+
+      function playCelebrationSound() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const playNote = (freq, startTime, dur) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime + startTime);
+            gain.gain.exponentialRampToValueAtTime(
+              0.001,
+              ctx.currentTime + startTime + dur,
+            );
+            osc.start(ctx.currentTime + startTime);
+            osc.stop(ctx.currentTime + startTime + dur);
+          };
+          playNote(523.25, 0, 0.15);
+          playNote(659.25, 0.1, 0.15);
+          playNote(783.99, 0.2, 0.15);
+          playNote(1046.5, 0.3, 0.4);
+        } catch (e) {}
+      }
+
+      let isPicking = false;
+      function pickRandomMember() {
+        if (isPicking) return;
+        if (pool.length === 0)
+          return showModal(
+            "Pool is empty! Reset the pool to select members again.",
+          );
+
+        isPicking = true;
+        const display = document.getElementById("picker-display");
+        const toss = document.getElementById("toss-checkbox").checked;
+
+        let counter = 0;
+        const interval = setInterval(() => {
+          const randomId = pool[Math.floor(Math.random() * pool.length)];
+          display.innerText = getMemberName(randomId);
+          fitText(display, 36);
+
+          counter++;
+          if (counter > 15) {
+            clearInterval(interval);
+            const finalIndex = Math.floor(Math.random() * pool.length);
+            const winnerId = pool[finalIndex];
+            display.innerHTML = `<span class="text-[#F8F8F2]">🎉 ${getMemberName(winnerId)} 🎉</span>`;
+            fitText(display, 36);
+
+            playCelebrationSound();
+
+            if (toss) {
+              pool.splice(finalIndex, 1);
+              updateTab1UI();
+              markUnsaved();
+            }
+            isPicking = false;
+          }
+        }, 50);
+      }
+
+      function resetPool() {
+        pool = allMembers.map((s) => s.id);
+        updateTab1UI();
+        const display = document.getElementById("picker-display");
+        display.innerText = "Ready";
+        fitText(display, 36);
+        markUnsaved();
+      }
+
+      function getMemberName(id) {
+        const s = allMembers.find((x) => x.id === id);
+        return s ? s.name : "Unknown";
+      }
+
+      function fitText(el, maxFontSize) {
+        let currentSize = maxFontSize;
+        el.style.fontSize = currentSize + "px";
+        const container = document.getElementById("picker-container");
+        while (el.scrollWidth > container.clientWidth && currentSize > 12) {
+          currentSize--;
+          el.style.fontSize = currentSize + "px";
+        }
+      }
+
+      // ================= TABS & EXPORT RENDERER =================
+      async function switchTab(tabId) {
+        if (hasUnsavedChanges) saveData();
+
+        let bounds;
+        if (tabId === "tab3") {
+          bounds = getCanvasBounds();
+        }
+
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((el) => el.classList.add("hide"));
+        document.getElementById(tabId).classList.remove("hide");
+
+        if (tabId === "tab3") {
+          setExportZoom(1);
+          await generateCleanPrintPreview(bounds);
+        }
+
+        document.querySelectorAll(".editor-tab").forEach((btn) => {
+          btn.className =
+            "editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap";
+          if (btn.id === "nav-" + tabId) {
+            btn.className =
+              "editor-tab active px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium transition whitespace-nowrap";
+          }
+        });
+      }
+
+      function getCanvasBounds() {
+        if (teams.length === 0) return { width: 800, height: 600 };
+        let maxX = 0,
+          maxY = 0;
+        teams.forEach((g) => {
+          const estHeight = 62 + g.members.length * 34;
+          if (g.x + 240 > maxX) maxX = g.x + 240;
+          if (g.y + estHeight > maxY) maxY = g.y + estHeight;
+        });
+        return { width: maxX, height: maxY };
+      }
+
+      async function generateCleanPrintPreview(bounds) {
+        const previewBox = document.getElementById("export-preview");
+        previewBox.innerHTML =
+          '<div class="text-[#66D9EF] flex flex-col items-center justify-center p-10 transform -translate-y-[3px]"><svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-[#66D9EF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Generating Print View...</span></div>';
+
+        const exportCanvas = document.createElement("div");
+        exportCanvas.style.position = "absolute";
+        exportCanvas.style.top = "-9999px";
+        exportCanvas.style.left = "-9999px";
+        exportCanvas.style.width = bounds.width + 80 + "px";
+        exportCanvas.style.height = bounds.height + 80 + "px";
+        exportCanvas.style.backgroundColor = "#ffffff";
+        exportCanvas.style.fontFamily = "'Inter', sans-serif";
+
+        teams.forEach((g) => {
+          const gDiv = document.createElement("div");
+          const c = exportTeamColors[g.colorIndex || 0];
+
+          gDiv.style.position = "absolute";
+          gDiv.style.left = g.x + "px";
+          gDiv.style.top = g.y + "px";
+          gDiv.style.width = "240px";
+          gDiv.style.border = "2px solid " + c.border;
+          gDiv.style.borderRadius = "8px";
+          gDiv.style.backgroundColor = "#ffffff";
+          gDiv.style.overflow = "hidden";
+
+          const header = document.createElement("div");
+          header.style.backgroundColor = c.bg;
+          header.style.borderBottom = "2px solid " + c.border;
+          header.style.padding = "12px 16px";
+
+          const titleDiv = document.createElement("div");
+          titleDiv.style.fontWeight = "700";
+          titleDiv.style.fontSize = "16px";
+          titleDiv.style.color = c.text;
+          titleDiv.style.marginBottom = "2px";
+          titleDiv.innerText = g.name;
+
+          const tallyDiv = document.createElement("div");
+          tallyDiv.style.fontSize = "12px";
+          tallyDiv.style.color = "#64748b";
+          tallyDiv.innerText = `${g.members.length} Members`;
+
+          header.appendChild(titleDiv);
+          header.appendChild(tallyDiv);
+          gDiv.appendChild(header);
+
+          const content = document.createElement("div");
+          content.style.padding = "8px";
+
+          g.members.forEach((sId, index) => {
+            const sDiv = document.createElement("div");
+            sDiv.style.padding = "8px 12px";
+            sDiv.style.fontSize = "14px";
+            sDiv.style.color = "#334155";
+            sDiv.style.fontWeight = "500";
+            sDiv.style.lineHeight = "1.4";
+
+            if (index < g.members.length - 1) {
+              sDiv.style.borderBottom = "1px solid #e2e8f0";
+            }
+
+            sDiv.innerText = getMemberName(sId);
+            content.appendChild(sDiv);
+          });
+
+          gDiv.appendChild(content);
+          exportCanvas.appendChild(gDiv);
+        });
+
+        document.body.appendChild(exportCanvas);
+        await new Promise((r) => setTimeout(r, 100));
+
+        try {
+          const canvasObj = await html2canvas(exportCanvas, {
+            backgroundColor: "#ffffff",
+            scale: 2,
+            width: bounds.width + 80,
+            height: bounds.height + 80,
+            logging: false,
+          });
+
+          previewBox.innerHTML = "";
+          canvasObj.style.maxWidth = "100%";
+          canvasObj.style.height = "auto";
+          canvasObj.id = "captured-canvas";
+          canvasObj.className = "shadow-2xl rounded border border-zinc-200";
+          previewBox.appendChild(canvasObj);
+        } catch (e) {
+          console.error(e);
+          previewBox.innerHTML =
+            '<div class="text-[#F92672] p-10 text-center font-bold transform -translate-y-[3px]">Error: Failed to render preview.</div>';
+        } finally {
+          document.body.removeChild(exportCanvas);
+        }
+      }
+
+      // ================= TAB 2 LOGIC =================
+
+      function updateConstraintSelects() {
+        const s1 = document.getElementById("const-s1");
+        const s2 = document.getElementById("const-s2");
+        let options = '<option value="">Select member...</option>';
+        allMembers.forEach(
+          (s) => (options += `<option value="${s.id}">${s.name}</option>`),
+        );
+        s1.innerHTML = options;
+        s2.innerHTML = options;
+        renderConstraintList();
+      }
+
+      function addConstraint(type) {
+        const id1 = document.getElementById("const-s1").value;
+        const id2 = document.getElementById("const-s2").value;
+        if (!id1 || !id2 || id1 === id2)
+          return showModal("Please select two different members.");
+
+        const exists = constraints[type].some(
+          (p) =>
+            (p[0] === id1 && p[1] === id2) || (p[0] === id2 && p[1] === id1),
+        );
+        if (!exists) {
+          constraints[type].push([id1, id2]);
+          renderConstraintList();
+          markUnsaved();
+        }
+      }
+
+      function removeConstraint(type, index) {
+        constraints[type].splice(index, 1);
+        renderConstraintList();
+        markUnsaved();
+      }
+
+      function renderConstraintList() {
+        const list = document.getElementById("constraint-list");
+        list.innerHTML = "";
+
+        const totalConstraints =
+          constraints.together.length + constraints.apart.length;
+        const tallyConstraints = document.getElementById("tally-constraints");
+        if (tallyConstraints) tallyConstraints.innerText = totalConstraints;
+
+        constraints.together.forEach((pair, i) => {
+          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
+                    <span class="truncate pr-2">${getMemberName(pair[0])} & ${getMemberName(pair[1])} <span class="text-[#A6E22E] text-[10px] uppercase ml-1 font-bold">Together</span></span>
+                    <button onclick="removeConstraint('together', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none">&times;</button>
+                </li>`;
+        });
+        constraints.apart.forEach((pair, i) => {
+          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
+                    <span class="truncate pr-2">${getMemberName(pair[0])} & ${getMemberName(pair[1])} <span class="text-[#F92672] text-[10px] uppercase ml-1 font-bold">Apart</span></span>
+                    <button onclick="removeConstraint('apart', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none">&times;</button>
+                </li>`;
+        });
+      }
+
+      function generateTeams() {
+        if (allMembers.length === 0)
+          return showModal("Please load members first.");
+
+        const method = document.getElementById("team-method").value;
+        const amount = parseInt(document.getElementById("team-amount").value);
+        if (isNaN(amount) || amount < 1) return showModal("Invalid amount.");
+
+        let bestTeams = [];
+        let minViolations = 999999;
+
+        for (let attempt = 0; attempt < 500; attempt++) {
+          let shuffled = [...allMembers]
+            .map((s) => s.id)
+            .sort(() => Math.random() - 0.5);
+          let numTeams =
+            method === "numTeams"
+              ? amount
+              : Math.ceil(shuffled.length / amount);
+          let currentTeams = Array.from({ length: numTeams }, () => []);
+
+          shuffled.forEach((sId, i) => currentTeams[i % numTeams].push(sId));
+
+          let violations = 0;
+          constraints.together.forEach((pair) => {
+            const g1 = currentTeams.findIndex((g) => g.includes(pair[0]));
+            const g2 = currentTeams.findIndex((g) => g.includes(pair[1]));
+            if (g1 !== g2 && g1 !== -1 && g2 !== -1) violations++;
+          });
+          constraints.apart.forEach((pair) => {
+            const g1 = currentTeams.findIndex((g) => g.includes(pair[0]));
+            const g2 = currentTeams.findIndex((g) => g.includes(pair[1]));
+            if (g1 === g2 && g1 !== -1) violations++;
+          });
+
+          if (violations === 0) {
+            bestTeams = currentTeams;
+            minViolations = 0;
+            break;
+          } else if (violations < minViolations) {
+            minViolations = violations;
+            bestTeams = currentTeams;
+          }
+        }
+
+        if (
+          minViolations > 0 &&
+          (constraints.together.length > 0 || constraints.apart.length > 0)
+        ) {
+          showModal(
+            `Generated best attempt with ${minViolations} constraint violation(s). You can manually adjust members.`,
+          );
+        }
+
+        teams = bestTeams.map((members, i) => {
+          const cols = 4;
+          const spacingX = 260;
+          const spacingY = 320;
+          return {
+            id: "t_" + generateId(),
+            name: `Team ${i + 1}`,
+            colorIndex: i % teamColors.length,
+            members: members,
+            x: 40 + (i % cols) * spacingX,
+            y: 40 + Math.floor(i / cols) * spacingY,
+          };
+        });
+        staging = [];
+
+        renderTeams();
+        markUnsaved();
+      }
+
+      window.updateTeamName = function (id, newName) {
+        const g = teams.find((x) => x.id === id);
+        if (g && g.name !== newName.trim()) {
+          g.name = newName.trim();
+          markUnsaved();
+        }
+      };
+
+      function renderTeams() {
+        const canvas = document.getElementById("canvas-area");
+        const stagingArea = document.getElementById("panel-staging");
+
+        canvas.innerHTML = "";
+        stagingArea.innerHTML = "";
+
+        const tallyStaging = document.getElementById("tally-staging");
+        if (tallyStaging) tallyStaging.innerText = staging.length;
+
+        teams.forEach((g) => {
+          const gDiv = document.createElement("div");
+          const c = teamColors[g.colorIndex || 0];
+
+          gDiv.className =
+            "team-card absolute w-56 rounded-xl shadow-xl flex flex-col border-2 box-border overflow-hidden";
+          gDiv.style.left = g.x + "px";
+          gDiv.style.top = g.y + "px";
+          gDiv.dataset.id = g.id;
+          gDiv.style.backgroundColor = c.cardBg;
+          gDiv.style.borderColor = c.border;
+
+          const header = document.createElement("div");
+          header.className = "team-header font-semibold cursor-move border-b-2";
+          header.style.backgroundColor = c.bg;
+          header.style.color = c.text;
+          header.style.borderColor = c.border;
+
+          header.innerHTML = `
+                    <span class="team-title outline-none hover:bg-black/20 focus:bg-black/40 transition-colors cursor-text rounded" contenteditable="true" onblur="updateTeamName('${g.id}', this.innerText)" onkeydown="if(event.key==='Enter'){this.blur(); event.preventDefault();}">${g.name}</span>
+                    <span class="team-tally text-current">${g.members.length}</span>
+                `;
+
+          const content = document.createElement("div");
+          content.className =
+            "drop-zone flex-1 p-2 min-h-[50px] flex flex-col gap-1.5 box-border";
+          content.dataset.zoneId = g.id;
+
+          g.members.forEach((sId) =>
+            content.appendChild(createMemberElement(sId, g.id)),
+          );
+
+          gDiv.appendChild(header);
+          gDiv.appendChild(content);
+          canvas.appendChild(gDiv);
+        });
+
+        if (staging.length === 0) {
+          const emptyMsg = document.createElement("div");
+          emptyMsg.className =
+            "text-zinc-500 text-sm text-center mt-4 pointer-events-none select-none";
+          emptyMsg.innerHTML = "Drop members here<br>or leave empty";
+          stagingArea.appendChild(emptyMsg);
+        } else {
+          staging.forEach((sId) =>
+            stagingArea.appendChild(createMemberElement(sId, "staging")),
+          );
+        }
+
+        // Also update mobile view
+        renderTeamsMobile();
+      }
+
+      function createMemberElement(sId, sourceZone) {
+        const div = document.createElement("div");
+        div.className =
+          "member-item border rounded-md text-sm font-medium shadow-sm";
+        div.draggable = true;
+        div.dataset.memberId = sId;
+        div.dataset.sourceId = sourceZone;
+
+        div.innerHTML = `
+                <span class="member-name-text flex-1 select-none">${getMemberName(sId)}</span>
+                ${sourceZone !== "staging" ? `<button onclick="moveToStaging('${sId}', '${sourceZone}')" class="x-btn text-zinc-500 font-bold ml-1 flex-shrink-0 rounded transition-colors" title="Move to staging">&times;</button>` : ""}
+            `;
+
+        div.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", sId);
+          e.dataTransfer.setData("source", sourceZone);
+          e.dataTransfer.effectAllowed = "move";
+          setTimeout(() => div.classList.add("opacity-40"), 0);
+        });
+        div.addEventListener("dragend", () =>
+          div.classList.remove("opacity-40"),
+        );
+
+        return div;
+      }
+
+      function moveToStaging(sId, sourceTeamId) {
+        const team = teams.find((g) => g.id === sourceTeamId);
+        if (team) {
+          team.members = team.members.filter((id) => id !== sId);
+          staging.push(sId);
+          renderTeams();
+          markUnsaved();
+        }
+      }
+
+      // ================= DRAG & DROP =================
+
+      let activeTeam = null;
+      let startX, startY, initialX, initialY;
+
+      const canvasArea = document.getElementById("canvas-area");
+
+      // MOUSE Events for dragging teams
+      canvasArea.addEventListener("mousedown", (e) => {
+        if (e.target.closest(".team-title")) return;
+        const header = e.target.closest(".team-header");
+        if (header) {
+          activeTeam = header.closest(".team-card");
+          canvasArea.appendChild(activeTeam);
+          startX = e.clientX / canvasZoom;
+          startY = e.clientY / canvasZoom;
+          initialX = parseInt(activeTeam.style.left || 0);
+          initialY = parseInt(activeTeam.style.top || 0);
+          document.body.style.userSelect = "none";
+        }
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (!activeTeam) return;
+        let newX = initialX + (e.clientX / canvasZoom - startX);
+        let newY = initialY + (e.clientY / canvasZoom - startY);
+        if (newX < 0) newX = 0;
+        if (newY < 0) newY = 0;
+        activeTeam.style.left = newX + "px";
+        activeTeam.style.top = newY + "px";
+      });
+
+      document.addEventListener("mouseup", (e) => {
+        if (activeTeam) {
+          const teamId = activeTeam.dataset.id;
+          const g = teams.find((x) => x.id === teamId);
+          if (g) {
+            if (
+              g.x !== parseInt(activeTeam.style.left) ||
+              g.y !== parseInt(activeTeam.style.top)
+            ) {
+              g.x = parseInt(activeTeam.style.left);
+              g.y = parseInt(activeTeam.style.top);
+              markUnsaved();
+            }
+          }
+          activeTeam = null;
+          document.body.style.userSelect = "";
+        }
+      });
+
+      // TOUCH Events for dragging teams on mobile devices
+      canvasArea.addEventListener(
+        "touchstart",
+        (e) => {
+          if (e.touches.length > 1) return;
+          if (e.target.closest(".team-title")) return;
+          const header = e.target.closest(".team-header");
+          if (header) {
+            activeTeam = header.closest(".team-card");
+            canvasArea.appendChild(activeTeam);
+            const touch = e.touches[0];
+            startX = touch.clientX / canvasZoom;
+            startY = touch.clientY / canvasZoom;
+            initialX = parseInt(activeTeam.style.left || 0);
+            initialY = parseInt(activeTeam.style.top || 0);
+            if (e.cancelable) e.preventDefault();
+          }
+        },
+        { passive: false },
+      );
+
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (!activeTeam) return;
+          if (e.touches.length > 1) return;
+          const touch = e.touches[0];
+          let newX = initialX + (touch.clientX / canvasZoom - startX);
+          let newY = initialY + (touch.clientY / canvasZoom - startY);
+          if (newX < 0) newX = 0;
+          if (newY < 0) newY = 0;
+          activeTeam.style.left = newX + "px";
+          activeTeam.style.top = newY + "px";
+          if (e.cancelable) e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      document.addEventListener("touchend", (e) => {
+        if (activeTeam) {
+          const teamId = activeTeam.dataset.id;
+          const g = teams.find((x) => x.id === teamId);
+          if (g) {
+            if (
+              g.x !== parseInt(activeTeam.style.left) ||
+              g.y !== parseInt(activeTeam.style.top)
+            ) {
+              g.x = parseInt(activeTeam.style.left);
+              g.y = parseInt(activeTeam.style.top);
+              markUnsaved();
+            }
+          }
+          activeTeam = null;
+        }
+      });
+
+      document.addEventListener("dragover", (e) => {
+        const dropZone = e.target.closest(".drop-zone");
+        if (dropZone) {
+          e.preventDefault();
+          dropZone.classList.add("drag-over");
+        }
+      });
+
+      document.addEventListener("dragleave", (e) => {
+        const dropZone = e.target.closest(".drop-zone");
+        if (dropZone) dropZone.classList.remove("drag-over");
+      });
+
+      document.addEventListener("drop", (e) => {
+        const dropZone = e.target.closest(".drop-zone");
+        if (dropZone) {
+          e.preventDefault();
+          dropZone.classList.remove("drag-over");
+          const sId = e.dataTransfer.getData("text/plain");
+          const sourceId = e.dataTransfer.getData("source");
+          const targetId = dropZone.dataset.zoneId;
+
+          if (sourceId !== targetId && sId) {
+            if (sourceId === "staging")
+              staging = staging.filter((id) => id !== sId);
+            else {
+              const sg = teams.find((g) => g.id === sourceId);
+              if (sg) sg.members = sg.members.filter((id) => id !== sId);
+            }
+            if (targetId === "staging") {
+              staging.push(sId);
+            } else {
+              const tg = teams.find((g) => g.id === targetId);
+              if (tg) tg.members.push(sId);
+            }
+            renderTeams();
+            markUnsaved();
+          }
+        }
+      });
+
+      // ================= FILES =================
+
+      function downloadImage() {
+        const canvas = document.getElementById("captured-canvas");
+        if (!canvas) return showModal("Please wait for preview to generate.");
+        const link = document.createElement("a");
+        link.download = "team-arrangement.jpg";
+        link.href = canvas.toDataURL("image/jpeg", 1.0);
+        link.click();
+      }
+
+      // ================= MOBILE TEAMS VIEW =================
+
+      // --- Rendering ---
+
+      function renderTeamsMobile() {
+        const container = document.getElementById("mobile-team-cards-inner");
+        if (!container) return;
+
+        if (teams.length === 0) {
+          container.innerHTML = `
+                    <div class="col-span-full text-center text-zinc-500 py-16">
+                        <div class="text-5xl mb-4">👥</div>
+                        <p class="font-medium text-zinc-400">No teams yet</p>
+                        <p class="text-sm mt-2 text-zinc-600">Tap "Generate" to get started</p>
+                    </div>`;
+          applyMobileGridLayout();
+          return;
+        }
+
+        container.innerHTML = "";
+        teams.forEach((g) => {
+          const c = teamColors[g.colorIndex || 0];
+          const card = document.createElement("div");
+          card.className =
+            "mobile-team-card rounded-xl border-2 overflow-hidden shadow-lg";
+          card.style.borderColor = c.border;
+          card.style.backgroundColor = c.cardBg;
+
+          const header = document.createElement("div");
+          header.className = "team-header";
+          header.style.backgroundColor = c.bg;
+          header.style.color = c.text;
+          header.style.borderBottom = "2px solid " + c.border;
+          header.innerHTML = `
+                    <span class="team-title font-bold text-sm">${g.name}</span>
+                    <span class="team-tally" style="background:rgba(0,0,0,0.25)">${g.members.length}</span>
+                `;
+
+          const membersList = document.createElement("div");
+          membersList.className =
+            "mobile-card-members p-1.5 flex flex-col gap-1";
+
+          g.members.forEach((sId) => {
+            const row = document.createElement("div");
+            row.className =
+              "flex items-center justify-between bg-zinc-800/60 rounded px-2.5 py-2 gap-2 cursor-pointer active:bg-zinc-700 select-none";
+            row.style.borderLeft = "3px solid " + c.border;
+            row.innerHTML = `<span class="text-[#F8F8F2] text-sm font-medium truncate flex-1">${getMemberName(sId)}</span>
+                        <svg class="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                        </svg>`;
+            row.addEventListener("click", () => openMemberSheet(sId, g.id));
+            membersList.appendChild(row);
+          });
+
+          card.appendChild(header);
+          card.appendChild(membersList);
+          container.appendChild(card);
+        });
+
+        applyMobileGridLayout();
+        renderMobileConstraintList();
+      }
+
+      // --- Grid layout: normal = 1 col portrait / 2 col landscape ---
+      //     fullscreen  = auto-fit all teams onto screen with no scroll ---
+
+      function applyMobileGridLayout() {
+        const container = document.getElementById("mobile-team-cards-inner");
+        const cardsEl = document.getElementById("mobile-team-cards");
+        const mobileUI = document.getElementById("mobile-tab2-ui");
+        if (!container || !cardsEl || !mobileUI) return;
+
+        const isProjector = mobileUI.classList.contains("projector-mode");
+        const n = teams.length;
+
+        if (!isProjector) {
+          // Normal scroll view: 1 col portrait, 2 col landscape
+          const isLandscape = window.innerWidth > window.innerHeight;
+          container.style.gridTemplateColumns =
+            isLandscape && n > 1 ? "repeat(2, 1fr)" : "1fr";
+          container.style.gridTemplateRows = "";
+          container.style.height = "";
+          container.style.gap = "8px";
+          return;
+        }
+
+        // --- PROJECTOR: capped columns, scrollable ---
+        if (n === 0) return;
+        const isLandscape = window.innerWidth > window.innerHeight;
+        const cols = isLandscape ? Math.min(3, n) : Math.min(2, n);
+
+        container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        container.style.gridTemplateRows = "";
+        container.style.height = "";
+        container.style.gap = "6px";
+      }
+
+      // --- Panel toggles ---
+
+      function toggleMobilePanel(panel) {
+        const settingsEl = document.getElementById("mobile-panel-settings");
+        const constraintsEl = document.getElementById(
+          "mobile-panel-constraints",
+        );
+        const settingsBtn = document.getElementById("mobile-settings-btn");
+        const constraintsBtn = document.getElementById(
+          "mobile-constraints-btn",
+        );
+
+        if (panel === "settings") {
+          const opening = settingsEl.classList.contains("hidden");
+          settingsEl.classList.toggle("hidden", !opening);
+          constraintsEl.classList.add("hidden");
+          settingsBtn.classList.toggle("border-[#66D9EF]", opening);
+          constraintsBtn.classList.remove("border-[#AE81FF]");
+        } else {
+          const opening = constraintsEl.classList.contains("hidden");
+          constraintsEl.classList.toggle("hidden", !opening);
+          settingsEl.classList.add("hidden");
+          constraintsBtn.classList.toggle("border-[#AE81FF]", opening);
+          settingsBtn.classList.remove("border-[#66D9EF]");
+          if (opening) renderMobileConstraintList();
+        }
+      }
+
+      function changeMobileAmount(delta) {
+        const input = document.getElementById("mobile-team-amount");
+        let value = parseInt(input.value) || 1;
+        input.value = Math.max(1, value + delta);
+      }
+
+      function syncMobileToDesktop() {
+        const mMethod = document.getElementById("mobile-team-method");
+        const mAmount = document.getElementById("mobile-team-amount");
+        if (mMethod)
+          document.getElementById("team-method").value = mMethod.value;
+        if (mAmount)
+          document.getElementById("team-amount").value = mAmount.value;
+      }
+
+      // --- Constraints (mobile) ---
+
+      function updateMobileConstraintSelects() {
+        const s1 = document.getElementById("mobile-const-s1");
+        const s2 = document.getElementById("mobile-const-s2");
+        if (!s1 || !s2) return;
+        let options = '<option value="">Select member…</option>';
+        allMembers.forEach((m) => {
+          options += `<option value="${m.id}">${m.name}</option>`;
+        });
+        s1.innerHTML = options;
+        s2.innerHTML = options;
+      }
+
+      function addMobileConstraint(type) {
+        const id1 = document.getElementById("mobile-const-s1").value;
+        const id2 = document.getElementById("mobile-const-s2").value;
+        if (!id1 || !id2 || id1 === id2)
+          return showModal("Please select two different members.");
+        const exists = constraints[type].some(
+          (p) =>
+            (p[0] === id1 && p[1] === id2) || (p[0] === id2 && p[1] === id1),
+        );
+        if (!exists) {
+          constraints[type].push([id1, id2]);
+          renderMobileConstraintList();
+          renderConstraintList(); // keep desktop in sync
+          markUnsaved();
+        }
+      }
+
+      function renderMobileConstraintList() {
+        const list = document.getElementById("mobile-constraint-list");
+        if (!list) return;
+        list.innerHTML = "";
+        const all = [
+          ...constraints.together.map((p, i) => ({ p, i, type: "together" })),
+          ...constraints.apart.map((p, i) => ({ p, i, type: "apart" })),
+        ];
+        if (all.length === 0) {
+          list.innerHTML =
+            '<li class="text-zinc-600 italic">No constraints yet</li>';
+          return;
+        }
+        all.forEach(({ p, i, type }) => {
+          const badge =
+            type === "together"
+              ? '<span class="text-[#A6E22E] font-bold uppercase text-[10px] ml-1">Together</span>'
+              : '<span class="text-[#F92672] font-bold uppercase text-[10px] ml-1">Apart</span>';
+          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
+                    <span class="truncate pr-2 text-zinc-300">${getMemberName(p[0])} & ${getMemberName(p[1])}${badge}</span>
+                    <button onclick="removeMobileConstraint('${type}',${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none flex-shrink-0">&times;</button>
+                </li>`;
+        });
+      }
+
+      function removeMobileConstraint(type, index) {
+        constraints[type].splice(index, 1);
+        renderMobileConstraintList();
+        renderConstraintList(); // keep desktop in sync
+        markUnsaved();
+      }
+
+      // --- Member bottom sheet ---
+
+      let _sheetMemberId = null;
+      let _sheetTeamId = null;
+
+      function openMemberSheet(memberId, teamId) {
+        _sheetMemberId = memberId;
+        _sheetTeamId = teamId;
+
+        const team = teams.find((t) => t.id === teamId);
+        const sheet = document.getElementById("mobile-member-sheet");
+        const name = document.getElementById("mobile-sheet-name");
+        const teamLbl = document.getElementById("mobile-sheet-team");
+        const moveBtns = document.getElementById("mobile-sheet-move-buttons");
+        const removeBtn = document.getElementById("mobile-sheet-remove-btn");
+
+        name.textContent = getMemberName(memberId);
+        teamLbl.textContent = `Currently in: ${team ? team.name : "?"}`;
+
+        moveBtns.innerHTML = "";
+        teams
+          .filter((t) => t.id !== teamId)
+          .forEach((t) => {
+            const c = teamColors[t.colorIndex || 0];
+            const btn = document.createElement("button");
+            btn.className =
+              "px-3 py-2 rounded-lg text-sm font-bold border-2 active:opacity-70";
+            btn.style.color = c.text;
+            btn.style.borderColor = c.border;
+            btn.style.backgroundColor = c.cardBg;
+            btn.textContent = t.name;
+            btn.addEventListener("click", () => {
+              moveMemberMobile(memberId, teamId, t.id);
+              closeMemberSheet();
+            });
+            moveBtns.appendChild(btn);
+          });
+
+        removeBtn.onclick = () => {
+          removeMemberMobile(memberId, teamId);
+          closeMemberSheet();
+        };
+
+        sheet.style.display = "flex";
+      }
+
+      function closeMemberSheet(e) {
+        // If called from backdrop click, only close if clicking the backdrop itself
+        if (e && e.target !== document.getElementById("mobile-member-sheet"))
+          return;
+        document.getElementById("mobile-member-sheet").style.display = "none";
+        _sheetMemberId = null;
+        _sheetTeamId = null;
+      }
+
+      function moveMemberMobile(memberId, fromTeamId, toTeamId) {
+        const from = teams.find((t) => t.id === fromTeamId);
+        const to = teams.find((t) => t.id === toTeamId);
+        if (!from || !to) return;
+        from.members = from.members.filter((id) => id !== memberId);
+        to.members.push(memberId);
+        renderTeams(); // updates both desktop canvas and mobile cards
+        markUnsaved();
+      }
+
+      function removeMemberMobile(memberId, teamId) {
+        const team = teams.find((t) => t.id === teamId);
+        if (!team) return;
+        team.members = team.members.filter((id) => id !== memberId);
+        staging.push(memberId);
+        renderTeams();
+        markUnsaved();
+      }
+
+      // --- Projector mode (CSS overlay — works on all mobile browsers incl. Safari iOS) ---
+
+      function enterMobileProjector() {
+        const el = document.getElementById("mobile-tab2-ui");
+        if (!el) return;
+        el.classList.add("projector-mode");
+        document.body.style.overflow = "hidden";
+        // Recalculate grid for the now-fullscreen dimensions
+        setTimeout(applyMobileGridLayout, 30);
+      }
+
+      function exitMobileProjector() {
+        const el = document.getElementById("mobile-tab2-ui");
+        if (!el) return;
+        el.classList.remove("projector-mode");
+        document.body.style.overflow = "";
+        setTimeout(applyMobileGridLayout, 30);
+      }
+
+      // Keep these as no-ops for any residual calls
+      function enterMobileFullscreen() {
+        enterMobileProjector();
+      }
+      function exitMobileFullscreen() {
+        exitMobileProjector();
+      }
+
+      // Fullscreen change handler — only fires for desktop projector mode
+      function handleMobileFullscreenChange() {
+        setTimeout(applyMobileGridLayout, 80);
+      }
+
+      document.addEventListener(
+        "fullscreenchange",
+        handleMobileFullscreenChange,
+      );
+      document.addEventListener(
+        "webkitfullscreenchange",
+        handleMobileFullscreenChange,
+      );
+
+      // Re-layout on orientation change
+      window.addEventListener("resize", () => {
+        setTimeout(applyMobileGridLayout, 80);
+      });
+
+      // Keep mobile constraint selects in sync whenever members change
+      const _origUpdateConstraintSelects = updateConstraintSelects;
+      updateConstraintSelects = function () {
+        _origUpdateConstraintSelects();
+        updateMobileConstraintSelects();
+      };
+
+      function downloadPDF() {
+        const canvas = document.getElementById("captured-canvas");
+        if (!canvas) return showModal("Please wait for preview to generate.");
+        const imgData = canvas.toDataURL("image/jpeg", 1.0);
+        const pdf = new window.jspdf.jsPDF("landscape", "pt", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasRatio = canvas.height / canvas.width;
+        let imgWidth = pdfWidth;
+        let imgHeight = pdfWidth * canvasRatio;
+
+        if (imgHeight > pdfHeight) {
+          imgHeight = pdfHeight;
+          imgWidth = pdfHeight / canvasRatio;
+        }
+        pdf.addImage(
+          imgData,
+          "JPEG",
+          (pdfWidth - imgWidth) / 2,
+          (pdfHeight - imgHeight) / 2,
+          imgWidth,
+          imgHeight,
+        );
+        pdf.save("team-arrangement.pdf");
+      }
+    </script>
+  </body>
+</html>
