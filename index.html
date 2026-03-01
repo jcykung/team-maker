@@ -490,7 +490,7 @@
 
 
   <!-- Floating Textbox Toolbar for Seating Canvas -->
-  <div id="seat-tb-floating-toolbar"
+  <div id="seat-tb-floating-toolbar" onmousedown="event.preventDefault()"
     style="display:none;position:fixed;z-index:9999;background:#1e1e2e;border:1px solid #44475a;border-radius:8px;padding:6px 8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);flex-direction:row;align-items:center;gap:6px;min-width:240px;">
     <select id="seat-tb-font"
       style="background:#282a36;border:1px solid #44475a;color:#f8f8f2;font-size:11px;border-radius:4px;padding:3px 6px;outline:none;max-width:90px;">
@@ -1016,7 +1016,7 @@
           <div class="p-3 grid grid-cols-2 gap-1.5">
             <!-- Select (V) -->
             <button
-              class="seat-tool-btn col-span-2 bg-zinc-800 border border-[#E6DB74]/30 text-[#E6DB74] py-1.5 rounded text-xs font-medium hover:bg-zinc-700 transition flex items-center justify-center gap-1.5 active-tool"
+              class="seat-tool-btn col-span-2 bg-zinc-800 border border-[#A6E22E]/30 text-[#A6E22E] py-1.5 rounded text-xs font-medium hover:bg-zinc-700 transition flex items-center justify-center gap-1.5 active-tool"
               data-tool="select" onclick="setTool('select')" title="Select/Move/Resize/Rotate [V]">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1024,7 +1024,7 @@
               </svg>
               <span>Select / Move / Resize / Rotate</span>
               <kbd
-                style="background:rgba(0,0,0,0.4);border:1px solid #E6DB7466;color:#E6DB74;border-radius:3px;font-size:9px;padding:1px 4px;font-family:monospace;line-height:1.4;font-weight:700;">V</kbd>
+                style="background:rgba(0,0,0,0.4);border:1px solid #A6E22E66;color:#A6E22E;border-radius:3px;font-size:9px;padding:1px 4px;font-family:monospace;line-height:1.4;font-weight:700;">V</kbd>
             </button>
             <!-- Square (S) -->
             <button
@@ -1285,7 +1285,8 @@
                 <p>Go to the <span
                     class="text-[#A6E22E] font-medium bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">Teams</span>
                   tab. Choose <em>Members per Team</em> or <em>Number of Teams</em>, set the amount, then click
-                  <strong>Generate Teams</strong>.</p>
+                  <strong>Generate Teams</strong>.
+                </p>
                 <p>Use <strong>Constraints</strong> to lock pairs together or force them apart — the same constraints
                   also apply in the Seating tab. The algorithm tries up to 500 attempts to satisfy every constraint.
                   Adding a "Together" constraint when the pair is already set as "Apart" (or vice versa) will be blocked
@@ -1304,7 +1305,8 @@
                   <p class="text-xs font-bold text-[#E6DB74] uppercase tracking-wider">📱 On Phone</p>
                   <p class="text-sm text-zinc-300">Teams appear as scrollable cards. Tap any member name to open a sheet
                     to move them or remove them. Tap the fullscreen icon (⤢) to enter Projector Mode — tap
-                    <strong>Exit</strong> when done.</p>
+                    <strong>Exit</strong> when done.
+                  </p>
                 </div>
               </div>
             </div>
@@ -1387,7 +1389,8 @@
                     class="text-[#AE81FF]">Circle</span> and click to place a seat, or click-and-drag to paint a row.
                   <span class="text-[#FD971F]">Unoccupied □/○</span> places a shape with a custom label (e.g. "Teacher's
                   Desk") that won't be assigned a student. Use <span class="text-[#E6DB74]">Text Box</span> to add
-                  free-floating labels on desktop.</p>
+                  free-floating labels on desktop.
+                </p>
                 <p><strong>Arranging:</strong> Use the Select tool (V) to click a seat and show resize and rotate
                   handles. Right-click any seat for options including <em>Split into seats</em>, which turns one large
                   table into labeled sections — rectangular tables spread names side by side, circular tables arrange
@@ -1396,14 +1399,16 @@
                   <strong>Assign Seats</strong> to auto-assign everyone. Constraints apply: <em>Together</em> means
                   adjacent seats (touching), <em>Apart</em> means opposite sides of the room. After assigning, drag any
                   name chip between seats or to the staging area to adjust. Click <strong>×</strong> on any chip to
-                  return that student to the staging area.</p>
+                  return that student to the staging area.
+                </p>
                 <div class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2">
                   <p class="text-xs font-bold text-[#A6E22E] uppercase tracking-wider">📐 Tips</p>
                   <p class="text-sm text-zinc-300"><strong>Snap On</strong> keeps seats aligned to the grid.
                     <strong>Ctrl+scroll</strong> or trackpad pinch to zoom — the grid scales with zoom. Press <kbd
                       class="bg-zinc-700 px-1 rounded text-[10px]">Delete</kbd> or <kbd
                       class="bg-zinc-700 px-1 rounded text-[10px]">Backspace</kbd> while a seat is selected to remove
-                    it.</p>
+                    it.
+                  </p>
                 </div>
               </div>
             </div>
@@ -1428,7 +1433,8 @@
                   to manage multiple files (one per class, period, or session).</p>
                 <p>Use <strong>Backup All Files</strong> to download a <code
                     class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> of everything. Restore it anytime with
-                  <strong>Restore from Backup</strong>.</p>
+                  <strong>Restore from Backup</strong>.
+                </p>
                 <p class="text-zinc-400 text-sm border-l-2 border-zinc-700 pl-4 py-1 italic">Tip: export a backup
                   regularly — browser storage can be cleared when disk space is low.</p>
               </div>
@@ -1712,9 +1718,7 @@
         if (!container) return;
         container.addEventListener('mousedown', ev => {
           if (ev.button !== 0) return;
-          const preview = document.getElementById('export-preview');
-          if (!preview || !preview.contains(ev.target)) return;
-          if (ev.target.closest('canvas') || ev.target.tagName === 'BUTTON') return;
+          if (ev.target.tagName === 'BUTTON') return;
           panDragging = true;
           panStartX = ev.clientX; panStartY = ev.clientY;
           panInitX = exportPanX; panInitY = exportPanY;
@@ -2556,17 +2560,21 @@
       return s ? s.name : "Unknown";
     }
 
-    // Format name for display in chips - first name / last name(s) on separate lines
+    // Format name for display in chips - one word per line
     function formatChipName(id) {
       const fullName = getMemberName(id);
       if (!fullName || fullName === 'Unknown') return 'Unknown';
-      return fullName.trim(); // Keep the full name on one line - never break between words
+      return fullName.trim().split(/\s+/).join('\n');
     }
 
-    // Set chip text with first/last name split on lines  
+    // Set chip text with one word per line, auto-resize chip height
     function setChipText(el, id) {
-      el.style.whiteSpace = 'nowrap';
-      el.innerText = formatChipName(id);
+      const formatted = formatChipName(id);
+      el.innerText = formatted;
+      el.style.whiteSpace = 'pre-line';
+      // Remove fixed height so box grows to fit content
+      el.style.height = 'auto';
+      el.style.minHeight = '';
     }
 
     function fitText(el, maxFontSize) {
@@ -3528,6 +3536,17 @@
       if (ft) ft.style.display = 'none';
     }
 
+    // Hide toolbar when clicking outside any textbox or the toolbar itself
+    document.addEventListener('mousedown', ev => {
+      const ft = document.getElementById('seat-tb-floating-toolbar');
+      if (!ft || ft.style.display === 'none') return;
+      const clickedTb = ev.target.closest('.tb-el');
+      const clickedToolbar = ev.target.closest('#seat-tb-floating-toolbar');
+      if (!clickedTb && !clickedToolbar) {
+        hideSeatTbFloatingToolbar();
+      }
+    }, true);
+
     function updateSeatTbFloatingToolbar(box, anchorEl) {
       const ft = document.getElementById('seat-tb-floating-toolbar');
       if (!ft || !box) return;
@@ -3608,14 +3627,12 @@
       const showHandles = isSeating && isSelected && seatTool === 'select';
       el.style.cssText = [
         `left:${box.x}px`, `top:${box.y}px`,
-        `min-width:${box.minW || 60}px`, `min-height:${box.minH || 20}px`,
-        box.w ? `width:${box.w}px` : 'max-width:800px',
-        box.minH && box.w ? `height:${box.minH}px` : '',
-        box.minH && box.w ? 'overflow:hidden' : '',
+        `min-width:${box.minW || 60}px`,
+        box.userResized && box.w ? `width:${box.w}px` : 'width:auto',
         `padding:6px 10px`,
         `box-sizing:border-box`,
         `transform:rotate(${box.rotation || 0}deg)`,
-        `transform-origin:center center`,
+        `transform-origin:top left`,
         `border:1.5px ${isSelected ? 'solid #FD971F' : 'dashed rgba(230,219,116,0.3)'}`,
         `border-radius:4px`,
         `background:${isSelected ? 'rgba(230,219,116,0.06)' : 'transparent'}`,
@@ -3624,19 +3641,38 @@
         `user-select:none`,
         `z-index:${isSelected ? 10 : 2}`,
         `outline:none`,
-        `white-space:pre-wrap`,
-        `word-break:break-word`,
-        `position:absolute`
+        `position:absolute`,
+        `display:inline-block`
       ].join(';');
       applyTbStyle(el, box);
 
-      // Editable text content
+      // Editable text content — drives the size of the container
       const textEl = document.createElement('div');
       textEl.contentEditable = 'true';
       textEl.innerText = box.text || 'Text';
-      textEl.style.cssText = 'outline:none;min-width:30px;min-height:20px;cursor:text;';
+      textEl.style.cssText = [
+        'outline:none',
+        'min-width:30px',
+        'min-height:1em',
+        'cursor:text',
+        'white-space:pre-wrap',
+        'word-break:normal',
+        'overflow-wrap:normal',
+        'line-height:1.4',
+        box.userResized && box.w ? `width:${box.w - 20}px` : 'width:auto'
+      ].join(';');
+
       textEl.addEventListener('mousedown', ev => { ev.stopPropagation(); });
-      textEl.addEventListener('input', () => { box.text = textEl.innerText; markUnsaved(); });
+      textEl.addEventListener('input', () => {
+        box.text = textEl.innerText;
+        markUnsaved();
+      });
+      textEl.addEventListener('keydown', ev => {
+        if (ev.key === 'Escape') {
+          textEl.blur();
+          ev.preventDefault();
+        }
+      });
       textEl.addEventListener('focus', () => {
         selectedTextboxId = box.id;
         lastInteractedTbId = box.id;
@@ -3647,14 +3683,15 @@
         }
       });
       textEl.addEventListener('blur', () => {
-        // Hide the floating toolbar when done editing (with delay for toolbar clicks)
+        // Sync final dimensions to box data
+        box.w = el.offsetWidth;
         if (isSeating) {
+          // Small delay allows toolbar button clicks to register first
           setTimeout(() => {
             const ft = document.getElementById('seat-tb-floating-toolbar');
             if (ft && ft.style.display !== 'none') {
-              // Only hide if focus didn't go to the toolbar itself
               if (!ft.contains(document.activeElement)) {
-                ft.style.display = 'none';
+                hideSeatTbFloatingToolbar();
               }
             }
           }, 150);
@@ -3699,11 +3736,15 @@
               if (hname.includes('w')) { nw = Math.max(60, initW - dx); nx = initBX + dx; }
               if (hname.includes('n')) { nh = Math.max(20, initH - dy); ny = initBY + dy; }
               box.w = Math.round(nw); box.x = Math.round(nx); box.y = Math.round(ny);
+              box.userResized = true;
               // Dynamically scale font size to fit new height
               box.size = Math.max(8, Math.min(96, Math.round(nh * 0.62)));
               el.style.width = box.w + 'px';
               el.style.left = box.x + 'px';
               el.style.top = box.y + 'px';
+              // Update inner textEl width to match
+              const tEl = el.querySelector('[contenteditable]');
+              if (tEl) tEl.style.width = (box.w - 20) + 'px';
               applyTbStyle(el, box);
               if (nh > 20) { box.minH = Math.round(nh); el.style.minHeight = Math.round(nh) + 'px'; }
               updateSeatTbFloatingToolbar(box, el);
@@ -3881,7 +3922,7 @@
 
     // ---- Tool ----
     const TOOL_COLORS = {
-      select: '#E6DB74', sq1: '#66D9EF', ci1: '#AE81FF',
+      select: '#A6E22E', sq1: '#66D9EF', ci1: '#AE81FF',
       manSq: '#FD971F', manCi: '#FD971F', textbox: '#E6DB74', eraser: '#F92672'
     };
 
@@ -3921,6 +3962,13 @@
       }
       const cc = document.getElementById('seating-canvas-container');
       if (cc) cc.style.cursor = tool === 'eraser' ? 'cell' : tool === 'textbox' ? 'crosshair' : 'default';
+      // Clear any eraser hover highlights when switching away from eraser
+      if (tool !== 'eraser') {
+        document.querySelectorAll('.seat-el, .tb-el').forEach(el => {
+          el.style.outline = '';
+          el.style.boxShadow = '';
+        });
+      }
       if (tool === 'textbox') { tbMode = 'seating'; }
       else { if (tbMode === 'seating') { tbMode = null; } }
       renderSeats();
@@ -3952,8 +4000,10 @@
     }
 
     function clearAllSeats() {
-      showModal('Clear all seats and assignments?', true, () => {
+      showModal('Clear all seats, names, and text boxes?', true, () => {
         seats = []; selectedSeatId = null;
+        textboxes = textboxes.filter(t => t.canvas !== 'seating');
+        selectedTextboxId = null;
         resetSeatPrimaryBtn();
         renderSeats(); markUnsaved();
       });
@@ -4071,7 +4121,11 @@
         // Drop zone over whole seat - overflow:visible so chips can float outside
         el.style.overflow = 'visible';
         el.addEventListener('dragover', ev => {
-          if ([...ev.dataTransfer.types].includes('seat-member')) { ev.preventDefault(); el.style.outline = '2px solid #A6E22E'; }
+          if ([...ev.dataTransfer.types].includes('seat-member')) {
+            ev.preventDefault();
+            const isFull = occ.indexOf(null) === -1;
+            el.style.outline = isFull ? '2px solid #F92672' : '2px solid #A6E22E';
+          }
         });
         el.addEventListener('dragleave', () => { el.style.outline = isSelected ? '0 0 0 3px #FD971F44' : ''; });
         el.addEventListener('drop', ev => {
@@ -4100,6 +4154,7 @@
           const fs = 12; // Consistent size; text wraps to 2nd line via white-space:normal
           const chip = document.createElement('div');
           chip.className = 'seat-name-chip';
+          chip.dataset.sectionIdx = String(i); // real index into sectionOccupants
           chip.draggable = true;
           const chipSize = Math.max(50, Math.min(90, Math.floor(Math.sqrt(seat.w * seat.h / n) * 0.7)));
           chip.style.cssText = [
@@ -4110,10 +4165,12 @@
             `border:1.5px solid rgba(255,255,255,0.22)`,
             `border-radius:4px`, `padding:3px 6px`,
             `color:${C.text}`, `font-size:12px`, 'font-weight:600',
-            'text-align:center', 'line-height:1.25',
-            `width:${chipSize}px`, 'min-height:28px',
-            'white-space:nowrap',
-            'cursor:grab', 'user-select:none', 'box-sizing:border-box', 'z-index:3'
+            'text-align:center', 'line-height:1.4',
+            'width:auto', 'height:auto', 'min-height:28px',
+            'white-space:pre-line',
+            'word-break:normal', 'overflow-wrap:normal',
+            'cursor:grab', 'user-select:none', 'box-sizing:border-box', 'z-index:3',
+            'overflow:visible'
           ].join(';');
           setChipText(chip, occ[i]);
 
@@ -4164,6 +4221,7 @@
             let foundChip = null;
             for (const oc of allChips) {
               if (oc === chip) continue;
+              if (oc.dataset.dragging) continue;
               const cr = oc.getBoundingClientRect();
               if (ev.clientX >= cr.left && ev.clientX <= cr.right && ev.clientY >= cr.top && ev.clientY <= cr.bottom) {
                 foundChip = oc; break;
@@ -4171,13 +4229,11 @@
             }
             if (_highlightedChip && _highlightedChip !== foundChip) {
               _highlightedChip.style.outline = '';
-              _highlightedChip.style.transform = 'translate(-50%,-50%)';
               _highlightedChip = null;
             }
             if (foundChip && foundChip !== _highlightedChip) {
               _highlightedChip = foundChip;
               foundChip.style.outline = '2px solid #A6E22E';
-              foundChip.style.transform = 'translate(-50%,-50%) scale(1.05)';
             }
           };
           const chipUp = ev => {
@@ -4189,7 +4245,7 @@
             document.removeEventListener('mousemove', chipMove, { capture: true });
             document.removeEventListener('mouseup', chipUp, { capture: true });
             // Clear highlight
-            if (_highlightedChip) { _highlightedChip.style.outline = ''; _highlightedChip.style.transform = 'translate(-50%,-50%)'; _highlightedChip = null; }
+            if (_highlightedChip) { _highlightedChip.style.outline = ''; _highlightedChip = null; }
 
             const dropX = ev.clientX, dropY = ev.clientY;
             const myMemberId = occ[capI];
@@ -4225,8 +4281,7 @@
                   }
                 } else if ((otherSeat.sections || 1) > 1) {
                   // Other multi-section table: swap names, move other chip to origOff position
-                  const allOtherChips = Array.from(otherEl.querySelectorAll('.seat-name-chip'));
-                  const otherIdx = allOtherChips.indexOf(otherChip);
+                  const otherIdx = parseInt(otherChip.dataset.sectionIdx ?? '-1');
                   const otherOcc = otherSeat.sectionOccupants || [];
                   if (otherIdx >= 0) {
                     const tmp = otherOcc[otherIdx] !== undefined ? otherOcc[otherIdx] : null;
@@ -4260,7 +4315,7 @@
                 if ((targetSeat.sections || 1) > 1) {
                   const emptyIdx = (targetSeat.sectionOccupants || []).indexOf(null);
                   if (emptyIdx >= 0) { targetSeat.sectionOccupants[emptyIdx] = myMemberId; occ[capI] = null; }
-                  else { const tmp = targetSeat.sectionOccupants[0]; targetSeat.sectionOccupants[0] = myMemberId; occ[capI] = tmp || null; }
+                  else { /* table full - snap back, do not move */ seat.chipOffsets[capI] = { ...origOff }; }
                 } else {
                   const tmp = targetSeat.occupantId || null;
                   targetSeat.occupantId = myMemberId; occ[capI] = tmp;
@@ -4269,7 +4324,20 @@
               }
             }
 
-            // No snap-back: chip stays wherever dropped within its own table
+            // No swap occurred. Check if chip is still within seat bounds (or touching border).
+            // off.x and off.y are relative to the seat element top-left.
+            // Allow chip center to be anywhere from 0 to seat.w / 0 to seat.h (touching border is OK).
+            const chipHalfW = 30; // approximate half-width of chip
+            const chipHalfH = 15;
+            const insideX = off.x >= -chipHalfW && off.x <= seat.w + chipHalfW;
+            const insideY = off.y >= -chipHalfH && off.y <= seat.h + chipHalfH;
+            if (!insideX || !insideY) {
+              // Snap back to original position
+              off.x = origOff.x;
+              off.y = origOff.y;
+              chip.style.left = off.x + 'px';
+              chip.style.top = off.y + 'px';
+            }
             markUnsaved();
           };
 
@@ -4289,40 +4357,59 @@
           lbl.addEventListener('mousedown', ev => ev.stopPropagation());
           inner.appendChild(lbl);
         } else if (isOccupied) {
-          // Draggable name chip
+          // Draggable name chip (mouse-drag only, not HTML5 drag)
           const chip = document.createElement('div');
           chip.className = 'seat-name-chip';
-          chip.draggable = true;
-          const chipW = seat.w, chipH = seat.h;
-          // Scale font to fit the box nicely
-          const maxChars = getMemberName(seat.occupantId).length;
-          const fsFromW = Math.floor((chipW - 12) / (maxChars * 0.6));
-          const fsFromH = Math.floor(chipH * 0.38);
-          const fs = Math.min(Math.max(9, fsFromW), Math.min(fsFromH, 16));
+          chip.draggable = false;
           chip.style.cssText = [
             'display:inline-flex', 'align-items:center', 'justify-content:center',
-            'max-width:calc(100% - 8px)',
+            'width:auto', // auto-size to content
             'background:rgba(0,0,0,0.22)', 'border:1px solid rgba(255,255,255,0.15)',
             'border-radius:5px', 'padding:3px 8px',
             `color:${C.text}`, 'font-size:12px', 'font-weight:600',
-            'text-align:center', 'line-height:1.25', 'word-break:break-word', 'white-space:nowrap',
-            'cursor:grab', 'user-select:none', 'position:relative', 'box-sizing:border-box'
+            'text-align:center', 'line-height:1.4', 'white-space:pre-line',
+            'word-break:normal', 'overflow-wrap:normal',
+            'cursor:grab', 'user-select:none', 'position:relative', 'box-sizing:border-box',
+            'overflow:visible', 'z-index:3'
           ].join(';');
           setChipText(chip, seat.occupantId);
           chip.addEventListener('mousedown', ev => {
             if (ev.button === 2) return;
             ev.stopPropagation();
-            // CHANGE 7: enable mouse-drag swap for single-seat chips
             let sdx0 = ev.clientX, sdy0 = ev.clientY, sdDragging = false;
             let _sdHighlight = null;
+            let ghost = null;
             const sdMove = ev2 => {
-              if (!sdDragging && Math.hypot(ev2.clientX - sdx0, ev2.clientY - sdy0) > 6) { sdDragging = true; chip.style.opacity = '0.7'; }
+              if (!sdDragging && Math.hypot(ev2.clientX - sdx0, ev2.clientY - sdy0) > 6) {
+                sdDragging = true;
+                chip.style.opacity = '0.35';
+                chip.dataset.dragging = 'true';
+                // Create floating ghost clone
+                ghost = chip.cloneNode(true);
+                ghost.style.cssText = chip.style.cssText;
+                ghost.style.position = 'fixed';
+                ghost.style.pointerEvents = 'none';
+                ghost.style.zIndex = '9999';
+                ghost.style.opacity = '0.9';
+                ghost.style.transform = 'translate(-50%, -50%)';
+                ghost.style.left = ev2.clientX + 'px';
+                ghost.style.top = ev2.clientY + 'px';
+                ghost.style.cursor = 'grabbing';
+                document.body.appendChild(ghost);
+              }
               if (!sdDragging) return;
-              // Highlight chip under cursor
+              // Move ghost with cursor
+              if (ghost) {
+                ghost.style.left = ev2.clientX + 'px';
+                ghost.style.top = ev2.clientY + 'px';
+              }
+              // Highlight chip under cursor (skip the chip being dragged)
               const allChips2 = document.querySelectorAll('.seat-name-chip');
               let foundC = null;
               for (const oc of allChips2) {
                 if (oc === chip) continue;
+                if (oc.dataset.dragging) continue;
+                if (oc.closest('[data-seat-id]')?.dataset.seatId === seat.id) continue;
                 const cr = oc.getBoundingClientRect();
                 if (ev2.clientX >= cr.left && ev2.clientX <= cr.right && ev2.clientY >= cr.top && ev2.clientY <= cr.bottom) { foundC = oc; break; }
               }
@@ -4333,7 +4420,9 @@
               document.removeEventListener('mousemove', sdMove);
               document.removeEventListener('mouseup', sdUp);
               if (_sdHighlight) { _sdHighlight.style.outline = ''; _sdHighlight = null; }
+              if (ghost) { ghost.remove(); ghost = null; }
               chip.style.opacity = '1';
+              delete chip.dataset.dragging;
               if (!sdDragging) return;
               const dropX = ev2.clientX, dropY = ev2.clientY;
               const myId = seat.occupantId;
@@ -4350,8 +4439,7 @@
                   const otherSeat = seats.find(s => s.id === otherEl.dataset.seatId);
                   if (!otherSeat) continue;
                   if ((otherSeat.sections || 1) > 1) {
-                    const otherChips = Array.from(otherEl.querySelectorAll('.seat-name-chip'));
-                    const j = otherChips.indexOf(otherChip);
+                    const j = parseInt(otherChip.dataset.sectionIdx ?? '-1');
                     if (j >= 0) {
                       const tmp = otherSeat.sectionOccupants[j];
                       otherSeat.sectionOccupants[j] = myId;
@@ -4377,7 +4465,7 @@
                   if ((ts.sections || 1) > 1) {
                     const ei = (ts.sectionOccupants || []).indexOf(null);
                     if (ei >= 0) { ts.sectionOccupants[ei] = myId; seat.occupantId = null; }
-                    else { const tmp = ts.sectionOccupants[0]; ts.sectionOccupants[0] = myId; seat.occupantId = tmp || null; }
+                    // else: table full - don't move
                   } else {
                     const tmp = ts.occupantId || null; ts.occupantId = myId; seat.occupantId = tmp;
                   }
@@ -4388,14 +4476,8 @@
             document.addEventListener('mousemove', sdMove);
             document.addEventListener('mouseup', sdUp);
           });
-          chip.addEventListener('dragstart', ev => {
-            ev.dataTransfer.setData('seat-member', seat.occupantId);
-            ev.dataTransfer.setData('seat-source-id', seat.id);
-            ev.dataTransfer.setData('seat-section-idx', '');
-            ev.dataTransfer.effectAllowed = 'move';
-            setTimeout(() => chip.style.opacity = '0.4', 0);
-          });
-          chip.addEventListener('dragend', () => chip.style.opacity = '1');
+          chip.draggable = false;
+          chip.addEventListener('dragstart', ev => { ev.preventDefault(); });
 
           // X button on chip itself
           const del = document.createElement('button');
@@ -4417,9 +4499,14 @@
 
       // Drop target
       el.addEventListener('dragover', e => {
-        if ([...e.dataTransfer.types].includes('seat-member')) { e.preventDefault(); el.style.outline = '2px solid #A6E22E'; el.style.outlineOffset = '2px'; }
+        if ([...e.dataTransfer.types].includes('seat-member')) {
+          e.preventDefault();
+          el.style.outline = '2px solid #A6E22E'; el.style.outlineOffset = '2px';
+        }
       });
-      el.addEventListener('dragleave', () => { el.style.outline = ''; });
+      el.addEventListener('dragleave', () => {
+        el.style.outline = '';
+      });
       el.addEventListener('drop', e => {
         e.preventDefault(); e.stopPropagation(); el.style.outline = '';
         const draggedId = e.dataTransfer.getData('seat-member');
@@ -4591,6 +4678,8 @@
     let activeDrawShape = 'square';  // shape being drawn in current paint session
     let pendingPaintStart = null;   // {col, row, clientX, clientY}
     let eraserActive = false;
+    let eraserDragStartX = 0, eraserDragStartY = 0, eraserDragging = false;
+    let eraserPreview = null;
 
     function initSeatCanvas() {
       if (seatCanvasInitialized) return;
@@ -4641,14 +4730,82 @@
           selectedSeatId = null; renderSeats();
         } else if (seatTool === 'eraser') {
           eraserActive = true;
-          // Erase seat at this location
-          const target = e.target.closest('[data-seat-id]');
-          if (target) {
-            const s = seats.find(x => x.id === target.dataset.seatId);
-            if (s) { if (s.occupantId) staging.push(s.occupantId); seats = seats.filter(x => x.id !== s.id); renderSeats(); markUnsaved(); }
-          }
+          eraserDragStartX = rawX;
+          eraserDragStartY = rawY;
+          eraserDragging = false;
+          // Click-to-delete: handled on mouseup if no drag occurred
         }
       });
+
+      // Track eraser hover highlight
+      let _eraserHovered = null;
+
+      function clearEraserHover() {
+        if (_eraserHovered) {
+          _eraserHovered.style.outline = '';
+          _eraserHovered.style.boxShadow = '';
+          _eraserHovered = null;
+        }
+      }
+      function setEraserHover(el) {
+        if (_eraserHovered === el) return;
+        clearEraserHover();
+        if (el) {
+          el.style.outline = '2px solid #F92672';
+          el.style.boxShadow = '0 0 8px rgba(249,38,114,0.5)';
+          _eraserHovered = el;
+        }
+      }
+      function removeEraserPreview() {
+        if (eraserPreview) { eraserPreview.remove(); eraserPreview = null; }
+      }
+      // Highlight elements touched by eraser drag box
+      function updateEraserDragHighlights(x1, y1, x2, y2) {
+        const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
+        const rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+        const areaRect = area.getBoundingClientRect();
+        // Convert canvas coords to screen coords for overlap check
+        const toScreen = (cx, cy) => ({
+          x: areaRect.left + cx * seatCanvasZoom,
+          y: areaRect.top + cy * seatCanvasZoom
+        });
+        const boxL = areaRect.left + rx * seatCanvasZoom;
+        const boxT = areaRect.top + ry * seatCanvasZoom;
+        const boxR = boxL + rw * seatCanvasZoom;
+        const boxB = boxT + rh * seatCanvasZoom;
+
+        // Check seats
+        document.querySelectorAll('.seat-el[data-seat-id]').forEach(el => {
+          const r = el.getBoundingClientRect();
+          const overlaps = r.left < boxR && r.right > boxL && r.top < boxB && r.bottom > boxT;
+          if (overlaps) {
+            el.style.outline = '2px solid #F92672';
+            el.style.boxShadow = '0 0 8px rgba(249,38,114,0.5)';
+          } else {
+            el.style.outline = '';
+            el.style.boxShadow = '';
+          }
+        });
+        // Check textboxes
+        document.querySelectorAll('.tb-el').forEach(el => {
+          const r = el.getBoundingClientRect();
+          const overlaps = r.left < boxR && r.right > boxL && r.top < boxB && r.bottom > boxT;
+          if (overlaps) {
+            el.style.outline = '2px solid #F92672';
+            el.style.boxShadow = '0 0 8px rgba(249,38,114,0.5)';
+          } else {
+            el.style.outline = '';
+            el.style.boxShadow = '';
+          }
+        });
+      }
+      function clearAllEraserHighlights() {
+        document.querySelectorAll('.seat-el, .tb-el').forEach(el => {
+          el.style.outline = '';
+          el.style.boxShadow = '';
+        });
+        _eraserHovered = null;
+      }
 
       area.addEventListener('mousemove', e => {
         const rect = area.getBoundingClientRect();
@@ -4670,18 +4827,100 @@
             Math.floor(rawX / SGRID), Math.floor(rawY / SGRID));
         }
 
-        // Drag erase
+        // Eraser hover highlight (when not drag-erasing)
+        if (seatTool === 'eraser' && !eraserDragging && !eraserActive) {
+          // Use elementFromPoint for accurate textbox hover detection
+          const el = document.elementFromPoint(e.clientX, e.clientY);
+          const tbTarget = el?.closest('.tb-el');
+          const seatTarget = el?.closest('[data-seat-id]');
+          if (tbTarget) setEraserHover(tbTarget);
+          else if (seatTarget) setEraserHover(seatTarget);
+          else clearEraserHover();
+        }
+
+        // Eraser drag-box
         if (eraserActive && seatTool === 'eraser') {
-          const target = e.target.closest('[data-seat-id]');
-          if (target) {
-            const s = seats.find(x => x.id === target.dataset.seatId);
-            if (s) { if (s.occupantId) staging.push(s.occupantId); seats = seats.filter(x => x.id !== s.id); renderSeats(); markUnsaved(); }
+          const dx = rawX - eraserDragStartX, dy = rawY - eraserDragStartY;
+          if (!eraserDragging && Math.hypot(dx, dy) > 8) {
+            eraserDragging = true;
+            clearEraserHover();
+            // Create preview box
+            eraserPreview = document.createElement('div');
+            eraserPreview.style.cssText = 'position:absolute;pointer-events:none;z-index:50;background:rgba(249,38,114,0.12);border:2px solid #F92672;border-radius:3px;box-sizing:border-box;';
+            area.appendChild(eraserPreview);
+          }
+          if (eraserDragging && eraserPreview) {
+            const x = Math.min(rawX, eraserDragStartX);
+            const y = Math.min(rawY, eraserDragStartY);
+            const w = Math.abs(rawX - eraserDragStartX);
+            const h = Math.abs(rawY - eraserDragStartY);
+            eraserPreview.style.left = x + 'px';
+            eraserPreview.style.top = y + 'px';
+            eraserPreview.style.width = w + 'px';
+            eraserPreview.style.height = h + 'px';
+            updateEraserDragHighlights(eraserDragStartX, eraserDragStartY, rawX, rawY);
           }
         }
       });
 
+      area.addEventListener('mouseleave', () => { if (!eraserDragging) clearEraserHover(); });
+
       area.addEventListener('mouseup', e => {
+        if (seatTool === 'eraser' && eraserActive) {
+          if (eraserDragging) {
+            // Drag-box delete: remove all highlighted elements
+            removeEraserPreview();
+            const areaRect = area.getBoundingClientRect();
+            const rawX2 = (e.clientX - areaRect.left) / seatCanvasZoom;
+            const rawY2 = (e.clientY - areaRect.top) / seatCanvasZoom;
+            const x1 = Math.min(eraserDragStartX, rawX2), y1 = Math.min(eraserDragStartY, rawY2);
+            const x2 = Math.max(eraserDragStartX, rawX2), y2 = Math.max(eraserDragStartY, rawY2);
+            const toScreen = (cx, cy) => ({
+              x: areaRect.left + cx * seatCanvasZoom,
+              y: areaRect.top + cy * seatCanvasZoom
+            });
+            const boxL = areaRect.left + x1 * seatCanvasZoom;
+            const boxT = areaRect.top + y1 * seatCanvasZoom;
+            const boxR = areaRect.left + x2 * seatCanvasZoom;
+            const boxB = areaRect.top + y2 * seatCanvasZoom;
+            // Delete overlapping seats
+            seats = seats.filter(s => {
+              const el = document.querySelector(`[data-seat-id="${s.id}"]`);
+              if (!el) return true;
+              const r = el.getBoundingClientRect();
+              const overlaps = r.left < boxR && r.right > boxL && r.top < boxB && r.bottom > boxT;
+              if (overlaps && s.occupantId) staging.push(s.occupantId);
+              return !overlaps;
+            });
+            // Delete overlapping textboxes
+            textboxes = textboxes.filter(t => {
+              const el = document.getElementById('tb-el-' + t.id);
+              if (!el) return true;
+              const r = el.getBoundingClientRect();
+              return !(r.left < boxR && r.right > boxL && r.top < boxB && r.bottom > boxT);
+            });
+            clearAllEraserHighlights();
+            renderSeats(); markUnsaved();
+          } else {
+            // Click-delete: erase whatever was hovered
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            const tbTarget = el?.closest('.tb-el');
+            const seatTarget = el?.closest('[data-seat-id]');
+            if (tbTarget) {
+              textboxes = textboxes.filter(t => t.id !== tbTarget.dataset.tbId);
+              clearAllEraserHighlights(); renderSeats(); markUnsaved();
+            } else if (seatTarget) {
+              const s = seats.find(x => x.id === seatTarget.dataset.seatId);
+              if (s) { if (s.occupantId) staging.push(s.occupantId); seats = seats.filter(x => x.id !== s.id); }
+              clearAllEraserHighlights(); renderSeats(); markUnsaved();
+            }
+          }
+          eraserActive = false;
+          eraserDragging = false;
+        }
+
         eraserActive = false;
+        eraserDragging = false;
         pendingPaintShape = null;
         pendingPaintStart = null;
         if (!painting) return;
@@ -4740,10 +4979,12 @@
         const rect = area.getBoundingClientRect();
         const curX = (ev.clientX - rect.left) / seatCanvasZoom;
         const curY = (ev.clientY - rect.top) / seatCanvasZoom;
+        const w = Math.abs(curX - tbPlaceStartX);
+        const h = Math.abs(curY - tbPlaceStartY);
+        // Require a real drag - ignore clicks or tiny movements
+        if (w < 20 || h < 10) return;
         const x = Math.min(curX, tbPlaceStartX);
         const y = Math.min(curY, tbPlaceStartY);
-        const w = Math.max(Math.abs(curX - tbPlaceStartX), 60);
-        const h = Math.max(Math.abs(curY - tbPlaceStartY), 20);
         // Infer font size from drag height
         const autoSize = Math.max(10, Math.min(72, Math.round(h * 0.75)));
         const fmt = getTbFormatting();
@@ -4885,7 +5126,8 @@
       if (draggingSeat) { if (draggingSeatMoved) markDirtyOnly(); draggingSeat = null; draggingSeatMoved = false; document.body.style.userSelect = ''; }
       if (resizingSeat) { markDirtyOnly(); resizingSeat = null; resizeHandle = null; renderSeats(); }
       if (rotatingSeat) { markDirtyOnly(); rotatingSeat = null; }
-      eraserActive = false; pendingPaintShape = null; pendingPaintStart = null;
+      eraserActive = false; eraserDragging = false; pendingPaintShape = null; pendingPaintStart = null;
+      if (eraserPreview) { eraserPreview.remove(); eraserPreview = null; }
     });
 
     // ---- Context menu ----
@@ -4923,22 +5165,55 @@
     function promptSplitSeat(seatId) {
       const seat = seats.find(s => s.id === seatId); if (!seat) return;
       const modal = document.getElementById('custom-modal');
+      const titleEl = document.getElementById('modal-title');
       const msgEl = document.getElementById('modal-message');
       const btnCancel = document.getElementById('modal-cancel');
       const btnConfirm = document.getElementById('modal-confirm');
-      msgEl.innerHTML = 'Split into how many seats? (2–20)<br><input id="split-count-input" type="number" min="2" max="20" value="4" style="margin-top:8px;width:100%;background:#18181b;border:1px solid #52525b;color:#F8F8F2;padding:6px 10px;border-radius:6px;font-size:14px;outline:none;text-align:center;">';
+
+      const currentN = seat.sections || 1;
+      const defaultN = currentN > 1 ? currentN : 4;
+
+      titleEl.textContent = 'Split into Seats';
+      msgEl.innerHTML = `How many seats for this table? (2–20)<br><input id="split-count-input" type="number" min="2" max="20" value="${defaultN}" style="margin-top:8px;width:100%;background:#18181b;border:1px solid #52525b;color:#F8F8F2;padding:6px 10px;border-radius:6px;font-size:14px;outline:none;text-align:center;">`;
       modal.classList.remove('hide');
+
       const nc = btnCancel.cloneNode(true); btnCancel.parentNode.replaceChild(nc, btnCancel);
       const nf = btnConfirm.cloneNode(true); btnConfirm.parentNode.replaceChild(nf, btnConfirm);
       nc.classList.remove('hide');
-      nc.addEventListener('click', () => modal.classList.add('hide'));
-      nf.addEventListener('click', () => {
+
+      const doConfirm = () => {
         modal.classList.add('hide');
+        titleEl.textContent = 'Notice';
         const n = parseInt(document.getElementById('split-count-input')?.value);
         if (!n || n < 2 || n > 20) return showModal('Please enter a number between 2 and 20.');
         doSplitSeat(seat, n);
-      });
-      setTimeout(() => document.getElementById('split-count-input')?.focus(), 50);
+        document.removeEventListener('keydown', keyHandler);
+        modal.removeEventListener('mousedown', backdropHandler);
+      };
+      const doCancel = () => {
+        modal.classList.add('hide');
+        titleEl.textContent = 'Notice';
+        document.removeEventListener('keydown', keyHandler);
+        modal.removeEventListener('mousedown', backdropHandler);
+      };
+
+      nc.addEventListener('click', doCancel);
+      nf.addEventListener('click', doConfirm);
+
+      const keyHandler = ev => {
+        if (ev.key === 'Enter') { ev.preventDefault(); doConfirm(); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); doCancel(); }
+      };
+      const backdropHandler = ev => {
+        if (ev.target === modal) doCancel();
+      };
+      document.addEventListener('keydown', keyHandler);
+      modal.addEventListener('mousedown', backdropHandler);
+
+      setTimeout(() => {
+        const inp = document.getElementById('split-count-input');
+        if (inp) { inp.focus(); inp.select(); }
+      }, 50);
     }
 
     function doSplitSeat(seat, n) {
@@ -5071,15 +5346,115 @@
       unassigned.forEach(m => {
         const div = document.createElement('div');
         div.className = 'member-item border rounded-md text-sm font-medium shadow-sm';
-        div.draggable = true;
+        div.draggable = false;
         div.innerHTML = `<span class="member-name-text flex-1 select-none">${m.name}</span>`;
-        div.addEventListener('dragstart', e => { e.dataTransfer.setData('seat-member', m.id); e.dataTransfer.setData('seat-source-id', ''); e.dataTransfer.effectAllowed = 'move'; setTimeout(() => div.style.opacity = '0.4', 0); });
-        div.addEventListener('dragend', () => div.style.opacity = '1');
+
+        div.addEventListener('mousedown', ev => {
+          if (ev.button !== 0) return;
+          ev.stopPropagation();
+          let stx0 = ev.clientX, sty0 = ev.clientY, stDragging = false;
+          let ghost = null, _stHighlight = null;
+
+          const stMove = ev2 => {
+            if (!stDragging && Math.hypot(ev2.clientX - stx0, ev2.clientY - sty0) > 6) {
+              stDragging = true;
+              div.style.opacity = '0.35';
+              // Create ghost that looks like a seat namebox chip
+              ghost = document.createElement('div');
+              ghost.style.cssText = [
+                'position:fixed', 'pointer-events:none', 'z-index:9999',
+                'background:rgba(0,0,0,0.28)', 'border:1.5px solid rgba(255,255,255,0.22)',
+                'border-radius:4px', 'padding:3px 8px',
+                'color:#F8F8F2', 'font-size:12px', 'font-weight:600',
+                'text-align:center', 'line-height:1.4', 'white-space:pre-line',
+                'word-break:normal', 'transform:translate(-50%,-50%)',
+                'opacity:0.9', 'cursor:grabbing', 'user-select:none'
+              ].join(';');
+              // One word per line, matching chip format
+              ghost.innerText = m.name.trim().split(/\s+/).join('\n');
+              ghost.style.left = ev2.clientX + 'px';
+              ghost.style.top = ev2.clientY + 'px';
+              document.body.appendChild(ghost);
+            }
+            if (!stDragging) return;
+            if (ghost) { ghost.style.left = ev2.clientX + 'px'; ghost.style.top = ev2.clientY + 'px'; }
+            // Highlight chip under cursor
+            const allChips = document.querySelectorAll('.seat-name-chip');
+            let foundC = null;
+            for (const oc of allChips) {
+              if (oc.dataset.dragging) continue;
+              const cr = oc.getBoundingClientRect();
+              if (ev2.clientX >= cr.left && ev2.clientX <= cr.right && ev2.clientY >= cr.top && ev2.clientY <= cr.bottom) { foundC = oc; break; }
+            }
+            if (_stHighlight && _stHighlight !== foundC) { _stHighlight.style.outline = ''; _stHighlight = null; }
+            if (foundC && foundC !== _stHighlight) { _stHighlight = foundC; foundC.style.outline = '2px solid #A6E22E'; }
+          };
+
+          const stUp = ev2 => {
+            document.removeEventListener('mousemove', stMove);
+            document.removeEventListener('mouseup', stUp);
+            if (_stHighlight) { _stHighlight.style.outline = ''; _stHighlight = null; }
+            if (ghost) { ghost.remove(); ghost = null; }
+            div.style.opacity = '1';
+            if (!stDragging) return;
+
+            const dropX = ev2.clientX, dropY = ev2.clientY;
+            pushSeatUndoNow();
+
+            // Check chip-to-chip: swap with existing chip
+            const allChips = document.querySelectorAll('.seat-name-chip');
+            for (const otherChip of allChips) {
+              const cr = otherChip.getBoundingClientRect();
+              if (dropX >= cr.left && dropX <= cr.right && dropY >= cr.top && dropY <= cr.bottom) {
+                const otherEl = otherChip.closest('[data-seat-id]');
+                if (!otherEl) continue;
+                const otherSeat = seats.find(s => s.id === otherEl.dataset.seatId);
+                if (!otherSeat) continue;
+                if ((otherSeat.sections || 1) > 1) {
+                  const j = parseInt(otherChip.dataset.sectionIdx ?? '-1');
+                  if (j >= 0) {
+                    const displaced = otherSeat.sectionOccupants[j];
+                    otherSeat.sectionOccupants[j] = m.id;
+                    // Send displaced name back to staging (it's already unassigned after renderSeats)
+                    if (displaced) staging.push(displaced);
+                    renderSeats(); markUnsaved(); return;
+                  }
+                } else {
+                  const displaced = otherSeat.occupantId;
+                  otherSeat.occupantId = m.id;
+                  if (displaced) staging.push(displaced);
+                  renderSeats(); markUnsaved(); return;
+                }
+              }
+            }
+
+            // Check seat-level drop (empty slot)
+            const allSeatEls = document.querySelectorAll('.seat-el[data-seat-id]');
+            for (const sEl of allSeatEls) {
+              const r = sEl.getBoundingClientRect();
+              if (dropX >= r.left && dropX <= r.right && dropY >= r.top && dropY <= r.bottom) {
+                const ts = seats.find(s => s.id === sEl.dataset.seatId);
+                if (!ts) continue;
+                if ((ts.sections || 1) > 1) {
+                  const ei = (ts.sectionOccupants || []).indexOf(null);
+                  if (ei >= 0) { ts.sectionOccupants[ei] = m.id; renderSeats(); markUnsaved(); return; }
+                  // Full — do nothing
+                } else if (!ts.occupantId) {
+                  ts.occupantId = m.id; renderSeats(); markUnsaved(); return;
+                }
+              }
+            }
+          };
+
+          document.addEventListener('mousemove', stMove);
+          document.addEventListener('mouseup', stUp);
+        });
+
         area.appendChild(div);
       });
     }
 
-    // ---- Print preview ---- (CHANGE 4: modern, clean, colored, no borders)
+    // ---- Print preview ---- (SVG-based, reliable layout)
     async function generateSeatPrintPreview() {
       exportPanX = 0; exportPanY = 0; // reset pan on new preview
       const previewBox = document.getElementById('export-preview');
@@ -5091,97 +5466,162 @@
         return;
       }
 
-      // Palette for seat types - modern, clean
       const PALETTE = {
-        square: { bg: '#E8F4FD', text: '#1a6fa8', border: '#90c4e8', shadow: 'rgba(26,111,168,0.15)' },
-        circle: { bg: '#F0EBFF', text: '#5b3fa8', border: '#b8a0e8', shadow: 'rgba(91,63,168,0.15)' },
-        manual: { bg: '#FFF4E6', text: '#b85c00', border: '#f0b070', shadow: 'rgba(184,92,0,0.12)' },
+        square: { bg: '#E8F4FD', text: '#1a6fa8', border: '#90c4e8' },
+        circle: { bg: '#F0EBFF', text: '#5b3fa8', border: '#b8a0e8' },
+        manual: { bg: '#FFF4E6', text: '#b85c00', border: '#f0b070' },
       };
-      const UNASSIGNED = { bg: '#F8F8F8', text: '#999', border: '#ccc', shadow: 'rgba(0,0,0,0.08)' };
+      const UNASSIGNED = { bg: '#F8F8F8', text: '#aaa', border: '#ccc' };
 
-      // Bounding box
-      let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
+      // Bounding box over all seats + chips
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       seats.forEach(s => {
         minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
         maxX = Math.max(maxX, s.x + s.w); maxY = Math.max(maxY, s.y + s.h);
         if ((s.sections || 1) > 1 && s.chipOffsets) {
           s.chipOffsets.forEach(off => {
-            minX = Math.min(minX, s.x + off.x - 70); minY = Math.min(minY, s.y + off.y - 25);
-            maxX = Math.max(maxX, s.x + off.x + 70); maxY = Math.max(maxY, s.y + off.y + 25);
+            minX = Math.min(minX, s.x + off.x - 55); minY = Math.min(minY, s.y + off.y - 30);
+            maxX = Math.max(maxX, s.x + off.x + 55); maxY = Math.max(maxY, s.y + off.y + 30);
           });
         }
       });
       textboxes.filter(t => t.canvas === 'seating').forEach(t => {
         minX = Math.min(minX, t.x); minY = Math.min(minY, t.y);
-        maxX = Math.max(maxX, t.x + (t.w || 200)); maxY = Math.max(maxY, t.y + (t.minH || 60));
+        maxX = Math.max(maxX, t.x + (t.w || 200)); maxY = Math.max(maxY, t.y + (t.minH || 60) + (t.size || 16) * 2);
       });
       if (!isFinite(minX)) { minX = 0; minY = 0; maxX = 800; maxY = 600; }
 
-      const PAD = 60;
+      const PAD = 50;
       const offX = -minX + PAD, offY = -minY + PAD;
-      const contentW = maxX - minX + PAD * 2, contentH = maxY - minY + PAD * 2;
-      const RATIO = 297 / 210; // A4 landscape
-      const wrapW = Math.max(contentW, contentH * RATIO);
-      const wrapH = wrapW / RATIO;
+      const W = maxX - minX + PAD * 2;
+      const H = maxY - minY + PAD * 2;
 
-      const wrap = document.createElement('div');
-      wrap.style.cssText = `position:absolute;top:-9999px;left:-9999px;width:${wrapW}px;height:${wrapH}px;background:#fafafa;font-family:'Inter',sans-serif;overflow:visible;`;
+      // Build SVG
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('xmlns', svgNS);
+      svg.setAttribute('width', W);
+      svg.setAttribute('height', H);
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.style.cssText = 'background:#fafafa;border-radius:8px;display:block;box-shadow:0 4px 24px rgba(0,0,0,0.18);max-width:100%;';
 
-      // Subtle background grid
-      const gridSvg = document.createElement('div');
-      gridSvg.style.cssText = `position:absolute;inset:0;background-image:radial-gradient(circle,#d0d0d0 1px,transparent 1px);background-size:24px 24px;opacity:0.35;pointer-events:none;`;
-      wrap.appendChild(gridSvg);
+      // Background
+      const bg = document.createElementNS(svgNS, 'rect');
+      bg.setAttribute('width', W); bg.setAttribute('height', H); bg.setAttribute('fill', '#fafafa');
+      svg.appendChild(bg);
+
+      // Dot grid
+      const defs = document.createElementNS(svgNS, 'defs');
+      const pat = document.createElementNS(svgNS, 'pattern');
+      pat.setAttribute('id', 'dotgrid'); pat.setAttribute('patternUnits', 'userSpaceOnUse');
+      pat.setAttribute('width', '24'); pat.setAttribute('height', '24');
+      const dot = document.createElementNS(svgNS, 'circle');
+      dot.setAttribute('cx', '12'); dot.setAttribute('cy', '12'); dot.setAttribute('r', '1');
+      dot.setAttribute('fill', '#cccccc');
+      pat.appendChild(dot); defs.appendChild(pat); svg.appendChild(defs);
+      const gridRect = document.createElementNS(svgNS, 'rect');
+      gridRect.setAttribute('width', W); gridRect.setAttribute('height', H);
+      gridRect.setAttribute('fill', 'url(#dotgrid)'); gridRect.setAttribute('opacity', '0.5');
+      svg.appendChild(gridRect);
+
+      // Helper: add text lines (one word per line) centered in a rect
+      function addTextLines(parentEl, id, cx, cy, pal, maxW) {
+        const name = getMemberName(id);
+        if (!name) return;
+        const words = name.trim().split(/\s+/);
+        const lineH = 14;
+        const totalH = words.length * lineH;
+        const startY = cy - totalH / 2 + lineH / 2;
+        words.forEach((word, i) => {
+          const t = document.createElementNS(svgNS, 'text');
+          t.setAttribute('x', cx);
+          t.setAttribute('y', startY + i * lineH);
+          t.setAttribute('text-anchor', 'middle');
+          t.setAttribute('dominant-baseline', 'middle');
+          t.setAttribute('font-family', 'Inter, Arial, sans-serif');
+          t.setAttribute('font-size', '11');
+          t.setAttribute('font-weight', '700');
+          t.setAttribute('fill', pal.text);
+          t.textContent = word;
+          parentEl.appendChild(t);
+        });
+      }
+
+      // Helper: rounded rect
+      function svgRect(x, y, w, h, rx, fill, stroke, strokeW = 1.5) {
+        const r = document.createElementNS(svgNS, 'rect');
+        r.setAttribute('x', x); r.setAttribute('y', y);
+        r.setAttribute('width', w); r.setAttribute('height', h);
+        r.setAttribute('rx', rx); r.setAttribute('ry', rx);
+        r.setAttribute('fill', fill); r.setAttribute('stroke', stroke);
+        r.setAttribute('stroke-width', strokeW);
+        return r;
+      }
 
       // Draw seats
       seats.forEach(seat => {
         const isCircle = seat.shape === 'circle';
         const isMnl = seat.manual;
         const hasSec = (seat.sections || 1) > 1;
-        const occ = hasSec ? (seat.sectionOccupants || []) : null;
         const pal = isMnl ? PALETTE.manual : (isCircle ? PALETTE.circle : PALETTE.square);
-        const hasAnyOccupant = hasSec ? (occ || []).some(Boolean) : !!seat.occupantId;
-        const activePal = hasAnyOccupant ? pal : UNASSIGNED;
+        const hasOcc = hasSec ? (seat.sectionOccupants || []).some(Boolean) : !!seat.occupantId;
+        const activePal = hasOcc || isMnl ? pal : UNASSIGNED;
 
-        const div = document.createElement('div');
+        const sx = seat.x + offX, sy = seat.y + offY;
         const rot = seat.rotation || 0;
-        div.style.cssText = [
-          `position:absolute`,
-          `left:${seat.x + offX}px`, `top:${seat.y + offY}px`,
-          `width:${seat.w}px`, `height:${seat.h}px`,
-          `transform:rotate(${rot}deg)`, `transform-origin:center center`,
-          `box-sizing:border-box`,
-          `border-radius:${isCircle ? '50%' : '10px'}`,
-          `background:${activePal.bg}`,
-          `border:1.5px solid ${activePal.border || (activePal.text + '55')}`,
-          `box-shadow:0 1px 4px ${activePal.shadow}`,
-          `display:flex`, `align-items:center`, `justify-content:center`,
-          `overflow:visible`,
-          `flex-direction:column`
-        ].join(';');
 
-        if (isMnl && seat.label && seat.label.trim()) {
-          const lbl = document.createElement('div');
-          lbl.style.cssText = `font-size:${Math.min(14, Math.floor(seat.h * 0.3))}px;font-weight:700;text-align:center;color:${pal.text};padding:4px 8px;line-height:1.3;word-break:break-word;width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;height:100%;`;
-          lbl.innerText = seat.label;
-          div.appendChild(lbl);
-        } else if (!hasSec && seat.occupantId) {
-          const fs = 12; // consistent with canvas display
-          const lbl = document.createElement('div');
-          lbl.style.cssText = `font-size:${fs}px;font-weight:700;text-align:center;color:${pal.text};padding:4px 8px;line-height:1.3;word-break:break-word;width:100%;box-sizing:border-box;background:transparent;border:none;display:flex;align-items:center;justify-content:center;height:100%;white-space:nowrap;margin-top:-5px;`;
-          setChipText(lbl, seat.occupantId);
-          div.appendChild(lbl);
-        } else if (!hasSec && !seat.occupantId && !isMnl) {
-          // Empty seat hint
-          const hint = document.createElement('div');
-          hint.style.cssText = 'font-size:18px;opacity:0.25;';
-          hint.innerText = isCircle ? '○' : '□';
-          div.appendChild(hint);
+        const g = document.createElementNS(svgNS, 'g');
+        if (rot !== 0) {
+          g.setAttribute('transform', `rotate(${rot}, ${sx + seat.w / 2}, ${sy + seat.h / 2})`);
         }
-        div.dataset.seatExportId = seat.id;
-        wrap.appendChild(div);
+
+        // Shape
+        if (isCircle) {
+          const el = document.createElementNS(svgNS, 'ellipse');
+          el.setAttribute('cx', sx + seat.w / 2); el.setAttribute('cy', sy + seat.h / 2);
+          el.setAttribute('rx', seat.w / 2); el.setAttribute('ry', seat.h / 2);
+          el.setAttribute('fill', activePal.bg); el.setAttribute('stroke', activePal.border);
+          el.setAttribute('stroke-width', '1.5');
+          g.appendChild(el);
+        } else {
+          g.appendChild(svgRect(sx, sy, seat.w, seat.h, 8, activePal.bg, activePal.border));
+        }
+
+        // Label/name inside shape
+        if (!hasSec) {
+          const cx = sx + seat.w / 2, cy = sy + seat.h / 2;
+          if (isMnl && seat.label) {
+            const words = (seat.label || '').trim().split(/\s+/);
+            const lineH = Math.min(16, Math.floor(seat.h * 0.28));
+            const fs = Math.min(13, lineH - 1);
+            const totalH = words.length * lineH;
+            const startY = cy - totalH / 2 + lineH / 2;
+            words.forEach((word, i) => {
+              const t = document.createElementNS(svgNS, 'text');
+              t.setAttribute('x', cx); t.setAttribute('y', startY + i * lineH);
+              t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'middle');
+              t.setAttribute('font-family', 'Inter, Arial, sans-serif');
+              t.setAttribute('font-size', fs); t.setAttribute('font-weight', '700');
+              t.setAttribute('fill', pal.text);
+              t.textContent = word;
+              g.appendChild(t);
+            });
+          } else if (seat.occupantId) {
+            addTextLines(g, seat.occupantId, cx, cy, pal, seat.w - 8);
+          } else {
+            const hint = document.createElementNS(svgNS, 'text');
+            hint.setAttribute('x', cx); hint.setAttribute('y', cy);
+            hint.setAttribute('text-anchor', 'middle'); hint.setAttribute('dominant-baseline', 'middle');
+            hint.setAttribute('font-size', Math.min(seat.w, seat.h) * 0.32);
+            hint.setAttribute('fill', activePal.border); hint.setAttribute('opacity', '0.4');
+            hint.textContent = isCircle ? '○' : '□';
+            g.appendChild(hint);
+          }
+        }
+        svg.appendChild(g);
       });
 
-      // Draw multi-section chips on top (placed absolutely in wrap)
+      // Draw multi-section chips on top
       seats.forEach(seat => {
         if ((seat.sections || 1) <= 1) return;
         const pal = seat.shape === 'circle' ? PALETTE.circle : PALETTE.square;
@@ -5190,71 +5630,83 @@
         occ.forEach((id, i) => {
           if (!id) return;
           const off = offsets[i] || { x: seat.w / 2, y: seat.h / 2 };
-          const name = getMemberName(id);
           const chipL = seat.x + offX + off.x;
-          const chipT = seat.y + offY + off.y - 5;
-          const chipArea = (seat.w * seat.h) / seat.sections;
-          const approxW = Math.sqrt(chipArea) * 0.85;
-          const fs = Math.min(14, Math.max(8, Math.floor(approxW / (Math.max(name.length, 1) * 0.6))));
-          const chip = document.createElement('div');
-          chip.style.cssText = [
-            `position:absolute`,
-            `left:${chipL}px`, `top:${chipT}px`,
-            `transform:translate(-50%,-50%)`,
-            `background:transparent`,
-            `border:none`,
-            `color:${pal.text}`,
-            `font-size:12px`, `font-weight:700`,
-            `border-radius:4px`,
-            `padding:2px 4px`,
-            `white-space:pre-line`,
-            `word-break:break-word`,
-            `text-align:center`,
-            `line-height:1.3`,
-            `display:flex`, `align-items:center`, `justify-content:center`, `flex-direction:column`,
-            `max-width:${Math.max(50, Math.floor(seat.w / Math.min(seat.sections, 4)) - 4)}px`,
-            `z-index:20`,
-            `pointer-events:none`
-          ].join(';');
-          setChipText(chip, id);
-          wrap.appendChild(chip);
+          const chipT = seat.y + offY + off.y;
+          const name = getMemberName(id);
+          const words = name.trim().split(/\s+/);
+          const lineH = 13;
+          const chipW = Math.max(50, Math.min(90, Math.floor(Math.sqrt(seat.w * seat.h / seat.sections) * 0.7)));
+          const chipH = words.length * lineH + 8;
+
+          // Text lines only - no box
+
+          // Text lines
+          const startY = chipT - chipH / 2 + lineH / 2 + 4;
+          words.forEach((word, wi) => {
+            const t = document.createElementNS(svgNS, 'text');
+            t.setAttribute('x', chipL); t.setAttribute('y', startY + wi * lineH);
+            t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'middle');
+            t.setAttribute('font-family', 'Inter, Arial, sans-serif');
+            t.setAttribute('font-size', '11'); t.setAttribute('font-weight', '700');
+            t.setAttribute('fill', pal.text);
+            t.textContent = word;
+            svg.appendChild(t);
+          });
         });
       });
 
       // Draw textboxes
       textboxes.filter(t => t.canvas === 'seating').forEach(box => {
-        const el = document.createElement('div');
-        el.style.cssText = [
-          `position:absolute`,
-          `left:${box.x + offX}px`, `top:${box.y + offY}px`,
-          `font-family:${box.font || 'Inter'}`,
-          `font-size:${box.size || 16}px`,
-          `font-weight:${box.bold ? 'bold' : 'normal'}`,
-          `font-style:${box.italic ? 'italic' : 'normal'}`,
-          `text-decoration:${box.underline ? 'underline' : 'none'}`,
-          `color:#1a1a2e`,
-          `white-space:pre-wrap`,
-          `z-index:5`,
-          `transform:rotate(${box.rotation || 0}deg)`,
-          `transform-origin:top left`
-        ].join(';');
-        el.innerText = box.text || 'Text';
-        wrap.appendChild(el);
+        const g = document.createElementNS(svgNS, 'g');
+        const rot = box.rotation || 0;
+        const bx = box.x + offX, by = box.y + offY;
+        if (rot !== 0) g.setAttribute('transform', `rotate(${rot}, ${bx}, ${by})`);
+        const lines = (box.text || 'Text').split('\n');
+        const fs = box.size || 16;
+        lines.forEach((line, li) => {
+          const t = document.createElementNS(svgNS, 'text');
+          t.setAttribute('x', bx); t.setAttribute('y', by + li * (fs * 1.3) + fs);
+          t.setAttribute('font-family', box.font === 'Fira Code' ? '"Fira Code", monospace' : 'Inter, Arial, sans-serif');
+          t.setAttribute('font-size', fs);
+          t.setAttribute('font-weight', box.bold ? '700' : '400');
+          t.setAttribute('font-style', box.italic ? 'italic' : 'normal');
+          t.setAttribute('text-decoration', box.underline ? 'underline' : 'none');
+          t.setAttribute('fill', '#1a1a2e');
+          t.textContent = line;
+          g.appendChild(t);
+        });
+        svg.appendChild(g);
       });
 
-      document.body.appendChild(wrap);
-      try {
-        const cv = await html2canvas(wrap, { backgroundColor: '#fafafa', scale: 2, useCORS: true, logging: false, width: wrapW, height: wrapH });
-        cv.id = 'captured-canvas-seating';
-        cv.className = 'shadow-2xl rounded-lg border border-zinc-200';
+      // Serialize SVG and show as image
+      const serializer = new XMLSerializer();
+      const svgStr = serializer.serializeToString(svg);
+      const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+
+      // Create an image from the SVG for download compatibility
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = W * 2; canvas.height = H * 2;
+        canvas.id = 'captured-canvas-seating';
+        canvas.className = 'shadow-2xl rounded-lg border border-zinc-200';
+        canvas.style.maxWidth = '100%';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
         previewBox.innerHTML = '';
-        previewBox.appendChild(cv);
-      } catch (err) {
-        console.error(err);
-        previewBox.innerHTML = '<div class="text-[#F92672] p-10 text-center font-bold">Error rendering seating preview.</div>';
-      } finally {
-        if (document.body.contains(wrap)) document.body.removeChild(wrap);
-      }
+        previewBox.appendChild(canvas);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        // Fallback: show SVG directly
+        previewBox.innerHTML = '';
+        svg.style.maxWidth = '100%';
+        previewBox.appendChild(svg);
+      };
+      img.src = url;
     }
     // ---- Mobile pinch-to-zoom ----
     (function () {
