@@ -12,6 +12,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Polyfill to enable HTML5 drag and drop on Mobile Touchscreens -->
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <!-- Favicon -->
     <link
       rel="apple-touch-icon"
@@ -31,10 +35,7 @@
       href="favicons/favicon-16x16.png"
     />
     <link rel="manifest" href="favicons/site.webmanifest" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+
     <script>
       tailwind.config = {
         theme: {
@@ -8213,7 +8214,7 @@
           menu.appendChild(btn);
         };
 
-        if (!seat.manual)
+        if (!seat.manual && (seat.w > SGRID || seat.h > SGRID))
           addItem("Split into seats…", () => promptSplitSeat(seatId));
         if (seat.manual)
           addItem("Edit label", () => {
