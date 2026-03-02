@@ -393,15 +393,24 @@
         #export-preview-toggle {
           display: none !important;
         }
+        /* Let the container shrink to fit content instead of filling the screen */
         #export-preview-container {
+          flex: none !important;
+          min-height: 0 !important;
           align-items: flex-start !important;
           justify-content: flex-start !important;
-          padding: 12px !important;
+          padding: 8px !important;
         }
         #export-preview {
           width: 100% !important;
           will-change: transform;
           touch-action: none;
+        }
+        /* Scale SVG/canvas inside preview to fill container width, height auto */
+        #export-preview svg,
+        #export-preview canvas {
+          width: 100% !important;
+          height: auto !important;
         }
       }
 
