@@ -2004,8 +2004,8 @@
           <div
             class="bg-zinc-900 p-5 sm:p-6 rounded-xl border border-zinc-700 shadow-xl mb-6 flex flex-col gap-4"
           >
-            <!-- Toggle: Teams vs Seating -->
-            <div class="flex items-center gap-2">
+            <!-- Toggle: Teams vs Seating (hidden on mobile) -->
+            <div class="hidden md:flex items-center gap-2">
               <span
                 class="text-xs text-zinc-500 font-bold uppercase tracking-wider"
                 >Preview:</span
@@ -3934,11 +3934,17 @@
         }
 
         document.querySelectorAll(".editor-tab").forEach((btn) => {
+          const isSeating = btn.id === "nav-tab5";
+          const mobileHide = isSeating ? "hidden md:block " : "";
           btn.className =
-            "editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap";
+            "editor-tab " +
+            mobileHide +
+            "px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap";
           if (btn.id === "nav-" + tabId) {
             btn.className =
-              "editor-tab active px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium transition whitespace-nowrap";
+              "editor-tab " +
+              mobileHide +
+              "active px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium transition whitespace-nowrap";
           }
         });
       }
