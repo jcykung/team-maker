@@ -7,25 +7,6 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Team Maker</title>
-    <!-- Favicon -->
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="favicons/apple-touch-icon.png"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="favicons/favicon-32x32.png"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="16x16"
-      href="favicons/favicon-16x16.png"
-    />
-    <link rel="manifest" href="favicons/site.webmanifest" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -415,6 +396,18 @@
         transition: transform 0.05s;
       }
 
+      /* Mobile: push canvas below nav (44px) + mobile topbar (48px) */
+      @media (max-width: 767px) {
+        #seating-canvas-container {
+          padding-top: 48px;
+        }
+        /* Mobile active tool highlight in bottom sheet */
+        .seat-m-tool-btn.seat-m-active {
+          filter: brightness(1.25);
+          box-shadow: 0 0 0 2px currentColor;
+        }
+      }
+
       .seat-el {
         box-sizing: border-box;
         transition: box-shadow 0.1s;
@@ -563,13 +556,7 @@
     <!-- Floating Textbox Toolbar for Seating Canvas -->
     <div
       id="seat-tb-floating-toolbar"
-      onmousedown="
-        if (
-          event.target.tagName !== 'SELECT' &&
-          event.target.tagName !== 'INPUT'
-        )
-          event.preventDefault();
-      "
+      onmousedown="event.preventDefault()"
       style="
         display: none;
         position: fixed;
@@ -1471,7 +1458,7 @@
         <!-- SEATING SIDEBAR -->
         <div
           id="seat-sidebar"
-          class="border-r border-zinc-700 flex flex-col h-[48dvh] md:h-full z-10 bg-zinc-900 shadow-xl relative flex-shrink-0 w-full md:w-[300px]"
+          class="border-r border-zinc-700 hidden md:flex flex-col md:h-full z-10 bg-zinc-900 shadow-xl relative flex-shrink-0 md:w-[300px]"
         >
           <!-- Actions -->
           <div
@@ -1945,6 +1932,373 @@
           id="seating-canvas-container"
           class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto"
         >
+          <!-- ══ MOBILE TOP BAR ══ -->
+          <div
+            id="seat-m-topbar"
+            class="md:hidden fixed top-[44px] left-0 right-0 z-40 flex items-center gap-2 px-3 h-12 bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-700 shadow-lg"
+          >
+            <div class="flex items-center gap-1.5 flex-1 min-w-0">
+              <span
+                class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider shrink-0"
+                >Tool:</span
+              >
+              <span
+                id="seat-m-tool-label"
+                class="text-xs font-bold truncate"
+                style="color: #a6e22e"
+                >Select</span
+              >
+            </div>
+            <button
+              id="seat-m-undo"
+              onclick="seatUndo()"
+              disabled
+              style="opacity: 0.3"
+              class="w-9 h-9 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-zinc-400 active:bg-zinc-700 shrink-0"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 7v6h6" />
+                <path d="M3 13C5.4 7.4 11.5 4 18 6.4A9 9 0 0 1 21 17" />
+              </svg>
+            </button>
+            <button
+              id="seat-m-redo"
+              onclick="seatRedo()"
+              disabled
+              style="opacity: 0.3"
+              class="w-9 h-9 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-zinc-400 active:bg-zinc-700 shrink-0"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 7v6h-6" />
+                <path d="M21 13C18.6 7.4 12.5 4 6 6.4A9 9 0 0 0 3 17" />
+              </svg>
+            </button>
+            <button
+              id="seat-m-primary"
+              onclick="seatPrimaryAction()"
+              class="h-9 px-3 bg-[#A6E22E] text-zinc-900 rounded font-bold text-xs active:bg-[#8cc026] shrink-0"
+            >
+              Load Roster
+            </button>
+            <button
+              onclick="seatMPanelToggle()"
+              class="w-9 h-9 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-[#FD971F] active:bg-zinc-700 shrink-0"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- ══ MOBILE BOTTOM SHEET ══ -->
+          <div
+            id="seat-m-backdrop"
+            onclick="seatMPanelClose()"
+            class="md:hidden fixed inset-0 z-[60] bg-black/50 hidden"
+          ></div>
+          <div
+            id="seat-m-sheet"
+            class="md:hidden fixed bottom-0 left-0 right-0 z-[61] bg-zinc-900 border-t-2 border-zinc-600 rounded-t-2xl shadow-2xl translate-y-full"
+            style="
+              transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+              max-height: 78dvh;
+              padding-bottom: max(16px, env(safe-area-inset-bottom));
+            "
+          >
+            <!-- Handle -->
+            <div
+              class="flex justify-center pt-2.5 pb-1 cursor-pointer"
+              onclick="seatMPanelClose()"
+            >
+              <div class="w-10 h-1 bg-zinc-600 rounded-full"></div>
+            </div>
+            <!-- Tab strip -->
+            <div class="flex border-b border-zinc-700 px-2">
+              <button
+                onclick="seatMSetTab('tools')"
+                id="seat-m-tab-tools"
+                class="flex-1 py-2 text-xs font-bold border-b-2 border-[#A6E22E] text-[#A6E22E]"
+              >
+                🔧 Tools
+              </button>
+              <button
+                onclick="seatMSetTab('staging')"
+                id="seat-m-tab-staging"
+                class="flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-zinc-400"
+              >
+                Staging
+                <span
+                  id="seat-m-staging-count"
+                  class="text-[10px] bg-zinc-800 px-1 rounded font-mono ml-0.5"
+                  >0</span
+                >
+              </button>
+              <button
+                onclick="seatMSetTab('pairs')"
+                id="seat-m-tab-pairs"
+                class="flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-zinc-400"
+              >
+                Pairs
+                <span
+                  id="seat-m-pairs-count"
+                  class="text-[10px] bg-zinc-800 px-1 rounded font-mono ml-0.5"
+                  >0</span
+                >
+              </button>
+            </div>
+
+            <!-- TOOLS PANEL -->
+            <div
+              id="seat-m-panel-tools"
+              class="overflow-y-auto"
+              style="max-height: calc(78dvh - 98px)"
+            >
+              <div class="p-3 grid grid-cols-3 gap-2">
+                <button
+                  onclick="
+                    setTool('select');
+                    seatMPanelClose();
+                  "
+                  data-m-tool="select"
+                  class="seat-m-tool-btn col-span-3 bg-zinc-800 border border-[#A6E22E]/40 text-[#A6E22E] py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 active:opacity-70"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"
+                    />
+                  </svg>
+                  Select / Move
+                </button>
+                <button
+                  onclick="
+                    setTool('sq1');
+                    seatMPanelClose();
+                  "
+                  data-m-tool="sq1"
+                  class="seat-m-tool-btn bg-zinc-800 border border-[#66D9EF]/40 text-[#66D9EF] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <rect
+                      x="4"
+                      y="4"
+                      width="16"
+                      height="16"
+                      rx="2"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  Square
+                </button>
+                <button
+                  onclick="
+                    setTool('ci1');
+                    seatMPanelClose();
+                  "
+                  data-m-tool="ci1"
+                  class="seat-m-tool-btn bg-zinc-800 border border-[#AE81FF]/40 text-[#AE81FF] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle cx="12" cy="12" r="9" stroke-width="2" />
+                  </svg>
+                  Circle
+                </button>
+                <button
+                  onclick="
+                    setTool('eraser');
+                    seatMPanelClose();
+                  "
+                  data-m-tool="eraser"
+                  class="seat-m-tool-btn bg-zinc-800 border border-[#F92672]/40 text-[#F92672] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  Delete
+                </button>
+                <button
+                  onclick="
+                    setTool('manSq');
+                    seatMPanelClose();
+                  "
+                  data-m-tool="manSq"
+                  class="seat-m-tool-btn bg-zinc-800 border border-[#FD971F]/40 text-[#FD971F] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <rect
+                      x="4"
+                      y="4"
+                      width="16"
+                      height="16"
+                      rx="2"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  Label □
+                </button>
+                <button
+                  onclick="
+                    setTool('manCi');
+                    seatMPanelClose();
+                  "
+                  data-m-tool="manCi"
+                  class="seat-m-tool-btn bg-zinc-800 border border-[#FD971F]/40 text-[#FD971F] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle cx="12" cy="12" r="9" stroke-width="2" />
+                  </svg>
+                  Label ○
+                </button>
+              </div>
+              <div
+                class="px-3 pb-4 grid grid-cols-2 gap-2 border-t border-zinc-800 pt-3"
+              >
+                <button
+                  id="seat-m-snap"
+                  onclick="
+                    toggleSeatSnap();
+                    seatMSyncSnap();
+                  "
+                  class="bg-zinc-800 border border-[#A6E22E]/50 text-[#A6E22E] py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 active:opacity-70"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 6h16M4 12h8m-8 6h16"
+                    />
+                  </svg>
+                  Snap On
+                </button>
+                <button
+                  onclick="clearAllSeats()"
+                  class="bg-zinc-800 border border-zinc-700 text-[#F92672] py-2.5 rounded-lg text-xs font-bold active:opacity-70"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+
+            <!-- STAGING PANEL -->
+            <div
+              id="seat-m-panel-staging"
+              class="hidden overflow-y-auto p-3 pb-4"
+              style="max-height: calc(78dvh - 98px)"
+            >
+              <p class="text-[10px] text-zinc-500 italic mb-2.5">
+                Drag a name onto a seat on the canvas to assign it.
+              </p>
+              <div
+                id="seat-m-staging-list"
+                class="grid grid-cols-2 gap-1.5"
+              ></div>
+            </div>
+
+            <!-- PAIRS / CONSTRAINTS PANEL -->
+            <div
+              id="seat-m-panel-pairs"
+              class="hidden overflow-y-auto p-3 pb-4"
+              style="max-height: calc(78dvh - 98px)"
+            >
+              <div class="flex gap-2 mb-2">
+                <select
+                  id="seat-m-cs1"
+                  class="flex-1 min-w-0 bg-zinc-950 border border-zinc-700 text-[#E6DB74] text-xs rounded p-2 outline-none"
+                ></select>
+                <select
+                  id="seat-m-cs2"
+                  class="flex-1 min-w-0 bg-zinc-950 border border-zinc-700 text-[#E6DB74] text-xs rounded p-2 outline-none"
+                ></select>
+              </div>
+              <div class="flex gap-2 mb-3">
+                <button
+                  onclick="seatMAddConstraint('together')"
+                  class="flex-1 bg-zinc-800 border border-zinc-700 text-[#A6E22E] text-xs py-2 rounded font-bold active:opacity-70"
+                >
+                  + Together
+                </button>
+                <button
+                  onclick="seatMAddConstraint('apart')"
+                  class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F92672] text-xs py-2 rounded font-bold active:opacity-70"
+                >
+                  + Apart
+                </button>
+              </div>
+              <ul id="seat-m-pairs-list" class="space-y-1.5 text-xs"></ul>
+            </div>
+          </div>
+
           <!-- Floating Exit Projector Button -->
           <button
             id="seat-exit-fullscreen-btn"
@@ -2291,7 +2645,7 @@
                         <tr>
                           <td class="py-1 pr-4 whitespace-nowrap">
                             <kbd
-                              class="bg-zinc-900 border border-zinc-600 text-[#66D9EF] px-2 py-0.5 rounded font-mono shadow-sm"
+                              class="bg-zinc-900 border border-zinc-600 text-[#A6E22E] px-2 py-0.5 rounded font-mono shadow-sm"
                               >V</kbd
                             >
                           </td>
@@ -2324,7 +2678,9 @@
                               >U</kbd
                             >
                           </td>
-                          <td class="py-1 text-zinc-300">Unoccupied square</td>
+                          <td class="py-1 text-zinc-300">
+                            Label square (unoccupied)
+                          </td>
                         </tr>
                         <tr>
                           <td class="py-1 pr-4 whitespace-nowrap">
@@ -2333,7 +2689,9 @@
                               >O</kbd
                             >
                           </td>
-                          <td class="py-1 text-zinc-300">Unoccupied circle</td>
+                          <td class="py-1 text-zinc-300">
+                            Label circle (unoccupied)
+                          </td>
                         </tr>
                         <tr>
                           <td class="py-1 pr-4 whitespace-nowrap">
@@ -2344,7 +2702,7 @@
                           </td>
                           <td class="py-1 text-zinc-300">
                             Text Box
-                            <span class="text-zinc-500">(desktop)</span>
+                            <span class="text-zinc-500">(desktop only)</span>
                           </td>
                         </tr>
                         <tr>
@@ -2364,26 +2722,17 @@
                             >
                           </td>
                           <td class="py-1 text-zinc-300">
-                            Delete selected seat / textbox
+                            Delete selected seat or text box
                           </td>
                         </tr>
                         <tr>
                           <td class="py-1 pr-4 whitespace-nowrap">
                             <kbd
                               class="bg-zinc-900 border border-zinc-600 text-zinc-300 px-2 py-0.5 rounded font-mono shadow-sm"
-                              >Ctrl+Z</kbd
+                              >Ctrl+Z / Ctrl+Y</kbd
                             >
                           </td>
-                          <td class="py-1 text-zinc-300">Undo</td>
-                        </tr>
-                        <tr>
-                          <td class="py-1 pr-4 whitespace-nowrap">
-                            <kbd
-                              class="bg-zinc-900 border border-zinc-600 text-zinc-300 px-2 py-0.5 rounded font-mono shadow-sm"
-                              >Ctrl+Y</kbd
-                            >
-                          </td>
-                          <td class="py-1 text-zinc-300">Redo</td>
+                          <td class="py-1 text-zinc-300">Undo / Redo</td>
                         </tr>
                       </tbody>
                     </table>
@@ -2393,51 +2742,85 @@
                     <span class="text-[#66D9EF]">Square</span> or
                     <span class="text-[#AE81FF]">Circle</span> and click to
                     place a seat, or click-and-drag to paint a row.
-                    <span class="text-[#FD971F]">Unoccupied □/○</span> places a
-                    shape with a custom label (e.g. "Teacher's Desk") that won't
-                    be assigned a student. Use
+                    <span class="text-[#FD971F]">Label □/○</span> places a shape
+                    with a custom label (e.g. "Teacher's Desk") that won't be
+                    assigned a student. Use
                     <span class="text-[#E6DB74]">Text Box</span> to add
                     free-floating labels on desktop.
                   </p>
                   <p>
-                    <strong>Arranging:</strong> Use the Select tool (V) to click
-                    a seat and show resize and rotate handles. Right-click any
-                    seat for options including <em>Split into seats</em>, which
-                    turns one large table into labeled sections — rectangular
-                    tables spread names side by side, circular tables arrange
-                    them around the perimeter. After splitting, drag any name
-                    chip freely within the table.
+                    <strong>Selecting &amp; Arranging:</strong> With the Select
+                    tool active, click a seat to show resize handles and a
+                    rotation dot — hover the dot to reveal the rotation arrow.
+                    Drag an empty area on the canvas to draw a selection box;
+                    all seats and text boxes inside highlight in
+                    <span class="text-[#A6E22E] font-semibold">green</span> and
+                    can be moved together as a group. Right-click any seat for
+                    options. <em>Split into seats</em> (available on larger
+                    tables only) divides one table into labelled sections —
+                    rectangular tables spread names side by side, circular
+                    tables arrange them around the perimeter. After splitting,
+                    drag name chips freely within that table.
                   </p>
                   <p>
                     <strong>Assigning:</strong> Press
                     <strong>Load Roster</strong> to populate the staging area,
                     then <strong>Assign Seats</strong> to auto-assign everyone.
-                    Constraints apply: <em>Together</em> means adjacent seats
-                    (touching), <em>Apart</em> means opposite sides of the room.
-                    After assigning, drag any name chip between seats or to the
-                    staging area to adjust. Click <strong>×</strong> on any chip
-                    to return that student to the staging area.
+                    Constraints apply:
+                    <span class="text-[#A6E22E] font-semibold">Together</span>
+                    places the pair in adjacent seats;
+                    <span class="text-[#F92672] font-semibold">Apart</span>
+                    places them on opposite sides of the room. Constraint pairs
+                    are shown with
+                    <span class="text-[#A6E22E] font-semibold"
+                      >green names</span
+                    >
+                    for Together and
+                    <span class="text-[#F92672] font-semibold">pink names</span>
+                    for Apart, so you can see them at a glance. After assigning,
+                    drag any name chip onto another chip to swap them — chips
+                    snap back if dropped on empty canvas. Click
+                    <strong>×</strong> on any chip to return that student to
+                    staging.
                   </p>
                   <div
                     class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
                   >
                     <p
-                      class="text-xs font-bold text-[#A6E22E] uppercase tracking-wider"
+                      class="text-xs font-bold text-[#66D9EF] uppercase tracking-wider"
                     >
-                      📐 Tips
+                      💻 On Desktop
                     </p>
                     <p class="text-sm text-zinc-300">
-                      <strong>Snap On</strong> keeps seats aligned to the grid.
-                      <strong>Ctrl+scroll</strong> or trackpad pinch to zoom —
-                      the grid scales with zoom. Press
-                      <kbd class="bg-zinc-700 px-1 rounded text-[10px]"
-                        >Delete</kbd
-                      >
-                      or
-                      <kbd class="bg-zinc-700 px-1 rounded text-[10px]"
-                        >Backspace</kbd
-                      >
-                      while a seat is selected to remove it.
+                      The sidebar contains all tools, constraints, and the
+                      staging area. <strong>Snap On</strong> keeps seats aligned
+                      to the grid. <strong>Ctrl+scroll</strong> to zoom — the
+                      grid, seats, and text boxes all scale together. Use
+                      <strong>Projector Mode</strong> to go fullscreen for
+                      display on a classroom screen.
+                    </p>
+                  </div>
+                  <div
+                    class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
+                  >
+                    <p
+                      class="text-xs font-bold text-[#E6DB74] uppercase tracking-wider"
+                    >
+                      📱 On Phone
+                    </p>
+                    <p class="text-sm text-zinc-300">
+                      The canvas fills the full screen for maximum drawing
+                      space. A slim <strong>top bar</strong> shows the active
+                      tool name, undo/redo buttons, the primary action (Load
+                      Roster / Assign Seats), and a
+                      <strong>☰ menu</strong> button. Tap ☰ to open the bottom
+                      panel, which has three tabs:
+                      <strong>Tools</strong> (switch tool, toggle snap, clear
+                      all), <strong>Staging</strong> (unassigned members — drag
+                      a name chip from here onto a seat on the canvas), and
+                      <strong>Pairs</strong> (manage Together/Apart
+                      constraints). Tapping a tool closes the panel
+                      automatically so you can get straight back to drawing.
                     </p>
                   </div>
                 </div>
@@ -2772,6 +3155,7 @@
           r.disabled = seatRedoStack.length === 0;
           r.style.opacity = r.disabled ? "0.3" : "1";
         }
+        seatMSyncUndoRedo();
       }
 
       let hasUnsavedChanges = false;
@@ -2852,7 +3236,10 @@
           `scale(${canvasZoom})`;
         document.getElementById("canvas-zoom-label").innerText =
           Math.round(canvasZoom * 100) + "%";
-        // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
+        const cc = document.getElementById("canvas-area");
+        if (cc)
+          cc.style.backgroundSize =
+            CANVAS_GRID * canvasZoom + "px " + CANVAS_GRID * canvasZoom + "px";
       }
 
       let exportPanX = 0,
@@ -3937,7 +4324,8 @@
 
         if (tabId === "tab3") {
           setExportZoom(1);
-          if (currentExportMode === "teams") generateCleanPrintPreview(bounds);
+          if (currentExportMode === "teams")
+            await generateCleanPrintPreview(bounds);
           else await generateSeatPrintPreview();
         }
 
@@ -3975,191 +4363,131 @@
         return { width: maxX, height: maxY };
       }
 
-      function generateCleanPrintPreview(bounds) {
+      async function generateCleanPrintPreview(bounds) {
         exportPanX = 0;
-        exportPanY = 0;
+        exportPanY = 0; // reset pan on new preview
         const previewBox = document.getElementById("export-preview");
-        previewBox.innerHTML = "";
+        previewBox.innerHTML =
+          '<div class="text-[#66D9EF] flex flex-col items-center justify-center p-10 transform -translate-y-[3px]"><svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-[#66D9EF] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Generating Print View...</span></div>';
 
-        const PAD = 40;
-        const W = bounds.width + PAD * 2;
-        const H = bounds.height + PAD * 2;
-        const svgNS = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute("xmlns", svgNS);
-        svg.setAttribute("width", W);
-        svg.setAttribute("height", H);
-        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-        svg.id = "captured-canvas";
-        svg.style.cssText =
-          "background:#ffffff;border-radius:8px;display:block;box-shadow:0 4px 24px rgba(0,0,0,0.18);max-width:100%;";
-
-        // White background rect
-        const bg = document.createElementNS(svgNS, "rect");
-        bg.setAttribute("width", W);
-        bg.setAttribute("height", H);
-        bg.setAttribute("fill", "#ffffff");
-        svg.appendChild(bg);
-
-        const CARD_W = 240;
-        const HEADER_H = 56;
-        const ROW_H = 34;
-        const RADIUS = 8;
-
-        function esc(str) {
-          return String(str || "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
-        }
+        const exportCanvas = document.createElement("div");
+        exportCanvas.style.position = "absolute";
+        exportCanvas.style.top = "-9999px";
+        exportCanvas.style.left = "-9999px";
+        exportCanvas.style.width = bounds.width + 80 + "px";
+        exportCanvas.style.height = bounds.height + 80 + "px";
+        exportCanvas.style.backgroundColor = "#ffffff";
+        exportCanvas.style.fontFamily = "'Inter', sans-serif";
 
         teams.forEach((g) => {
+          const gDiv = document.createElement("div");
           const c = exportTeamColors[g.colorIndex || 0];
-          const cardH = HEADER_H + g.members.length * ROW_H + 8;
-          const cx = g.x + PAD;
-          const cy = g.y + PAD;
 
-          // Card background
-          const cardBg = document.createElementNS(svgNS, "rect");
-          cardBg.setAttribute("x", cx);
-          cardBg.setAttribute("y", cy);
-          cardBg.setAttribute("width", CARD_W);
-          cardBg.setAttribute("height", cardH);
-          cardBg.setAttribute("rx", RADIUS);
-          cardBg.setAttribute("ry", RADIUS);
-          cardBg.setAttribute("fill", "#ffffff");
-          cardBg.setAttribute("stroke", c.border);
-          cardBg.setAttribute("stroke-width", "2");
-          svg.appendChild(cardBg);
+          gDiv.style.position = "absolute";
+          gDiv.style.left = g.x + "px";
+          gDiv.style.top = g.y + "px";
+          gDiv.style.width = "240px";
+          gDiv.style.border = "2px solid " + c.border;
+          gDiv.style.borderRadius = "8px";
+          gDiv.style.backgroundColor = "#ffffff";
+          gDiv.style.overflow = "hidden";
 
-          // Header background (clipped to top rounded corners)
-          const headClipId = "hc_" + g.id;
-          const defs = document.createElementNS(svgNS, "defs");
-          const clipPath = document.createElementNS(svgNS, "clipPath");
-          clipPath.setAttribute("id", headClipId);
-          const clipRect = document.createElementNS(svgNS, "rect");
-          clipRect.setAttribute("x", cx);
-          clipRect.setAttribute("y", cy);
-          clipRect.setAttribute("width", CARD_W);
-          clipRect.setAttribute("height", HEADER_H);
-          clipRect.setAttribute("rx", RADIUS);
-          clipRect.setAttribute("ry", RADIUS);
-          clipPath.appendChild(clipRect);
-          // Extra rect to square off the bottom corners of the header clip
-          const clipFill = document.createElementNS(svgNS, "rect");
-          clipFill.setAttribute("x", cx);
-          clipFill.setAttribute("y", cy + RADIUS);
-          clipFill.setAttribute("width", CARD_W);
-          clipFill.setAttribute("height", HEADER_H - RADIUS);
-          clipPath.appendChild(clipFill);
-          defs.appendChild(clipPath);
-          svg.appendChild(defs);
+          const header = document.createElement("div");
+          header.style.backgroundColor = c.bg;
+          header.style.borderBottom = "2px solid " + c.border;
+          header.style.padding = "12px 16px";
 
-          const headerBg = document.createElementNS(svgNS, "rect");
-          headerBg.setAttribute("x", cx);
-          headerBg.setAttribute("y", cy);
-          headerBg.setAttribute("width", CARD_W);
-          headerBg.setAttribute("height", HEADER_H);
-          headerBg.setAttribute("fill", c.bg);
-          headerBg.setAttribute("clip-path", `url(#${headClipId})`);
-          svg.appendChild(headerBg);
+          const titleDiv = document.createElement("div");
+          titleDiv.style.fontWeight = "700";
+          titleDiv.style.fontSize = "16px";
+          titleDiv.style.color = c.text;
+          titleDiv.style.marginBottom = "2px";
+          titleDiv.innerText = g.name;
 
-          // Header border bottom line
-          const hLine = document.createElementNS(svgNS, "line");
-          hLine.setAttribute("x1", cx);
-          hLine.setAttribute("y1", cy + HEADER_H);
-          hLine.setAttribute("x2", cx + CARD_W);
-          hLine.setAttribute("y2", cy + HEADER_H);
-          hLine.setAttribute("stroke", c.border);
-          hLine.setAttribute("stroke-width", "2");
-          svg.appendChild(hLine);
+          const tallyDiv = document.createElement("div");
+          tallyDiv.style.fontSize = "12px";
+          tallyDiv.style.color = "#64748b";
+          tallyDiv.innerText = `${g.members.length} Members`;
 
-          // Team name
-          const titleT = document.createElementNS(svgNS, "text");
-          titleT.setAttribute("x", cx + 14);
-          titleT.setAttribute("y", cy + 24);
-          titleT.setAttribute("font-family", "Inter, Arial, sans-serif");
-          titleT.setAttribute("font-size", "15");
-          titleT.setAttribute("font-weight", "700");
-          titleT.setAttribute("fill", c.text);
-          titleT.textContent = esc(g.name);
-          svg.appendChild(titleT);
+          header.appendChild(titleDiv);
+          header.appendChild(tallyDiv);
+          gDiv.appendChild(header);
 
-          // Member count
-          const tallyT = document.createElementNS(svgNS, "text");
-          tallyT.setAttribute("x", cx + 14);
-          tallyT.setAttribute("y", cy + 42);
-          tallyT.setAttribute("font-family", "Inter, Arial, sans-serif");
-          tallyT.setAttribute("font-size", "11");
-          tallyT.setAttribute("fill", "#64748b");
-          tallyT.textContent = `${g.members.length} Members`;
-          svg.appendChild(tallyT);
+          const content = document.createElement("div");
+          content.style.padding = "8px";
 
-          // Members
-          g.members.forEach((sId, i) => {
-            const rowY = cy + HEADER_H + i * ROW_H;
+          g.members.forEach((sId, index) => {
+            const sDiv = document.createElement("div");
+            sDiv.style.padding = "8px 12px";
+            sDiv.style.fontSize = "14px";
+            sDiv.style.color = "#334155";
+            sDiv.style.fontWeight = "500";
+            sDiv.style.lineHeight = "1.4";
 
-            // Divider (skip first)
-            if (i > 0) {
-              const div = document.createElementNS(svgNS, "line");
-              div.setAttribute("x1", cx + 8);
-              div.setAttribute("y1", rowY);
-              div.setAttribute("x2", cx + CARD_W - 8);
-              div.setAttribute("y2", rowY);
-              div.setAttribute("stroke", "#e2e8f0");
-              div.setAttribute("stroke-width", "1");
-              svg.appendChild(div);
+            if (index < g.members.length - 1) {
+              sDiv.style.borderBottom = "1px solid #e2e8f0";
             }
 
-            const memberT = document.createElementNS(svgNS, "text");
-            memberT.setAttribute("x", cx + 14);
-            memberT.setAttribute("y", rowY + 22);
-            memberT.setAttribute("font-family", "Inter, Arial, sans-serif");
-            memberT.setAttribute("font-size", "13");
-            memberT.setAttribute("font-weight", "500");
-            memberT.setAttribute("fill", "#334155");
-            memberT.textContent = esc(getMemberName(sId));
-            svg.appendChild(memberT);
+            sDiv.innerText = getMemberName(sId);
+            content.appendChild(sDiv);
           });
+
+          gDiv.appendChild(content);
+          exportCanvas.appendChild(gDiv);
         });
 
-        // Textboxes
+        // Add textboxes to export
         textboxes
           .filter((t) => t.canvas === "teams")
           .forEach((t) => {
-            const g = document.createElementNS(svgNS, "g");
-            const rot = t.rotation || 0;
-            const tx = (t.x || 0) + PAD;
-            const ty = (t.y || 0) + PAD;
-            if (rot !== 0) {
-              g.setAttribute("transform", `rotate(${rot}, ${tx}, ${ty})`);
-            }
-            const lines = (t.text || "").split("\n");
-            const fs = t.size || 16;
-            lines.forEach((line, li) => {
-              const tEl = document.createElementNS(svgNS, "text");
-              tEl.setAttribute("x", tx);
-              tEl.setAttribute("y", ty + li * (fs * 1.3) + fs);
-              tEl.setAttribute(
-                "font-family",
-                (t.font || "Inter") + ", Arial, sans-serif",
-              );
-              tEl.setAttribute("font-size", fs);
-              tEl.setAttribute("font-weight", t.bold ? "700" : "400");
-              tEl.setAttribute("font-style", t.italic ? "italic" : "normal");
-              tEl.setAttribute(
-                "text-decoration",
-                t.underline ? "underline" : "none",
-              );
-              tEl.setAttribute("fill", "#1e293b");
-              tEl.textContent = esc(line);
-              g.appendChild(tEl);
-            });
-            svg.appendChild(g);
+            const tbDiv = document.createElement("div");
+            tbDiv.style.cssText = [
+              `position:absolute`,
+              `left:${t.x}px`,
+              `top:${t.y}px`,
+              t.w ? `width:${t.w}px` : "width:auto",
+              `padding:6px 10px`,
+              `box-sizing:border-box`,
+              `transform:rotate(${t.rotation || 0}deg)`,
+              `transform-origin:center center`,
+              `font-family:${t.font || "Inter"},sans-serif`,
+              `font-size:${t.size || 16}px`,
+              `font-weight:${t.bold ? "bold" : "normal"}`,
+              `font-style:${t.italic ? "italic" : "normal"}`,
+              `text-decoration:${t.underline ? "underline" : "none"}`,
+              `color:#1e293b`,
+              `white-space:pre-wrap`,
+              `word-break:normal`,
+            ].join(";");
+            tbDiv.innerText = t.text || "";
+            exportCanvas.appendChild(tbDiv);
           });
 
-        previewBox.appendChild(svg);
+        document.body.appendChild(exportCanvas);
+        await new Promise((r) => setTimeout(r, 100));
+
+        try {
+          const canvasObj = await html2canvas(exportCanvas, {
+            backgroundColor: "#ffffff",
+            scale: 2,
+            width: bounds.width + 80,
+            height: bounds.height + 80,
+            logging: false,
+          });
+
+          previewBox.innerHTML = "";
+          canvasObj.style.maxWidth = "100%";
+          canvasObj.style.height = "auto";
+          canvasObj.id = "captured-canvas";
+          canvasObj.className = "shadow-2xl rounded border border-zinc-200";
+          previewBox.appendChild(canvasObj);
+        } catch (e) {
+          console.error(e);
+          previewBox.innerHTML =
+            '<div class="text-[#F92672] p-10 text-center font-bold transform -translate-y-[3px]">Error: Failed to render preview.</div>';
+        } finally {
+          document.body.removeChild(exportCanvas);
+        }
       }
 
       // ================= TAB 2 LOGIC =================
@@ -4218,15 +4546,15 @@
         if (tallyConstraints) tallyConstraints.innerText = totalConstraints;
 
         constraints.together.forEach((pair, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
-                    <span class="truncate pr-2"><span class="text-[#A6E22E] font-semibold">${getMemberName(pair[0])}</span> <span class="text-zinc-500">&</span> <span class="text-[#A6E22E] font-semibold">${getMemberName(pair[1])}</span></span>
-                    <button onclick="removeConstraint('together', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none flex-shrink-0">&times;</button>
+          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
+                    <span class="truncate pr-2">${getMemberName(pair[0])} & ${getMemberName(pair[1])} <span class="text-[#A6E22E] text-[10px] uppercase ml-1 font-bold">Together</span></span>
+                    <button onclick="removeConstraint('together', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none">&times;</button>
                 </li>`;
         });
         constraints.apart.forEach((pair, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
-                    <span class="truncate pr-2"><span class="text-[#F92672] font-semibold">${getMemberName(pair[0])}</span> <span class="text-zinc-500">&</span> <span class="text-[#F92672] font-semibold">${getMemberName(pair[1])}</span></span>
-                    <button onclick="removeConstraint('apart', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none flex-shrink-0">&times;</button>
+          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
+                    <span class="truncate pr-2">${getMemberName(pair[0])} & ${getMemberName(pair[1])} <span class="text-[#F92672] text-[10px] uppercase ml-1 font-bold">Apart</span></span>
+                    <button onclick="removeConstraint('apart', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none">&times;</button>
                 </li>`;
         });
       }
@@ -4694,73 +5022,39 @@
         link.click();
       }
 
-      // Helper: get a data URL from either a <canvas> or an <svg> element
-      async function getExportDataURL(el) {
-        if (!el) return null;
-        if (el.tagName.toLowerCase() === "canvas") {
-          return el.toDataURL("image/jpeg", 1.0);
-        }
-        // SVG → Canvas → JPEG
-        const serializer = new XMLSerializer();
-        const svgStr = serializer.serializeToString(el);
-        const blob = new Blob([svgStr], { type: "image/svg+xml" });
-        const url = URL.createObjectURL(blob);
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            const c = document.createElement("canvas");
-            c.width = el.getAttribute("width") * 2;
-            c.height = el.getAttribute("height") * 2;
-            const ctx = c.getContext("2d");
-            ctx.scale(2, 2);
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, c.width, c.height);
-            ctx.drawImage(img, 0, 0);
-            URL.revokeObjectURL(url);
-            resolve(c.toDataURL("image/jpeg", 1.0));
-          };
-          img.onerror = () => {
-            URL.revokeObjectURL(url);
-            resolve(null);
-          };
-          img.src = url;
-        });
-      }
-
-      async function downloadExportImage() {
+      function downloadExportImage() {
         const id =
           currentExportMode === "seating"
             ? "captured-canvas-seating"
             : "captured-canvas";
-        const el = document.getElementById(id);
-        if (!el) return showModal("Please wait for preview to generate.");
-        const dataURL = await getExportDataURL(el);
-        if (!dataURL) return showModal("Failed to export image.");
+        const canvas = document.getElementById(id);
+        if (!canvas) return showModal("Please wait for preview to generate.");
         const filename =
           currentExportMode === "seating"
             ? "seating-plan.jpg"
             : "team-arrangement.jpg";
-        shareOrDownload(dataURL, filename, "image/jpeg");
+        shareOrDownload(
+          canvas.toDataURL("image/jpeg", 1.0),
+          filename,
+          "image/jpeg",
+        );
       }
       function downloadImage() {
         downloadExportImage();
       }
 
-      async function downloadExportPDF() {
+      function downloadExportPDF() {
         const id =
           currentExportMode === "seating"
             ? "captured-canvas-seating"
             : "captured-canvas";
-        const el = document.getElementById(id);
-        if (!el) return showModal("Please wait for preview to generate.");
-        const imgData = await getExportDataURL(el);
-        if (!imgData) return showModal("Failed to export PDF.");
-        const w = parseInt(el.getAttribute("width") || el.width || 800);
-        const h = parseInt(el.getAttribute("height") || el.height || 600);
+        const canvas = document.getElementById(id);
+        if (!canvas) return showModal("Please wait for preview to generate.");
+        const imgData = canvas.toDataURL("image/jpeg", 1.0);
         const pdf = new window.jspdf.jsPDF("landscape", "pt", "a4");
         const pw = pdf.internal.pageSize.getWidth();
         const ph = pdf.internal.pageSize.getHeight();
-        const ratio = h / w;
+        const ratio = canvas.height / canvas.width;
         let iw = pw,
           ih = pw * ratio;
         if (ih > ph) {
@@ -4981,10 +5275,12 @@
           return;
         }
         all.forEach(({ p, i, type }) => {
-          const nameColor =
-            type === "together" ? "text-[#A6E22E]" : "text-[#F92672]";
+          const badge =
+            type === "together"
+              ? '<span class="text-[#A6E22E] font-bold uppercase text-[10px] ml-1">Together</span>'
+              : '<span class="text-[#F92672] font-bold uppercase text-[10px] ml-1">Apart</span>';
           list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
-                    <span class="truncate pr-2"><span class="${nameColor} font-semibold">${getMemberName(p[0])}</span> <span class="text-zinc-500">&</span> <span class="${nameColor} font-semibold">${getMemberName(p[1])}</span></span>
+                    <span class="truncate pr-2 text-zinc-300">${getMemberName(p[0])} & ${getMemberName(p[1])}${badge}</span>
                     <button onclick="removeMobileConstraint('${type}',${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none flex-shrink-0">&times;</button>
                 </li>`;
         });
@@ -5141,7 +5437,6 @@
 
       function blurTextboxEdit() {
         if (!editingTbId) return;
-        const prevId = editingTbId;
         const el = document.getElementById("tb-el-" + editingTbId);
         if (el) {
           const te = el.querySelector('[contenteditable="true"]');
@@ -5154,12 +5449,6 @@
         }
         editingTbId = null;
         hideSeatTbFloatingToolbar();
-        // Re-render to show resize/rotate handles now that editing stopped
-        const box = textboxes.find((t) => t.id === prevId);
-        if (box) {
-          if (box.canvas === "seating") setTimeout(() => renderSeats(), 0);
-          else setTimeout(() => renderTeams(), 0);
-        }
       }
 
       function setTeamsTextboxMode() {
@@ -5324,7 +5613,6 @@
         el.dataset.tbId = box.id;
         const isSeating = canvasId === "seating-canvas-area";
         const isSelected = box.id === selectedTextboxId;
-        const isMultiSel = isSeating && selectedSeatIds.has("_tb_" + box.id);
         const isEditing = box.id === editingTbId;
         const isEraser = isSeating && seatTool === "eraser";
         // Show handles whenever selected (not in eraser mode) for both canvases
@@ -5342,17 +5630,13 @@
           `box-sizing:border-box`,
           `transform:rotate(${box.rotation || 0}deg)`,
           `transform-origin:center center`,
-          isMultiSel
-            ? `border:1.5px solid #A6E22E`
-            : `border:1.5px ${isSelected || isEditing ? "solid #FD971F" : "dashed rgba(230,219,116,0.3)"}`,
+          `border:1.5px ${isSelected || isEditing ? "solid #FD971F" : "dashed rgba(230,219,116,0.3)"}`,
           `border-radius:4px`,
-          isMultiSel
-            ? `background:rgba(166,226,46,0.06)`
-            : `background:${isSelected || isEditing ? "rgba(230,219,116,0.06)" : "transparent"}`,
+          `background:${isSelected || isEditing ? "rgba(230,219,116,0.06)" : "transparent"}`,
           `color:#F8F8F2`,
           `cursor:${isEraser ? "cell" : isEditing ? "text" : "grab"}`,
           `user-select:none`,
-          `z-index:${isSelected || isEditing || isMultiSel ? 10 : 2}`,
+          `z-index:${isSelected || isEditing ? 10 : 2}`,
           `outline:none`,
           `position:absolute`,
           `display:inline-block`,
@@ -5472,8 +5756,7 @@
 
           clearHoverHighlight?.();
 
-          // Start drag — hide toolbar immediately (only visible during text edit)
-          hideSeatTbFloatingToolbar();
+          // Start drag
           if (isSeating) pushSeatUndoNow();
           draggingTb = box;
           tbDragStartX = ev.clientX;
@@ -5507,21 +5790,6 @@
               sEl.style.boxShadow = "";
             });
           }
-
-          // Inject resize/rotate handles directly (no re-render — re-rendering kills dblclick)
-          const clickStartX = ev.clientX,
-            clickStartY = ev.clientY;
-          const onTbMouseup = (upEv) => {
-            document.removeEventListener("mouseup", onTbMouseup);
-            const moved =
-              Math.abs(upEv.clientX - clickStartX) > 4 ||
-              Math.abs(upEv.clientY - clickStartY) > 4;
-            if (!moved) {
-              // It was a click — inject handles directly without re-rendering
-              injectTbHandles(el, box, isSeating);
-            }
-          };
-          document.addEventListener("mouseup", onTbMouseup);
         });
 
         // Resize handles — shown when selected (not eraser, not editing)
@@ -5542,7 +5810,6 @@
             h.addEventListener("mousedown", (ev) => {
               ev.stopPropagation();
               ev.preventDefault();
-              hideSeatTbFloatingToolbar();
               if (isSeating) pushSeatUndoNow(); // capture before resize
               const startX = ev.clientX,
                 startY = ev.clientY;
@@ -5571,12 +5838,8 @@
                 box.x = Math.round(nx);
                 box.y = Math.round(ny);
                 box.userResized = true;
-                if (hname.includes("n") || hname.includes("s")) {
-                  box.size = Math.max(
-                    8,
-                    Math.min(96, Math.round((nh - 20) / 1.6)),
-                  );
-                }
+                if (isSeating)
+                  box.size = Math.max(8, Math.min(96, Math.round(nh * 0.62)));
                 el.style.width = box.w + "px";
                 el.style.left = box.x + "px";
                 el.style.top = box.y + "px";
@@ -5587,6 +5850,7 @@
                   box.minH = Math.round(nh);
                   el.style.minHeight = Math.round(nh) + "px";
                 }
+                updateSeatTbFloatingToolbar(box, el);
               };
               const stopResize = () => {
                 document.removeEventListener("mousemove", doResize);
@@ -5609,33 +5873,11 @@
           rotHandle.style.cssText =
             "position:absolute;width:14px;height:14px;background:#66D9EF;border:2px solid #272822;border-radius:50%;left:calc(50% - 7px);top:-34px;cursor:grab;z-index:20;display:flex;align-items:center;justify-content:center;";
           rotHandle.title = "Drag to rotate";
-          const rotIcon = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg",
-          );
-          rotIcon.setAttribute("width", "9");
-          rotIcon.setAttribute("height", "9");
-          rotIcon.setAttribute("viewBox", "0 0 24 24");
-          rotIcon.setAttribute("fill", "none");
-          rotIcon.setAttribute("stroke", "white");
-          rotIcon.setAttribute("stroke-width", "2.5");
-          rotIcon.setAttribute("stroke-linecap", "round");
-          rotIcon.setAttribute("stroke-linejoin", "round");
-          rotIcon.style.cssText =
-            "opacity:0;transition:opacity 0.15s;pointer-events:none;";
-          rotIcon.innerHTML =
-            '<path d="M12 2a10 10 0 1 0 10 10"/><polyline points="22 2 22 12 12 12"/>';
-          rotHandle.appendChild(rotIcon);
-          rotHandle.addEventListener("mouseenter", () => {
-            rotIcon.style.opacity = "1";
-          });
-          rotHandle.addEventListener("mouseleave", () => {
-            rotIcon.style.opacity = "0";
-          });
+          rotHandle.innerHTML =
+            '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><polyline points="22 2 22 12 12 12"/></svg>';
           rotHandle.addEventListener("mousedown", (ev) => {
             ev.stopPropagation();
             ev.preventDefault();
-            hideSeatTbFloatingToolbar();
             if (isSeating) pushSeatUndoNow();
             rotHandle.style.cursor = "grabbing";
             // Re-read center after transform so pivot is always the box center
@@ -5653,6 +5895,7 @@
                   initAngle,
               );
               el.style.transform = `rotate(${box.rotation}deg)`;
+              updateSeatTbFloatingToolbar(box, el);
             };
             const stopRot = () => {
               rotHandle.style.cursor = "grab";
@@ -5696,10 +5939,6 @@
             selectedSeatId = null;
             selectedSeatIds.clear();
           }
-          // Remove any injected handles — we're in edit mode now
-          el.querySelectorAll(".tb-handle,.tb-rot-line,.tb-rot-handle").forEach(
-            (h) => h.remove(),
-          );
           // Directly activate the textEl in the existing DOM element (avoid re-render)
           const te = el.querySelector("[contenteditable]");
           if (te) {
@@ -5730,154 +5969,6 @@
         return el;
       }
 
-      // Inject resize + rotation handles into an existing tb-el DOM node (avoids re-render that kills dblclick)
-      function injectTbHandles(el, box, isSeating) {
-        // Remove any existing handles first
-        el.querySelectorAll(".tb-handle,.tb-rot-line,.tb-rot-handle").forEach(
-          (h) => h.remove(),
-        );
-        const zoom = isSeating ? seatCanvasZoom : canvasZoom;
-        [
-          ["nw", 0, 0],
-          ["n", 0.5, 0],
-          ["ne", 1, 0],
-          ["e", 1, 0.5],
-          ["se", 1, 1],
-          ["s", 0.5, 1],
-          ["sw", 0, 1],
-          ["w", 0, 0.5],
-        ].forEach(([hname, cx, cy]) => {
-          const h = document.createElement("div");
-          h.className = "tb-handle";
-          h.style.cssText = `position:absolute;width:10px;height:10px;background:#FD971F;border:2px solid #272822;border-radius:2px;left:calc(${cx * 100}% - 5px);top:calc(${cy * 100}% - 5px);cursor:${hname}-resize;z-index:20;`;
-          h.addEventListener("mousedown", (ev) => {
-            ev.stopPropagation();
-            ev.preventDefault();
-            hideSeatTbFloatingToolbar();
-            if (isSeating) pushSeatUndoNow();
-            const startX = ev.clientX,
-              startY = ev.clientY;
-            const initW = el.offsetWidth,
-              initH = el.offsetHeight;
-            const initBX = box.x,
-              initBY = box.y;
-            const doResize = (ev2) => {
-              const dx = (ev2.clientX - startX) / zoom;
-              const dy = (ev2.clientY - startY) / zoom;
-              let nw = initW,
-                nh = initH,
-                nx = initBX,
-                ny = initBY;
-              if (hname.includes("e")) nw = Math.max(60, initW + dx);
-              if (hname.includes("s")) nh = Math.max(20, initH + dy);
-              if (hname.includes("w")) {
-                nw = Math.max(60, initW - dx);
-                nx = initBX + dx;
-              }
-              if (hname.includes("n")) {
-                nh = Math.max(20, initH - dy);
-                ny = initBY + dy;
-              }
-              box.w = Math.round(nw);
-              box.x = Math.round(nx);
-              box.y = Math.round(ny);
-              box.userResized = true;
-              if (hname.includes("n") || hname.includes("s")) {
-                box.size = Math.max(
-                  8,
-                  Math.min(96, Math.round((nh - 20) / 1.6)),
-                );
-              }
-              el.style.width = box.w + "px";
-              el.style.left = box.x + "px";
-              el.style.top = box.y + "px";
-              const tEl = el.querySelector("[contenteditable]");
-              if (tEl) tEl.style.width = box.w - 20 + "px";
-              applyTbStyle(el, box);
-              if (nh > 20) {
-                box.minH = Math.round(nh);
-                el.style.minHeight = Math.round(nh) + "px";
-              }
-            };
-            const stopResize = () => {
-              document.removeEventListener("mousemove", doResize);
-              document.removeEventListener("mouseup", stopResize);
-              markUnsaved();
-              if (isSeating) renderSeats();
-              else renderTeams();
-            };
-            document.addEventListener("mousemove", doResize);
-            document.addEventListener("mouseup", stopResize);
-          });
-          el.appendChild(h);
-        });
-        // Rotation handle
-        const rotLine = document.createElement("div");
-        rotLine.className = "tb-rot-line";
-        rotLine.style.cssText =
-          "position:absolute;width:2px;height:18px;background:#66D9EF;left:calc(50% - 1px);top:-20px;pointer-events:none;z-index:19;";
-        const rotHandle = document.createElement("div");
-        rotHandle.className = "tb-rot-handle";
-        rotHandle.style.cssText =
-          "position:absolute;width:14px;height:14px;background:#66D9EF;border:2px solid #272822;border-radius:50%;left:calc(50% - 7px);top:-34px;cursor:grab;z-index:20;display:flex;align-items:center;justify-content:center;";
-        rotHandle.title = "Drag to rotate";
-        const rotIcon2 = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "svg",
-        );
-        rotIcon2.setAttribute("width", "9");
-        rotIcon2.setAttribute("height", "9");
-        rotIcon2.setAttribute("viewBox", "0 0 24 24");
-        rotIcon2.setAttribute("fill", "none");
-        rotIcon2.setAttribute("stroke", "white");
-        rotIcon2.setAttribute("stroke-width", "2.5");
-        rotIcon2.setAttribute("stroke-linecap", "round");
-        rotIcon2.setAttribute("stroke-linejoin", "round");
-        rotIcon2.style.cssText =
-          "opacity:0;transition:opacity 0.15s;pointer-events:none;";
-        rotIcon2.innerHTML =
-          '<path d="M12 2a10 10 0 1 0 10 10"/><polyline points="22 2 22 12 12 12"/>';
-        rotHandle.appendChild(rotIcon2);
-        rotHandle.addEventListener("mouseenter", () => {
-          rotIcon2.style.opacity = "1";
-        });
-        rotHandle.addEventListener("mouseleave", () => {
-          rotIcon2.style.opacity = "0";
-        });
-        rotHandle.addEventListener("mousedown", (ev) => {
-          ev.stopPropagation();
-          ev.preventDefault();
-          hideSeatTbFloatingToolbar();
-          if (isSeating) pushSeatUndoNow();
-          rotHandle.style.cursor = "grabbing";
-          const r2 = el.getBoundingClientRect();
-          const ocx = r2.left + r2.width / 2,
-            ocy = r2.top + r2.height / 2;
-          const initAngle =
-            (Math.atan2(ev.clientY - ocy, ev.clientX - ocx) * 180) / Math.PI;
-          const initRot = box.rotation || 0;
-          const doRot = (ev2) => {
-            box.rotation = Math.round(
-              initRot +
-                (Math.atan2(ev2.clientY - ocy, ev2.clientX - ocx) * 180) /
-                  Math.PI -
-                initAngle,
-            );
-            el.style.transform = `rotate(${box.rotation}deg)`;
-          };
-          const stopRot = () => {
-            rotHandle.style.cursor = "grab";
-            document.removeEventListener("mousemove", doRot);
-            document.removeEventListener("mouseup", stopRot);
-            markUnsaved();
-          };
-          document.addEventListener("mousemove", doRot);
-          document.addEventListener("mouseup", stopRot);
-        });
-        el.appendChild(rotLine);
-        el.appendChild(rotHandle);
-      }
-
       function syncTbToolbar(box) {
         const fnt = document.getElementById("tb-font");
         const sz = document.getElementById("tb-size");
@@ -5895,31 +5986,7 @@
       }
 
       // Apply live font/size changes from toolbars
-      // NOTE: DOMContentLoaded already fired for inline scripts at page bottom — use IIFE instead.
-
-      // Helper: after a font-size change, clear locked dimensions so the box reflows to fit its content
-      function resetTbSizeToContent(box, tbEl) {
-        // Clear any manually-locked dimensions so CSS can size naturally
-        delete box.userResized;
-        box.minH = 0;
-        box.minW = 60;
-        if (tbEl) {
-          tbEl.style.width = "auto";
-          tbEl.style.minHeight = "";
-          tbEl.style.minWidth = "60px";
-          const tEl = tbEl.querySelector("[contenteditable]");
-          if (tEl) tEl.style.width = "auto";
-          applyTbStyle(tbEl, box);
-          // After reflow, store the natural size back into box so saves/re-renders are consistent
-          requestAnimationFrame(() => {
-            box.w = tbEl.offsetWidth || box.w;
-            box.minH = tbEl.offsetHeight || 0;
-          });
-        }
-        markUnsaved();
-      }
-
-      (function wireTbToolbarListeners() {
+      document.addEventListener("DOMContentLoaded", () => {
         const fnt = document.getElementById("tb-font");
         const sz = document.getElementById("tb-size");
         if (fnt)
@@ -5930,7 +5997,8 @@
             if (box) {
               box.font = fnt.value;
               const tbEl = document.getElementById("tb-el-" + box.id);
-              resetTbSizeToContent(box, tbEl);
+              if (tbEl) tbEl.style.fontFamily = box.font;
+              markUnsaved();
             }
           });
         if (sz)
@@ -5941,7 +6009,8 @@
             if (box) {
               box.size = parseInt(sz.value);
               const tbEl = document.getElementById("tb-el-" + box.id);
-              resetTbSizeToContent(box, tbEl);
+              if (tbEl) tbEl.style.fontSize = box.size + "px";
+              markUnsaved();
             }
           });
         const sfnt = document.getElementById("seat-tb-font");
@@ -5954,7 +6023,8 @@
             if (box) {
               box.font = sfnt.value;
               const tbEl = document.getElementById("tb-el-" + box.id);
-              resetTbSizeToContent(box, tbEl);
+              if (tbEl) applyTbStyle(tbEl, box);
+              markUnsaved();
             }
           });
         if (ssz)
@@ -5965,10 +6035,11 @@
             if (box) {
               box.size = parseInt(ssz.value);
               const tbEl = document.getElementById("tb-el-" + box.id);
-              resetTbSizeToContent(box, tbEl);
+              if (tbEl) applyTbStyle(tbEl, box);
+              markUnsaved();
             }
           });
-      })();
+      });
 
       // ---- Textbox drag (global mousemove) - updates toolbar position in real time ----
       document.addEventListener("mousemove", (ev) => {
@@ -5987,6 +6058,8 @@
         if (tbEl) {
           tbEl.style.left = draggingTb.x + "px";
           tbEl.style.top = draggingTb.y + "px";
+          if (tbMode === "seating")
+            updateSeatTbFloatingToolbar(draggingTb, tbEl);
         }
       });
       document.addEventListener("mouseup", () => {
@@ -6084,6 +6157,7 @@
           });
           seatSeatsLoaded = true;
           btn.textContent = "Assign Seats";
+          seatMSyncPrimary();
           renderSeats();
           markUnsaved();
         } else {
@@ -6095,6 +6169,7 @@
         seatSeatsLoaded = false;
         const btn = document.getElementById("seat-primary-btn");
         if (btn) btn.textContent = "Load Roster";
+        seatMSyncPrimary();
       }
 
       // ---- Tool ----
@@ -6190,6 +6265,7 @@
             tbMode = null;
           }
         }
+        seatMSyncTool(tool);
         renderSeats();
       }
 
@@ -6199,7 +6275,10 @@
         if (area) area.style.transform = `scale(${seatCanvasZoom})`;
         const lbl = document.getElementById("seat-zoom-label");
         if (lbl) lbl.innerText = Math.round(seatCanvasZoom * 100) + "%";
-        // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
+        const scc = document.getElementById("seating-canvas-area");
+        if (scc)
+          scc.style.backgroundSize =
+            SGRID * seatCanvasZoom + "px " + SGRID * seatCanvasZoom + "px";
       }
 
       function toggleSeatSnap() {
@@ -6290,6 +6369,7 @@
         });
         s1.innerHTML = opts;
         s2.innerHTML = opts;
+        seatMSyncPairSelects();
       }
 
       function syncSeatConstraintList() {
@@ -6300,12 +6380,397 @@
         if (tally) tally.innerText = total;
         list.innerHTML = "";
         constraints.together.forEach((p, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2"><span class="text-[#A6E22E] font-semibold">${getMemberName(p[0])}</span> <span class="text-zinc-500">&</span> <span class="text-[#A6E22E] font-semibold">${getMemberName(p[1])}</span></span><button onclick="removeConstraint('together',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
+          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2">${getMemberName(p[0])} & ${getMemberName(p[1])} <span class="text-[#A6E22E] font-bold uppercase ml-1">Together</span></span><button onclick="removeConstraint('together',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
         });
         constraints.apart.forEach((p, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2"><span class="text-[#F92672] font-semibold">${getMemberName(p[0])}</span> <span class="text-zinc-500">&</span> <span class="text-[#F92672] font-semibold">${getMemberName(p[1])}</span></span><button onclick="removeConstraint('apart',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
+          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2">${getMemberName(p[0])} & ${getMemberName(p[1])} <span class="text-[#F92672] font-bold uppercase ml-1">Apart</span></span><button onclick="removeConstraint('apart',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
+        });
+        // Also sync mobile pairs list if open
+        seatMSyncPairs();
+      }
+
+      // ══════════════════════════════════════════
+      // MOBILE SEATING PANEL
+      // ══════════════════════════════════════════
+      let _seatMTab = "tools";
+      let _seatMOpen = false;
+
+      function seatMPanelToggle() {
+        _seatMOpen ? seatMPanelClose() : seatMPanelOpen();
+      }
+      function seatMPanelOpen() {
+        _seatMOpen = true;
+        document
+          .getElementById("seat-m-sheet")
+          .classList.remove("translate-y-full");
+        document.getElementById("seat-m-backdrop").classList.remove("hidden");
+        // Refresh current tab content
+        if (_seatMTab === "staging") seatMSyncStaging();
+        if (_seatMTab === "pairs") {
+          seatMSyncPairs();
+          seatMSyncPairSelects();
+        }
+      }
+      function seatMPanelClose() {
+        _seatMOpen = false;
+        document
+          .getElementById("seat-m-sheet")
+          .classList.add("translate-y-full");
+        document.getElementById("seat-m-backdrop").classList.add("hidden");
+      }
+
+      function seatMSetTab(tab) {
+        _seatMTab = tab;
+        if (!_seatMOpen) seatMPanelOpen();
+        else {
+          if (tab === "staging") seatMSyncStaging();
+          if (tab === "pairs") {
+            seatMSyncPairs();
+            seatMSyncPairSelects();
+          }
+        }
+        const tabs = ["tools", "staging", "pairs"];
+        tabs.forEach((t) => {
+          const btn = document.getElementById("seat-m-tab-" + t);
+          const panel = document.getElementById("seat-m-panel-" + t);
+          const active = t === tab;
+          if (btn) {
+            btn.className = `flex-1 py-2 text-xs font-bold border-b-2 ${active ? "border-[#A6E22E] text-[#A6E22E]" : "border-transparent text-zinc-400"}`;
+          }
+          if (panel) panel.classList.toggle("hidden", !active);
         });
       }
+
+      // Sync mobile tool label + active button highlight
+      function seatMSyncTool(tool) {
+        const labels = {
+          select: "Select",
+          sq1: "Square",
+          ci1: "Circle",
+          eraser: "Delete",
+          manSq: "Label □",
+          manCi: "Label ○",
+          textbox: "Textbox",
+        };
+        const colors = {
+          select: "#A6E22E",
+          sq1: "#66D9EF",
+          ci1: "#AE81FF",
+          eraser: "#F92672",
+          manSq: "#FD971F",
+          manCi: "#FD971F",
+          textbox: "#E6DB74",
+        };
+        const lbl = document.getElementById("seat-m-tool-label");
+        if (lbl) {
+          lbl.textContent = labels[tool] || tool;
+          lbl.style.color = colors[tool] || "#F8F8F2";
+        }
+        document.querySelectorAll(".seat-m-tool-btn").forEach((b) => {
+          b.classList.toggle("seat-m-active", b.dataset.mTool === tool);
+        });
+      }
+
+      // Sync snap button in mobile sheet
+      function seatMSyncSnap() {
+        const btn = document.getElementById("seat-m-snap");
+        if (!btn) return;
+        if (seatSnapToGrid) {
+          btn.className = btn.className
+            .replace("border-zinc-700 text-zinc-400", "")
+            .trim();
+          btn.classList.add("border-[#A6E22E]/50", "text-[#A6E22E]");
+          btn.querySelector("svg") ? (btn.innerHTML = btn.innerHTML) : null;
+          btn.childNodes.forEach((n) => {
+            if (n.nodeType === 3) n.textContent = " Snap On";
+          });
+        } else {
+          btn.classList.remove("border-[#A6E22E]/50", "text-[#A6E22E]");
+          btn.classList.add("border-zinc-700", "text-zinc-400");
+          btn.childNodes.forEach((n) => {
+            if (n.nodeType === 3) n.textContent = " Snap Off";
+          });
+        }
+      }
+
+      // Sync mobile primary button text
+      function seatMSyncPrimary() {
+        const btn = document.getElementById("seat-m-primary");
+        const src = document.getElementById("seat-primary-btn");
+        if (btn && src) btn.textContent = src.textContent;
+      }
+
+      // Sync mobile undo/redo
+      function seatMSyncUndoRedo() {
+        const mu = document.getElementById("seat-m-undo");
+        const mr = document.getElementById("seat-m-redo");
+        const du = document.getElementById("seat-undo-btn");
+        const dr = document.getElementById("seat-redo-btn");
+        if (mu && du) {
+          mu.disabled = du.disabled;
+          mu.style.opacity = du.style.opacity;
+        }
+        if (mr && dr) {
+          mr.disabled = dr.disabled;
+          mr.style.opacity = dr.style.opacity;
+        }
+      }
+
+      // Populate staging panel
+      function seatMSyncStaging() {
+        const list = document.getElementById("seat-m-staging-list");
+        const countEl = document.getElementById("seat-m-staging-count");
+        if (!list) return;
+        const assignedIds = new Set();
+        seats.forEach((s) => {
+          if (s.occupantId) assignedIds.add(s.occupantId);
+          if (s.sectionOccupants)
+            s.sectionOccupants.forEach((id) => {
+              if (id) assignedIds.add(id);
+            });
+        });
+        const unassigned = allMembers.filter((m) => !assignedIds.has(m.id));
+        if (countEl) countEl.textContent = unassigned.length;
+        list.innerHTML = "";
+        if (unassigned.length === 0) {
+          list.innerHTML =
+            '<div class="col-span-2 text-zinc-500 text-sm text-center py-4">Everyone is seated ✓</div>';
+          return;
+        }
+        unassigned.forEach((m) => {
+          const div = document.createElement("div");
+          div.className =
+            "member-item border rounded-md text-xs font-medium shadow-sm";
+          div.draggable = false;
+          div.innerHTML = `<span class="member-name-text flex-1 select-none">${m.name}</span>`;
+          // Drag from staging on mobile: mousedown drag (same as desktop staging)
+          div.addEventListener(
+            "mousedown",
+            stagingItemMousedown.bind(null, m, div),
+          );
+          list.appendChild(div);
+        });
+      }
+
+      // Shared staging drag handler (used by both desktop and mobile staging items)
+      function stagingItemMousedown(m, div, ev) {
+        if (ev.button !== 0) return;
+        ev.stopPropagation();
+        let x0 = ev.clientX,
+          y0 = ev.clientY,
+          dragging = false;
+        let ghost = null,
+          hlChip = null,
+          hlSeat = null;
+        const onMove = (ev2) => {
+          if (!dragging && Math.hypot(ev2.clientX - x0, ev2.clientY - y0) > 6) {
+            dragging = true;
+            seatMPanelClose(); // close sheet so canvas is visible
+            div.style.opacity = "0.35";
+            document.body.style.cursor = "grabbing";
+            ghost = document.createElement("div");
+            ghost.style.cssText =
+              "position:fixed;pointer-events:none;z-index:9999;background:rgba(0,0,0,0.28);border:1.5px solid rgba(255,255,255,0.22);border-radius:4px;padding:3px 8px;color:#F8F8F2;font-size:12px;font-weight:600;text-align:center;line-height:1.4;white-space:pre-line;transform:translate(-50%,-50%);opacity:0.9;cursor:grabbing;user-select:none;";
+            ghost.innerText = m.name.trim().split(/\s+/).join("\n");
+            document.body.appendChild(ghost);
+          }
+          if (!dragging) return;
+          ghost.style.left = ev2.clientX + "px";
+          ghost.style.top = ev2.clientY + "px";
+          // Highlight target chip
+          let foundChip = null;
+          document.querySelectorAll(".seat-name-chip").forEach((c) => {
+            if (c.dataset.dragging) return;
+            const r = c.getBoundingClientRect();
+            if (
+              ev2.clientX >= r.left &&
+              ev2.clientX <= r.right &&
+              ev2.clientY >= r.top &&
+              ev2.clientY <= r.bottom
+            )
+              foundChip = c;
+          });
+          if (hlChip && hlChip !== foundChip) {
+            hlChip.style.outline = "";
+            hlChip = null;
+          }
+          if (foundChip && foundChip !== hlChip) {
+            hlChip = foundChip;
+            foundChip.style.outline = "2px solid #A6E22E";
+          }
+          // Highlight empty seat
+          let foundSeat = null;
+          if (!foundChip) {
+            document
+              .querySelectorAll(".seat-el[data-seat-id]")
+              .forEach((el) => {
+                const r = el.getBoundingClientRect();
+                if (
+                  ev2.clientX >= r.left &&
+                  ev2.clientX <= r.right &&
+                  ev2.clientY >= r.top &&
+                  ev2.clientY <= r.bottom
+                ) {
+                  const ts = seats.find((s) => s.id === el.dataset.seatId);
+                  if (ts && !ts.manual) foundSeat = el;
+                }
+              });
+          }
+          if (hlSeat && hlSeat !== foundSeat) {
+            hlSeat.style.outline = "";
+            hlSeat = null;
+          }
+          if (foundSeat && foundSeat !== hlSeat) {
+            hlSeat = foundSeat;
+            foundSeat.style.outline = "2px solid #A6E22E";
+            foundSeat.style.outlineOffset = "2px";
+          }
+        };
+        const onUp = (ev2) => {
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+          document.body.style.cursor = "";
+          if (hlChip) {
+            hlChip.style.outline = "";
+            hlChip = null;
+          }
+          if (hlSeat) {
+            hlSeat.style.outline = "";
+            hlSeat = null;
+          }
+          if (ghost) {
+            ghost.remove();
+            ghost = null;
+          }
+          div.style.opacity = "1";
+          if (!dragging) return;
+          pushSeatUndoNow();
+          const dx = ev2.clientX,
+            dy = ev2.clientY;
+          // Try chip-to-chip swap first
+          let handled = false;
+          document.querySelectorAll(".seat-name-chip").forEach((chip) => {
+            if (handled) return;
+            const r = chip.getBoundingClientRect();
+            if (dx < r.left || dx > r.right || dy < r.top || dy > r.bottom)
+              return;
+            const el = chip.closest("[data-seat-id]");
+            if (!el) return;
+            const ts = seats.find((s) => s.id === el.dataset.seatId);
+            if (!ts || ts.manual) return;
+            if ((ts.sections || 1) > 1) {
+              const j = parseInt(chip.dataset.sectionIdx ?? "-1");
+              if (j >= 0) {
+                const old = ts.sectionOccupants[j];
+                ts.sectionOccupants[j] = m.id;
+                if (old) staging.push(old);
+                handled = true;
+              }
+            } else {
+              const old = ts.occupantId;
+              ts.occupantId = m.id;
+              if (old) staging.push(old);
+              handled = true;
+            }
+          });
+          if (handled) {
+            renderSeats();
+            markUnsaved();
+            return;
+          }
+          // Try empty seat
+          document.querySelectorAll(".seat-el[data-seat-id]").forEach((el) => {
+            if (handled) return;
+            const r = el.getBoundingClientRect();
+            if (dx < r.left || dx > r.right || dy < r.top || dy > r.bottom)
+              return;
+            const ts = seats.find((s) => s.id === el.dataset.seatId);
+            if (!ts || ts.manual) return;
+            if ((ts.sections || 1) > 1) {
+              const idx = (ts.sectionOccupants || []).indexOf(null);
+              if (idx >= 0) {
+                ts.sectionOccupants[idx] = m.id;
+                handled = true;
+              }
+            } else if (!ts.occupantId) {
+              ts.occupantId = m.id;
+              handled = true;
+            }
+          });
+          if (handled) {
+            renderSeats();
+            markUnsaved();
+          }
+        };
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      }
+
+      // Populate pairs panel
+      function seatMSyncPairs() {
+        const list = document.getElementById("seat-m-pairs-list");
+        const countEl = document.getElementById("seat-m-pairs-count");
+        const total = constraints.together.length + constraints.apart.length;
+        if (countEl) countEl.textContent = total;
+        if (!list) return;
+        list.innerHTML = "";
+        if (total === 0) {
+          list.innerHTML =
+            '<li class="text-zinc-600 italic py-1">No pairs yet</li>';
+          return;
+        }
+        constraints.together.forEach((p, i) => {
+          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700"><span class="truncate pr-2 text-[#A6E22E] font-semibold">${getMemberName(p[0])} <span class="text-zinc-500 font-normal">&amp;</span> ${getMemberName(p[1])}</span><button onclick="removeConstraint('together',${i});seatMSyncPairs();syncSeatConstraintList();" class="text-zinc-500 hover:text-[#F92672] font-bold text-base leading-none shrink-0">&times;</button></li>`;
+        });
+        constraints.apart.forEach((p, i) => {
+          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700"><span class="truncate pr-2 text-[#F92672] font-semibold">${getMemberName(p[0])} <span class="text-zinc-500 font-normal">&amp;</span> ${getMemberName(p[1])}</span><button onclick="removeConstraint('apart',${i});seatMSyncPairs();syncSeatConstraintList();" class="text-zinc-500 hover:text-[#F92672] font-bold text-base leading-none shrink-0">&times;</button></li>`;
+        });
+      }
+
+      // Populate mobile pair selects
+      function seatMSyncPairSelects() {
+        ["seat-m-cs1", "seat-m-cs2"].forEach((id) => {
+          const sel = document.getElementById(id);
+          if (!sel) return;
+          const cur = sel.value;
+          sel.innerHTML =
+            '<option value="">Select…</option>' +
+            allMembers
+              .map((m) => `<option value="${m.id}">${m.name}</option>`)
+              .join("");
+          if (cur) sel.value = cur;
+        });
+      }
+
+      // Add constraint from mobile panel
+      function seatMAddConstraint(type) {
+        const v1 = document.getElementById("seat-m-cs1")?.value;
+        const v2 = document.getElementById("seat-m-cs2")?.value;
+        if (!v1 || !v2 || v1 === v2)
+          return showModal("Select two different members.");
+        const opp = type === "together" ? "apart" : "together";
+        if (
+          constraints[opp].some(
+            (p) => (p[0] === v1 && p[1] === v2) || (p[0] === v2 && p[1] === v1),
+          )
+        )
+          return showModal(
+            `Already set as "${opp}". Remove that constraint first.`,
+          );
+        if (
+          constraints[type].some(
+            (p) => (p[0] === v1 && p[1] === v2) || (p[0] === v2 && p[1] === v1),
+          )
+        )
+          return;
+        constraints[type].push([v1, v2]);
+        syncSeatConstraintList();
+        seatMSyncPairs();
+        renderConstraintList();
+        markUnsaved();
+      }
+
+      // ══════════════════════════════════════════
 
       // ---- Projector ----
       function toggleSeatProjector() {
@@ -6510,14 +6975,6 @@
             ].join(";");
             setChipText(chip, occ[i]);
 
-            chip.addEventListener("mouseenter", () => {
-              if (!chip.dataset.dragging)
-                chip.style.outline = "2px solid #A6E22E";
-            });
-            chip.addEventListener("mouseleave", () => {
-              chip.style.outline = "";
-            });
-
             // ✕ button ON the chip
             const del = document.createElement("button");
             del.innerHTML = "&times;";
@@ -6559,7 +7016,6 @@
               cix = off.x;
               ciy = off.y;
               chip.style.cursor = "grabbing";
-              chip.style.outline = ""; // clear hover highlight when drag starts
               chip.style.zIndex = "100";
               chip.style.opacity = "0.85";
               document.body.style.userSelect = "none";
@@ -6630,6 +7086,8 @@
               // Remember original position for swapping
               const origOff = { x: cix, y: ciy }; // position BEFORE drag
 
+              // Push undo BEFORE doing any swap
+              pushSeatUndoNow();
               // Check chip-to-chip swap first (find chip the cursor is over)
               let swapped = false;
               const allChips = document.querySelectorAll(".seat-name-chip");
@@ -6649,7 +7107,7 @@
                   );
                   if (!otherSeat) continue;
                   if (otherSeat.id === seat.id) {
-                    // Same table: swap positions
+                    // Same table: find index by chip order in DOM
                     const allMyChips = Array.from(
                       el.querySelectorAll(".seat-name-chip"),
                     );
@@ -6658,13 +7116,14 @@
                       const tmp = occ[otherIdx];
                       occ[otherIdx] = myMemberId;
                       occ[capI] = tmp;
+                      // Also swap the chip positions
                       const otherOff = seat.chipOffsets[otherIdx];
                       seat.chipOffsets[capI] = { ...otherOff };
                       seat.chipOffsets[otherIdx] = { ...origOff };
                       swapped = true;
                     }
                   } else if ((otherSeat.sections || 1) > 1) {
-                    // Other multi-section table: chip-to-chip swap
+                    // Other multi-section table: swap names, move other chip to origOff position
                     const otherIdx = parseInt(
                       otherChip.dataset.sectionIdx ?? "-1",
                     );
@@ -6676,11 +7135,12 @@
                           : null;
                       otherOcc[otherIdx] = myMemberId;
                       occ[capI] = tmp;
+                      // Move myChip slot back to origOff, other chip stays at its position
                       seat.chipOffsets[capI] = { ...origOff };
                       swapped = true;
                     }
                   } else {
-                    // Other single-seat table: chip-to-chip swap
+                    // Other single-seat table: swap with occupantId
                     const tmp = otherSeat.occupantId || null;
                     otherSeat.occupantId = myMemberId;
                     occ[capI] = tmp;
@@ -6695,15 +7155,56 @@
                 }
               }
 
-              // No chip-to-chip swap. For large-table chips, allow free repositioning
-              // within the same table bounds — snap back if outside.
-              const chipHalfW = 30;
+              // Check if dropped over a seat element (no chip overlap, seat only)
+              const allSeatEls = document.querySelectorAll(
+                ".seat-el[data-seat-id]",
+              );
+              for (const sEl of allSeatEls) {
+                const sId = sEl.dataset.seatId;
+                if (sId === seat.id) continue;
+                const r = sEl.getBoundingClientRect();
+                if (
+                  dropX >= r.left &&
+                  dropX <= r.right &&
+                  dropY >= r.top &&
+                  dropY <= r.bottom
+                ) {
+                  const targetSeat = seats.find((s) => s.id === sId);
+                  if (!targetSeat) continue;
+                  if ((targetSeat.sections || 1) > 1) {
+                    const emptyIdx = (
+                      targetSeat.sectionOccupants || []
+                    ).indexOf(null);
+                    if (emptyIdx >= 0) {
+                      targetSeat.sectionOccupants[emptyIdx] = myMemberId;
+                      occ[capI] = null;
+                    } else {
+                      /* table full - snap back, do not move */ seat.chipOffsets[
+                        capI
+                      ] = { ...origOff };
+                    }
+                  } else {
+                    const tmp = targetSeat.occupantId || null;
+                    targetSeat.occupantId = myMemberId;
+                    occ[capI] = tmp;
+                  }
+                  renderSeats();
+                  markUnsaved();
+                  return;
+                }
+              }
+
+              // No swap occurred. Check if chip is still within seat bounds (or touching border).
+              // off.x and off.y are relative to the seat element top-left.
+              // Allow chip center to be anywhere from 0 to seat.w / 0 to seat.h (touching border is OK).
+              const chipHalfW = 30; // approximate half-width of chip
               const chipHalfH = 15;
               const insideX =
                 off.x >= -chipHalfW && off.x <= seat.w + chipHalfW;
               const insideY =
                 off.y >= -chipHalfH && off.y <= seat.h + chipHalfH;
               if (!insideX || !insideY) {
+                // Snap back to original position
                 off.x = origOff.x;
                 off.y = origOff.y;
                 chip.style.left = off.x + "px";
@@ -6765,13 +7266,6 @@
               "z-index:3",
             ].join(";");
             setChipText(chip, seat.occupantId);
-            chip.addEventListener("mouseenter", () => {
-              if (!chip.dataset.dragging)
-                chip.style.outline = "2px solid #A6E22E";
-            });
-            chip.addEventListener("mouseleave", () => {
-              chip.style.outline = "";
-            });
             chip.addEventListener("mousedown", (ev) => {
               if (ev.button === 2) return;
               ev.stopPropagation();
@@ -6779,7 +7273,6 @@
                 sdy0 = ev.clientY,
                 sdDragging = false;
               let _sdHighlight = null;
-              let _sdSeatHighlight = null;
               let ghost = null;
               const sdMove = (ev2) => {
                 if (
@@ -6788,7 +7281,6 @@
                 ) {
                   sdDragging = true;
                   chip.style.opacity = "0.35";
-                  chip.style.outline = ""; // clear hover highlight when drag starts
                   chip.dataset.dragging = "true";
                   document.body.style.cursor = "grabbing";
                   // Create floating ghost clone
@@ -6837,8 +7329,6 @@
                   _sdHighlight = foundC;
                   foundC.style.outline = "2px solid #A6E22E";
                 }
-                // Also highlight empty seat under cursor (if no chip found)
-                // (removed - single-seat chips only swap with other chips)
               };
               const sdUp = (ev2) => {
                 document.removeEventListener("mousemove", sdMove);
@@ -6847,10 +7337,6 @@
                 if (_sdHighlight) {
                   _sdHighlight.style.outline = "";
                   _sdHighlight = null;
-                }
-                if (_sdSeatHighlight) {
-                  _sdSeatHighlight.style.outline = "";
-                  _sdSeatHighlight = null;
                 }
                 if (ghost) {
                   ghost.remove();
@@ -6864,7 +7350,7 @@
                 const myId = seat.occupantId;
                 // Push undo BEFORE doing any swap
                 pushSeatUndoNow();
-                // Check chip-to-chip swap — the ONLY valid drop target for single-seat chips
+                // Check chip-to-chip swap
                 const allChips = document.querySelectorAll(".seat-name-chip");
                 for (const otherChip of allChips) {
                   if (otherChip === chip) continue;
@@ -6881,7 +7367,7 @@
                       (s) => s.id === otherEl.dataset.seatId,
                     );
                     if (!otherSeat) continue;
-                    if (otherSeat.manual) continue;
+                    if (otherSeat.manual) continue; // Label containers: no interaction
                     if ((otherSeat.sections || 1) > 1) {
                       const j = parseInt(otherChip.dataset.sectionIdx ?? "-1");
                       if (j >= 0) {
@@ -6902,9 +7388,39 @@
                     }
                   }
                 }
-                // Not dropped on a chip — snap back (no-op since single-seat chip
-                // stays inside its container visually, but renderSeats ensures clean state)
-                renderSeats();
+                // Check seat-level drop
+                const allSeatEls = document.querySelectorAll(
+                  ".seat-el[data-seat-id]",
+                );
+                for (const sEl of allSeatEls) {
+                  if (sEl.dataset.seatId === seat.id) continue;
+                  const r = sEl.getBoundingClientRect();
+                  if (
+                    dropX >= r.left &&
+                    dropX <= r.right &&
+                    dropY >= r.top &&
+                    dropY <= r.bottom
+                  ) {
+                    const ts = seats.find((s) => s.id === sEl.dataset.seatId);
+                    if (!ts) continue;
+                    if (ts.manual) continue; // Label containers: no interaction
+                    if ((ts.sections || 1) > 1) {
+                      const ei = (ts.sectionOccupants || []).indexOf(null);
+                      if (ei >= 0) {
+                        ts.sectionOccupants[ei] = myId;
+                        seat.occupantId = null;
+                      }
+                      // else: table full - don't move
+                    } else {
+                      const tmp = ts.occupantId || null;
+                      ts.occupantId = myId;
+                      seat.occupantId = tmp;
+                    }
+                    renderSeats();
+                    markUnsaved();
+                    return;
+                  }
+                }
               };
               document.addEventListener("mousemove", sdMove);
               document.addEventListener("mouseup", sdUp);
@@ -7090,30 +7606,9 @@
           const rotHandle = document.createElement("div");
           rotHandle.title = "Drag to rotate";
           rotHandle.style.cssText =
-            "position:absolute;width:14px;height:14px;background:#AE81FF;border:2px solid #272822;border-radius:50%;left:calc(50% - 7px);top:-34px;cursor:grab;z-index:10;display:flex;align-items:center;justify-content:center;";
-          const rotIcon3 = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg",
-          );
-          rotIcon3.setAttribute("width", "9");
-          rotIcon3.setAttribute("height", "9");
-          rotIcon3.setAttribute("viewBox", "0 0 24 24");
-          rotIcon3.setAttribute("fill", "none");
-          rotIcon3.setAttribute("stroke", "white");
-          rotIcon3.setAttribute("stroke-width", "2.5");
-          rotIcon3.setAttribute("stroke-linecap", "round");
-          rotIcon3.setAttribute("stroke-linejoin", "round");
-          rotIcon3.style.cssText =
-            "opacity:0;transition:opacity 0.15s;pointer-events:none;";
-          rotIcon3.innerHTML =
-            '<path d="M12 2a10 10 0 1 0 10 10"/><polyline points="22 2 22 12 12 12"/>';
-          rotHandle.appendChild(rotIcon3);
-          rotHandle.addEventListener("mouseenter", () => {
-            rotIcon3.style.opacity = "1";
-          });
-          rotHandle.addEventListener("mouseleave", () => {
-            rotIcon3.style.opacity = "0";
-          });
+            "position:absolute;width:14px;height:14px;background:#AE81FF;border:2px solid #272822;border-radius:50%;left:calc(50% - 7px);top:-34px;cursor:alias;z-index:10;display:flex;align-items:center;justify-content:center;";
+          rotHandle.innerHTML =
+            '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><polyline points="22 2 22 12 12 12"/></svg>';
           rotHandle.addEventListener("mousedown", (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -7484,44 +7979,6 @@
             selectDragPreview.style.top = y + "px";
             selectDragPreview.style.width = w + "px";
             selectDragPreview.style.height = h + "px";
-
-            // Live-highlight elements overlapping the selection rect
-            const areaRect = area.getBoundingClientRect();
-            const boxL = areaRect.left + x * seatCanvasZoom;
-            const boxT = areaRect.top + y * seatCanvasZoom;
-            const boxR = boxL + w * seatCanvasZoom;
-            const boxB = boxT + h * seatCanvasZoom;
-            document
-              .querySelectorAll(".seat-el[data-seat-id]")
-              .forEach((sEl) => {
-                const r = sEl.getBoundingClientRect();
-                const hits =
-                  r.left < boxR &&
-                  r.right > boxL &&
-                  r.top < boxB &&
-                  r.bottom > boxT;
-                if (hits) {
-                  sEl.style.boxShadow = "0 0 0 3px rgba(166,226,46,0.35)";
-                  sEl.style.borderColor = "#A6E22E";
-                } else {
-                  sEl.style.boxShadow = "";
-                  sEl.style.borderColor = "";
-                }
-              });
-            document.querySelectorAll(".tb-el").forEach((tEl) => {
-              const r = tEl.getBoundingClientRect();
-              const hits =
-                r.left < boxR &&
-                r.right > boxL &&
-                r.top < boxB &&
-                r.bottom > boxT;
-              tEl.style.border = hits
-                ? "1.5px solid #A6E22E"
-                : "1.5px dashed rgba(230,219,116,0.3)";
-              tEl.style.background = hits
-                ? "rgba(166,226,46,0.06)"
-                : "transparent";
-            });
           }
 
           // Eraser hover highlight (when not drag-erasing)
@@ -7775,7 +8232,6 @@
           tbPlaceStartX = 0,
           tbPlaceStartY = 0,
           tbSizePreview = null;
-        let tbHasDragged = false;
         area.addEventListener("mousedown", (ev) => {
           if (seatTool !== "textbox") return;
           if (ev.target.closest(".seat-el") || ev.target.closest(".tb-el"))
@@ -7792,7 +8248,6 @@
           tbPlaceStartX = rawX;
           tbPlaceStartY = rawY;
           tbPlacing = true;
-          tbHasDragged = false;
           tbSizePreview = document.createElement("div");
           tbSizePreview.style.cssText = `position:absolute;left:${rawX}px;top:${rawY}px;width:4px;height:4px;border:1.5px dashed #E6DB74;border-radius:3px;background:rgba(230,219,116,0.06);pointer-events:none;z-index:50;box-sizing:border-box;`;
           area.appendChild(tbSizePreview);
@@ -7807,7 +8262,6 @@
           const y = Math.min(curY, tbPlaceStartY);
           const w = Math.max(Math.abs(curX - tbPlaceStartX), 4);
           const h = Math.max(Math.abs(curY - tbPlaceStartY), 4);
-          if (w > 8 || h > 8) tbHasDragged = true;
           if (tbSizePreview) {
             tbSizePreview.style.left = x + "px";
             tbSizePreview.style.top = y + "px";
@@ -7829,7 +8283,7 @@
           const w = Math.abs(curX - tbPlaceStartX);
           const h = Math.abs(curY - tbPlaceStartY);
           // Require a real drag - ignore clicks or tiny movements
-          if (!tbHasDragged || w < 20 || h < 10) return;
+          if (w < 20 || h < 10) return;
           const x = Math.min(curX, tbPlaceStartX);
           const y = Math.min(curY, tbPlaceStartY);
           // Font size inferred from drag height, but don't exceed box
@@ -8211,7 +8665,7 @@
           menu.appendChild(btn);
         };
 
-        if (!seat.manual && (seat.w > SGRID || seat.h > SGRID))
+        if (!seat.manual)
           addItem("Split into seats…", () => promptSplitSeat(seatId));
         if (seat.manual)
           addItem("Edit label", () => {
@@ -8505,6 +8959,7 @@
         ) {
           btn.textContent = "Assign Seats";
           seatSeatsLoaded = true;
+          seatMSyncPrimary();
         }
         const assignedIds = new Set();
         seats.forEach((s) => {
@@ -8516,6 +8971,11 @@
         });
         const unassigned = allMembers.filter((m) => !assignedIds.has(m.id));
         if (tally) tally.innerText = unassigned.length; // count of names in staging area
+        // Sync mobile staging count badge
+        const mCount = document.getElementById("seat-m-staging-count");
+        if (mCount) mCount.textContent = unassigned.length;
+        // Refresh mobile staging panel if it's currently open
+        if (_seatMOpen && _seatMTab === "staging") seatMSyncStaging();
         area.innerHTML = "";
         if (allMembers.length === 0) {
           area.innerHTML =
@@ -8546,8 +9006,7 @@
               sty0 = ev.clientY,
               stDragging = false;
             let ghost = null,
-              _stHighlight = null,
-              _stSeatHighlight = null;
+              _stHighlight = null;
 
             const stMove = (ev2) => {
               if (
@@ -8614,37 +9073,6 @@
                 _stHighlight = foundC;
                 foundC.style.outline = "2px solid #A6E22E";
               }
-              // Also highlight empty seat under cursor if no chip found
-              let foundSeat = null;
-              if (!foundC) {
-                const allSeatEls3 = document.querySelectorAll(
-                  ".seat-el[data-seat-id]",
-                );
-                for (const sEl3 of allSeatEls3) {
-                  const r3 = sEl3.getBoundingClientRect();
-                  if (
-                    ev2.clientX >= r3.left &&
-                    ev2.clientX <= r3.right &&
-                    ev2.clientY >= r3.top &&
-                    ev2.clientY <= r3.bottom
-                  ) {
-                    const ts3 = seats.find((s) => s.id === sEl3.dataset.seatId);
-                    if (ts3 && !ts3.manual) {
-                      foundSeat = sEl3;
-                      break;
-                    }
-                  }
-                }
-              }
-              if (_stSeatHighlight && _stSeatHighlight !== foundSeat) {
-                _stSeatHighlight.style.outline = "";
-                _stSeatHighlight = null;
-              }
-              if (foundSeat && foundSeat !== _stSeatHighlight) {
-                _stSeatHighlight = foundSeat;
-                foundSeat.style.outline = "2px solid #A6E22E";
-                foundSeat.style.outlineOffset = "2px";
-              }
             };
 
             const stUp = (ev2) => {
@@ -8654,10 +9082,6 @@
               if (_stHighlight) {
                 _stHighlight.style.outline = "";
                 _stHighlight = null;
-              }
-              if (_stSeatHighlight) {
-                _stSeatHighlight.style.outline = "";
-                _stSeatHighlight = null;
               }
               if (ghost) {
                 ghost.remove();
@@ -8833,7 +9257,27 @@
         bg.setAttribute("fill", "#fafafa");
         svg.appendChild(bg);
 
-        // (no dot grid in export — clean white background only)
+        // Dot grid
+        const defs = document.createElementNS(svgNS, "defs");
+        const pat = document.createElementNS(svgNS, "pattern");
+        pat.setAttribute("id", "dotgrid");
+        pat.setAttribute("patternUnits", "userSpaceOnUse");
+        pat.setAttribute("width", "24");
+        pat.setAttribute("height", "24");
+        const dot = document.createElementNS(svgNS, "circle");
+        dot.setAttribute("cx", "12");
+        dot.setAttribute("cy", "12");
+        dot.setAttribute("r", "1");
+        dot.setAttribute("fill", "#cccccc");
+        pat.appendChild(dot);
+        defs.appendChild(pat);
+        svg.appendChild(defs);
+        const gridRect = document.createElementNS(svgNS, "rect");
+        gridRect.setAttribute("width", W);
+        gridRect.setAttribute("height", H);
+        gridRect.setAttribute("fill", "url(#dotgrid)");
+        gridRect.setAttribute("opacity", "0.5");
+        svg.appendChild(gridRect);
 
         // Helper: add text lines (one word per line) centered in a rect
         function addTextLines(parentEl, id, cx, cy, pal, maxW) {
