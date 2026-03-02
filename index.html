@@ -393,6 +393,14 @@
         #export-preview-toggle {
           display: none !important;
         }
+        #export-preview-container {
+          align-items: flex-start !important;
+          justify-content: flex-start !important;
+          padding: 12px !important;
+        }
+        #export-preview {
+          width: 100% !important;
+        }
       }
 
       /* ===== FILES MODAL ===== */
@@ -2164,8 +2172,8 @@
               Team Maker
             </h1>
             <p class="text-zinc-400 text-base sm:text-lg mb-10 leading-relaxed">
-              A quick and flexible tool for generating and managing teams or
-              any kind of group assignment — works great on desktop and phone.
+              A quick and flexible tool for generating and managing teams or any
+              kind of group assignment — works great on desktop and phone.
               Seating arrangements are available on desktop only.
             </p>
 
@@ -2225,10 +2233,10 @@
                   <p>
                     Use <strong>Constraints</strong> to lock pairs together or
                     force them apart — the same constraints also apply in the
-                    Seating tab (desktop). The algorithm tries up to 500 attempts to
-                    satisfy every constraint. Adding a "Together" constraint
-                    when the pair is already set as "Apart" (or vice versa) will
-                    be blocked automatically.
+                    Seating tab (desktop). The algorithm tries up to 500
+                    attempts to satisfy every constraint. Adding a "Together"
+                    constraint when the pair is already set as "Apart" (or vice
+                    versa) will be blocked automatically.
                   </p>
                   <div
                     class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
@@ -2242,12 +2250,14 @@
                       Drag member chips between team cards to reassign them.
                       Drag a team card header to reposition it on the canvas.
                       Click a team's name directly to rename it — press
-                      <kbd class="bg-zinc-700 px-1 rounded text-[10px]">Enter</kbd>
-                      or click away to confirm.
-                      Use the <strong>Text Box</strong> button (under Projector
-                      Mode) to add labels, headings, or notes to the canvas —
-                      click any text box to select it and use the format toolbar
-                      to change font, size, bold, italic, or underline. Press
+                      <kbd class="bg-zinc-700 px-1 rounded text-[10px]"
+                        >Enter</kbd
+                      >
+                      or click away to confirm. Use the
+                      <strong>Text Box</strong> button (under Projector Mode) to
+                      add labels, headings, or notes to the canvas — click any
+                      text box to select it and use the format toolbar to change
+                      font, size, bold, italic, or underline. Press
                       <kbd class="bg-zinc-700 px-1 rounded text-[10px]"
                         >Delete</kbd
                       >
@@ -2268,9 +2278,9 @@
                     </p>
                     <p class="text-sm text-zinc-300">
                       Teams appear as scrollable cards. Tap a team's name to
-                      rename it. Tap any member name to
-                      open a sheet to move them or remove them. Tap the
-                      fullscreen icon (⤢) to enter Projector Mode — tap
+                      rename it. Tap any member name to open a sheet to move
+                      them or remove them. Tap the fullscreen icon (⤢) to enter
+                      Projector Mode — tap
                       <strong>Exit</strong> when done.
                     </p>
                   </div>
@@ -2283,7 +2293,9 @@
                   class="text-xl sm:text-2xl font-semibold mb-3 text-[#66D9EF]"
                 >
                   3. Create Seating Arrangements
-                  <span class="text-sm font-normal text-zinc-500 ml-2">(desktop only)</span>
+                  <span class="text-sm font-normal text-zinc-500 ml-2"
+                    >(desktop only)</span
+                  >
                 </h3>
                 <div
                   class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base"
@@ -2294,7 +2306,8 @@
                       class="text-[#A6E22E] font-medium bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700"
                       >Seating</span
                     >
-                    tab (desktop only) to design a room layout and assign people to seats.
+                    tab (desktop only) to design a room layout and assign people
+                    to seats.
                   </p>
                   <div
                     class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-1.5"
@@ -2360,9 +2373,7 @@
                               >T</kbd
                             >
                           </td>
-                          <td class="py-1 text-zinc-300">
-                            Text Box
-                          </td>
+                          <td class="py-1 text-zinc-300">Text Box</td>
                         </tr>
                         <tr>
                           <td class="py-1 pr-4 whitespace-nowrap">
@@ -2411,8 +2422,8 @@
                     <span class="text-[#AE81FF]">Circle</span> and click to
                     place a seat, or click-and-drag to paint a row.
                     <span class="text-[#FD971F]">Unoccupied □/○</span> places a
-                    shape with a custom label (e.g. "Presenter's Desk") that won't
-                    be assigned a person. Use
+                    shape with a custom label (e.g. "Presenter's Desk") that
+                    won't be assigned a person. Use
                     <span class="text-[#E6DB74]">Text Box</span> to add
                     free-floating labels on desktop.
                   </p>
@@ -2478,8 +2489,8 @@
                     >
                     tab for a print-ready preview. On desktop, toggle between
                     <strong>Teams</strong> and <strong>Seating</strong> views.
-                    On phone, the Teams layout is exported directly.
-                    Download as <strong>PDF</strong> or <strong>JPG</strong>.
+                    On phone, the Teams layout is exported directly. Download as
+                    <strong>PDF</strong> or <strong>JPG</strong>.
                   </p>
                 </div>
               </div>
@@ -2507,9 +2518,17 @@
                   <p
                     class="text-zinc-300 text-sm border-l-2 border-[#F92672] pl-4 py-1 bg-zinc-800/50 rounded-r"
                   >
-                    ⚠️ <strong>Important:</strong> All data is stored only in your browser's local storage — it is <strong>not backed up to the cloud</strong> and can be permanently lost if your browser storage is cleared, you switch browsers, or use a different device. Use <strong>Backup All Files</strong> regularly to download a
-                    <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code>
-                    snapshot you can restore anytime with <strong>Restore from Backup</strong>.
+                    ⚠️ <strong>Important:</strong> All data is stored only in
+                    your browser's local storage — it is
+                    <strong>not backed up to the cloud</strong> and can be
+                    permanently lost if your browser storage is cleared, you
+                    switch browsers, or use a different device. Use
+                    <strong>Backup All Files</strong> regularly to download a
+                    <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded"
+                      >.json</code
+                    >
+                    snapshot you can restore anytime with
+                    <strong>Restore from Backup</strong>.
                   </p>
                 </div>
               </div>
@@ -2890,6 +2909,8 @@
         document.addEventListener("DOMContentLoaded", () => {
           const container = document.getElementById("export-preview-container");
           if (!container) return;
+
+          // ── Mouse pan (desktop) ──
           container.addEventListener("mousedown", (ev) => {
             if (ev.button !== 0) return;
             if (ev.target.tagName === "BUTTON") return;
@@ -2913,6 +2934,39 @@
               const c2 = document.getElementById("export-preview-container");
               if (c2) c2.style.cursor = "";
             }
+          });
+
+          // ── Single-finger touch pan (mobile) ──
+          let touchPanning = false,
+            touchStartX = 0,
+            touchStartY = 0,
+            touchInitX = 0,
+            touchInitY = 0;
+          container.addEventListener(
+            "touchstart",
+            (ev) => {
+              if (ev.touches.length !== 1) return;
+              touchPanning = true;
+              touchStartX = ev.touches[0].clientX;
+              touchStartY = ev.touches[0].clientY;
+              touchInitX = exportPanX;
+              touchInitY = exportPanY;
+            },
+            { passive: true },
+          );
+          container.addEventListener(
+            "touchmove",
+            (ev) => {
+              if (!touchPanning || ev.touches.length !== 1) return;
+              exportPanX = touchInitX + (ev.touches[0].clientX - touchStartX);
+              exportPanY = touchInitY + (ev.touches[0].clientY - touchStartY);
+              updateExportTransform();
+              ev.preventDefault();
+            },
+            { passive: false },
+          );
+          container.addEventListener("touchend", () => {
+            touchPanning = false;
           });
         });
       })();
