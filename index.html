@@ -7,15 +7,6 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Team Maker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Polyfill to enable HTML5 drag and drop on Mobile Touchscreens -->
-    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
     <!-- Favicon -->
     <link
       rel="apple-touch-icon"
@@ -35,7 +26,15 @@
       href="favicons/favicon-16x16.png"
     />
     <link rel="manifest" href="favicons/site.webmanifest" />
-
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Polyfill to enable HTML5 drag and drop on Mobile Touchscreens -->
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <script>
       tailwind.config = {
         theme: {
@@ -4219,15 +4218,15 @@
         if (tallyConstraints) tallyConstraints.innerText = totalConstraints;
 
         constraints.together.forEach((pair, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
-                    <span class="truncate pr-2">${getMemberName(pair[0])} & ${getMemberName(pair[1])} <span class="text-[#A6E22E] text-[10px] uppercase ml-1 font-bold">Together</span></span>
-                    <button onclick="removeConstraint('together', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none">&times;</button>
+          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
+                    <span class="truncate pr-2"><span class="text-[#A6E22E] font-semibold">${getMemberName(pair[0])}</span> <span class="text-zinc-500">&</span> <span class="text-[#A6E22E] font-semibold">${getMemberName(pair[1])}</span></span>
+                    <button onclick="removeConstraint('together', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none flex-shrink-0">&times;</button>
                 </li>`;
         });
         constraints.apart.forEach((pair, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
-                    <span class="truncate pr-2">${getMemberName(pair[0])} & ${getMemberName(pair[1])} <span class="text-[#F92672] text-[10px] uppercase ml-1 font-bold">Apart</span></span>
-                    <button onclick="removeConstraint('apart', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none">&times;</button>
+          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
+                    <span class="truncate pr-2"><span class="text-[#F92672] font-semibold">${getMemberName(pair[0])}</span> <span class="text-zinc-500">&</span> <span class="text-[#F92672] font-semibold">${getMemberName(pair[1])}</span></span>
+                    <button onclick="removeConstraint('apart', ${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-lg leading-none flex-shrink-0">&times;</button>
                 </li>`;
         });
       }
@@ -4982,12 +4981,10 @@
           return;
         }
         all.forEach(({ p, i, type }) => {
-          const badge =
-            type === "together"
-              ? '<span class="text-[#A6E22E] font-bold uppercase text-[10px] ml-1">Together</span>'
-              : '<span class="text-[#F92672] font-bold uppercase text-[10px] ml-1">Apart</span>';
+          const nameColor =
+            type === "together" ? "text-[#A6E22E]" : "text-[#F92672]";
           list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700">
-                    <span class="truncate pr-2 text-zinc-300">${getMemberName(p[0])} & ${getMemberName(p[1])}${badge}</span>
+                    <span class="truncate pr-2"><span class="${nameColor} font-semibold">${getMemberName(p[0])}</span> <span class="text-zinc-500">&</span> <span class="${nameColor} font-semibold">${getMemberName(p[1])}</span></span>
                     <button onclick="removeMobileConstraint('${type}',${i})" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none flex-shrink-0">&times;</button>
                 </li>`;
         });
@@ -6303,10 +6300,10 @@
         if (tally) tally.innerText = total;
         list.innerHTML = "";
         constraints.together.forEach((p, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2">${getMemberName(p[0])} & ${getMemberName(p[1])} <span class="text-[#A6E22E] font-bold uppercase ml-1">Together</span></span><button onclick="removeConstraint('together',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
+          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2"><span class="text-[#A6E22E] font-semibold">${getMemberName(p[0])}</span> <span class="text-zinc-500">&</span> <span class="text-[#A6E22E] font-semibold">${getMemberName(p[1])}</span></span><button onclick="removeConstraint('together',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
         });
         constraints.apart.forEach((p, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2">${getMemberName(p[0])} & ${getMemberName(p[1])} <span class="text-[#F92672] font-bold uppercase ml-1">Apart</span></span><button onclick="removeConstraint('apart',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
+          list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2"><span class="text-[#F92672] font-semibold">${getMemberName(p[0])}</span> <span class="text-zinc-500">&</span> <span class="text-[#F92672] font-semibold">${getMemberName(p[1])}</span></span><button onclick="removeConstraint('apart',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
         });
       }
 
