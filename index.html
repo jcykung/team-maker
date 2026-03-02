@@ -385,6 +385,16 @@
         display: flex !important;
       }
 
+      /* ===== HIDE SEATING TAB ON MOBILE ===== */
+      @media (max-width: 767px) {
+        #nav-tab5 {
+          display: none !important;
+        }
+        #export-preview-toggle {
+          display: none !important;
+        }
+      }
+
       /* ===== FILES MODAL ===== */
       #files-modal {
         display: none;
@@ -820,12 +830,15 @@
 
             <div class="flex items-center space-x-4 mb-5">
               <span class="text-sm text-zinc-500">OR</span>
-              <input
-                type="file"
-                id="csv-file"
-                accept=".csv"
-                class="block w-full text-sm text-zinc-400 file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:bg-zinc-700 file:text-[#A6E22E] hover:file:bg-zinc-600 cursor-pointer transition"
-              />
+              <div class="flex flex-col gap-1 w-full">
+                <input
+                  type="file"
+                  id="csv-file"
+                  accept=".csv"
+                  class="block w-full text-sm text-zinc-400 file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:bg-zinc-700 file:text-[#A6E22E] hover:file:bg-zinc-600 cursor-pointer transition"
+                />
+                <span class="text-xs text-zinc-600">CSV files only (.csv)</span>
+              </div>
             </div>
 
             <button
@@ -2030,7 +2043,7 @@
             class="bg-zinc-900 p-5 sm:p-6 rounded-xl border border-zinc-700 shadow-xl mb-6 flex flex-col gap-4"
           >
             <!-- Toggle: Teams vs Seating -->
-            <div class="flex items-center gap-2">
+            <div id="export-preview-toggle" class="flex items-center gap-2">
               <span
                 class="text-xs text-zinc-500 font-bold uppercase tracking-wider"
                 >Preview:</span
@@ -2151,9 +2164,9 @@
               Team Maker
             </h1>
             <p class="text-zinc-400 text-base sm:text-lg mb-10 leading-relaxed">
-              A quick and flexible tool for generating and managing teams,
-              seating arrangements, or any kind of group assignment — works
-              great on desktop and phone.
+              A quick and flexible tool for generating and managing teams or any
+              kind of group assignment — works great on desktop and phone.
+              Seating arrangements are available on desktop only.
             </p>
 
             <div class="space-y-10">
@@ -2212,10 +2225,10 @@
                   <p>
                     Use <strong>Constraints</strong> to lock pairs together or
                     force them apart — the same constraints also apply in the
-                    Seating tab. The algorithm tries up to 500 attempts to
-                    satisfy every constraint. Adding a "Together" constraint
-                    when the pair is already set as "Apart" (or vice versa) will
-                    be blocked automatically.
+                    Seating tab (desktop). The algorithm tries up to 500
+                    attempts to satisfy every constraint. Adding a "Together"
+                    constraint when the pair is already set as "Apart" (or vice
+                    versa) will be blocked automatically.
                   </p>
                   <div
                     class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
@@ -2228,10 +2241,15 @@
                     <p class="text-sm text-zinc-300">
                       Drag member chips between team cards to reassign them.
                       Drag a team card header to reposition it on the canvas.
-                      Use the <strong>Text Box</strong> button (under Projector
-                      Mode) to add labels, headings, or notes to the canvas —
-                      click any text box to select it and use the format toolbar
-                      to change font, size, bold, italic, or underline. Press
+                      Click a team's name directly to rename it — press
+                      <kbd class="bg-zinc-700 px-1 rounded text-[10px]"
+                        >Enter</kbd
+                      >
+                      or click away to confirm. Use the
+                      <strong>Text Box</strong> button (under Projector Mode) to
+                      add labels, headings, or notes to the canvas — click any
+                      text box to select it and use the format toolbar to change
+                      font, size, bold, italic, or underline. Press
                       <kbd class="bg-zinc-700 px-1 rounded text-[10px]"
                         >Delete</kbd
                       >
@@ -2251,9 +2269,10 @@
                       📱 On Phone
                     </p>
                     <p class="text-sm text-zinc-300">
-                      Teams appear as scrollable cards. Tap any member name to
-                      open a sheet to move them or remove them. Tap the
-                      fullscreen icon (⤢) to enter Projector Mode — tap
+                      Teams appear as scrollable cards. Tap a team's name to
+                      rename it. Tap any member name to open a sheet to move
+                      them or remove them. Tap the fullscreen icon (⤢) to enter
+                      Projector Mode — tap
                       <strong>Exit</strong> when done.
                     </p>
                   </div>
@@ -2266,6 +2285,9 @@
                   class="text-xl sm:text-2xl font-semibold mb-3 text-[#66D9EF]"
                 >
                   3. Create Seating Arrangements
+                  <span class="text-sm font-normal text-zinc-500 ml-2"
+                    >(desktop only)</span
+                  >
                 </h3>
                 <div
                   class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base"
@@ -2276,7 +2298,8 @@
                       class="text-[#A6E22E] font-medium bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700"
                       >Seating</span
                     >
-                    tab to design a room layout and assign students to seats.
+                    tab (desktop only) to design a room layout and assign people
+                    to seats.
                   </p>
                   <div
                     class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-1.5"
@@ -2342,10 +2365,7 @@
                               >T</kbd
                             >
                           </td>
-                          <td class="py-1 text-zinc-300">
-                            Text Box
-                            <span class="text-zinc-500">(desktop)</span>
-                          </td>
+                          <td class="py-1 text-zinc-300">Text Box</td>
                         </tr>
                         <tr>
                           <td class="py-1 pr-4 whitespace-nowrap">
@@ -2394,8 +2414,8 @@
                     <span class="text-[#AE81FF]">Circle</span> and click to
                     place a seat, or click-and-drag to paint a row.
                     <span class="text-[#FD971F]">Unoccupied □/○</span> places a
-                    shape with a custom label (e.g. "Teacher's Desk") that won't
-                    be assigned a student. Use
+                    shape with a custom label (e.g. "Presenter's Desk") that
+                    won't be assigned a person. Use
                     <span class="text-[#E6DB74]">Text Box</span> to add
                     free-floating labels on desktop.
                   </p>
@@ -2416,7 +2436,7 @@
                     (touching), <em>Apart</em> means opposite sides of the room.
                     After assigning, drag any name chip between seats or to the
                     staging area to adjust. Click <strong>×</strong> on any chip
-                    to return that student to the staging area.
+                    to return that person to the staging area.
                   </p>
                   <div
                     class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
@@ -2459,9 +2479,10 @@
                       class="text-[#66D9EF] font-medium bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700"
                       >Export</span
                     >
-                    tab for a print-ready preview. Toggle between
+                    tab for a print-ready preview. On desktop, toggle between
                     <strong>Teams</strong> and <strong>Seating</strong> views.
-                    Download as <strong>PDF</strong> or <strong>JPG</strong>.
+                    On phone, the Teams layout is exported directly. Download as
+                    <strong>PDF</strong> or <strong>JPG</strong>.
                   </p>
                 </div>
               </div>
@@ -2486,19 +2507,20 @@
                     to manage multiple files (one per class, period, or
                     session).
                   </p>
-                  <p>
-                    Use <strong>Backup All Files</strong> to download a
+                  <p
+                    class="text-zinc-300 text-sm border-l-2 border-[#F92672] pl-4 py-1 bg-zinc-800/50 rounded-r"
+                  >
+                    ⚠️ <strong>Important:</strong> All data is stored only in
+                    your browser's local storage — it is
+                    <strong>not backed up to the cloud</strong> and can be
+                    permanently lost if your browser storage is cleared, you
+                    switch browsers, or use a different device. Use
+                    <strong>Backup All Files</strong> regularly to download a
                     <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded"
                       >.json</code
                     >
-                    of everything. Restore it anytime with
+                    snapshot you can restore anytime with
                     <strong>Restore from Backup</strong>.
-                  </p>
-                  <p
-                    class="text-zinc-400 text-sm border-l-2 border-zinc-700 pl-4 py-1 italic"
-                  >
-                    Tip: export a backup regularly — browser storage can be
-                    cleared when disk space is low.
                   </p>
                 </div>
               </div>
@@ -2515,10 +2537,10 @@
                 <p
                   class="text-zinc-300 text-base sm:text-lg leading-relaxed mb-6"
                 >
-                  I'm a full-time teacher who builds tools like this in my free
-                  time. If Team Maker saves you even a few minutes, I'd really
-                  appreciate a coffee — it keeps me motivated to keep improving
-                  it!
+                  I am a full-time high school teacher and I build tools like
+                  this in my free time. If Team Maker saves you even a few
+                  minutes, I'd really appreciate a coffee — it keeps me
+                  motivated to keep improving it!
                 </p>
                 <a
                   href="https://ko-fi.com/coolpuddytat"
@@ -4394,11 +4416,9 @@
             return;
           if (ev.button !== 0) return;
           ev.stopPropagation();
-          const cont = canvas.parentElement;
-          const rect = cont.getBoundingClientRect();
-          teamsTbStartX =
-            (ev.clientX - rect.left + cont.scrollLeft) / canvasZoom;
-          teamsTbStartY = (ev.clientY - rect.top + cont.scrollTop) / canvasZoom;
+          const rect = canvas.getBoundingClientRect();
+          teamsTbStartX = (ev.clientX - rect.left) / canvasZoom;
+          teamsTbStartY = (ev.clientY - rect.top) / canvasZoom;
           teamsTbPlacing = true;
           teamsTbPreview = document.createElement("div");
           teamsTbPreview.style.cssText = `position:absolute;left:${teamsTbStartX}px;top:${teamsTbStartY}px;width:4px;height:4px;border:1.5px dashed #E6DB74;border-radius:3px;background:rgba(230,219,116,0.06);pointer-events:none;z-index:50;box-sizing:border-box;`;
@@ -4408,10 +4428,9 @@
           document.removeEventListener("mousemove", canvas._tbMousemoveHandler);
         canvas._tbMousemoveHandler = (ev) => {
           if (!teamsTbPlacing || tbMode !== "teams") return;
-          const cont = canvas.parentElement;
-          const rect = cont.getBoundingClientRect();
-          const curX = (ev.clientX - rect.left + cont.scrollLeft) / canvasZoom;
-          const curY = (ev.clientY - rect.top + cont.scrollTop) / canvasZoom;
+          const rect = canvas.getBoundingClientRect();
+          const curX = (ev.clientX - rect.left) / canvasZoom;
+          const curY = (ev.clientY - rect.top) / canvasZoom;
           if (teamsTbPreview) {
             teamsTbPreview.style.left = Math.min(curX, teamsTbStartX) + "px";
             teamsTbPreview.style.top = Math.min(curY, teamsTbStartY) + "px";
@@ -4430,10 +4449,9 @@
             teamsTbPreview.remove();
             teamsTbPreview = null;
           }
-          const cont = canvas.parentElement;
-          const rect = cont.getBoundingClientRect();
-          const curX = (ev.clientX - rect.left + cont.scrollLeft) / canvasZoom;
-          const curY = (ev.clientY - rect.top + cont.scrollTop) / canvasZoom;
+          const rect = canvas.getBoundingClientRect();
+          const curX = (ev.clientX - rect.left) / canvasZoom;
+          const curY = (ev.clientY - rect.top) / canvasZoom;
           const w = Math.abs(curX - teamsTbStartX);
           const h = Math.abs(curY - teamsTbStartY);
           if (w < 20 || h < 10) return; // require real drag
@@ -4829,7 +4847,7 @@
           header.style.color = c.text;
           header.style.borderBottom = "2px solid " + c.border;
           header.innerHTML = `
-                    <span class="team-title font-bold text-sm">${g.name}</span>
+                    <span class="team-title font-bold text-sm cursor-pointer active:opacity-70 select-none" title="Tap to rename" onclick="(function(){const n=prompt('Rename team:', '${g.name.replace(/'/g, "\\'")}'); if(n!==null&&n.trim()){updateTeamName('${g.id}',n);renderTeams();renderTeamsMobile();}})()">${g.name}</span>
                     <span class="team-tally" style="background:rgba(0,0,0,0.25)">${g.members.length}</span>
                 `;
 
