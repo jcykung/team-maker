@@ -396,18 +396,6 @@
         transition: transform 0.05s;
       }
 
-      /* Mobile: push canvas below nav (44px) + mobile topbar (48px) */
-      @media (max-width: 767px) {
-        #seating-canvas-container {
-          padding-top: 48px;
-        }
-        /* Mobile active tool highlight in bottom sheet */
-        .seat-m-tool-btn.seat-m-active {
-          filter: brightness(1.25);
-          box-shadow: 0 0 0 2px currentColor;
-        }
-      }
-
       .seat-el {
         box-sizing: border-box;
         transition: box-shadow 0.1s;
@@ -494,7 +482,7 @@
               <button
                 onclick="switchTab('tab5')"
                 id="nav-tab5"
-                class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap"
+                class="editor-tab hidden md:block px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap"
               >
                 Seating
               </button>
@@ -1932,373 +1920,6 @@
           id="seating-canvas-container"
           class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto"
         >
-          <!-- ══ MOBILE TOP BAR ══ -->
-          <div
-            id="seat-m-topbar"
-            class="md:hidden fixed top-[44px] left-0 right-0 z-40 flex items-center gap-2 px-3 h-12 bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-700 shadow-lg"
-          >
-            <div class="flex items-center gap-1.5 flex-1 min-w-0">
-              <span
-                class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider shrink-0"
-                >Tool:</span
-              >
-              <span
-                id="seat-m-tool-label"
-                class="text-xs font-bold truncate"
-                style="color: #a6e22e"
-                >Select</span
-              >
-            </div>
-            <button
-              id="seat-m-undo"
-              onclick="seatUndo()"
-              disabled
-              style="opacity: 0.3"
-              class="w-9 h-9 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-zinc-400 active:bg-zinc-700 shrink-0"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M3 7v6h6" />
-                <path d="M3 13C5.4 7.4 11.5 4 18 6.4A9 9 0 0 1 21 17" />
-              </svg>
-            </button>
-            <button
-              id="seat-m-redo"
-              onclick="seatRedo()"
-              disabled
-              style="opacity: 0.3"
-              class="w-9 h-9 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-zinc-400 active:bg-zinc-700 shrink-0"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M21 7v6h-6" />
-                <path d="M21 13C18.6 7.4 12.5 4 6 6.4A9 9 0 0 0 3 17" />
-              </svg>
-            </button>
-            <button
-              id="seat-m-primary"
-              onclick="seatPrimaryAction()"
-              class="h-9 px-3 bg-[#A6E22E] text-zinc-900 rounded font-bold text-xs active:bg-[#8cc026] shrink-0"
-            >
-              Load Roster
-            </button>
-            <button
-              onclick="seatMPanelToggle()"
-              class="w-9 h-9 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-[#FD971F] active:bg-zinc-700 shrink-0"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.2"
-                stroke-linecap="round"
-              >
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- ══ MOBILE BOTTOM SHEET ══ -->
-          <div
-            id="seat-m-backdrop"
-            onclick="seatMPanelClose()"
-            class="md:hidden fixed inset-0 z-[60] bg-black/50 hidden"
-          ></div>
-          <div
-            id="seat-m-sheet"
-            class="md:hidden fixed bottom-0 left-0 right-0 z-[61] bg-zinc-900 border-t-2 border-zinc-600 rounded-t-2xl shadow-2xl translate-y-full"
-            style="
-              transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
-              max-height: 78dvh;
-              padding-bottom: max(16px, env(safe-area-inset-bottom));
-            "
-          >
-            <!-- Handle -->
-            <div
-              class="flex justify-center pt-2.5 pb-1 cursor-pointer"
-              onclick="seatMPanelClose()"
-            >
-              <div class="w-10 h-1 bg-zinc-600 rounded-full"></div>
-            </div>
-            <!-- Tab strip -->
-            <div class="flex border-b border-zinc-700 px-2">
-              <button
-                onclick="seatMSetTab('tools')"
-                id="seat-m-tab-tools"
-                class="flex-1 py-2 text-xs font-bold border-b-2 border-[#A6E22E] text-[#A6E22E]"
-              >
-                🔧 Tools
-              </button>
-              <button
-                onclick="seatMSetTab('staging')"
-                id="seat-m-tab-staging"
-                class="flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-zinc-400"
-              >
-                Staging
-                <span
-                  id="seat-m-staging-count"
-                  class="text-[10px] bg-zinc-800 px-1 rounded font-mono ml-0.5"
-                  >0</span
-                >
-              </button>
-              <button
-                onclick="seatMSetTab('pairs')"
-                id="seat-m-tab-pairs"
-                class="flex-1 py-2 text-xs font-bold border-b-2 border-transparent text-zinc-400"
-              >
-                Pairs
-                <span
-                  id="seat-m-pairs-count"
-                  class="text-[10px] bg-zinc-800 px-1 rounded font-mono ml-0.5"
-                  >0</span
-                >
-              </button>
-            </div>
-
-            <!-- TOOLS PANEL -->
-            <div
-              id="seat-m-panel-tools"
-              class="overflow-y-auto"
-              style="max-height: calc(78dvh - 98px)"
-            >
-              <div class="p-3 grid grid-cols-3 gap-2">
-                <button
-                  onclick="
-                    setTool('select');
-                    seatMPanelClose();
-                  "
-                  data-m-tool="select"
-                  class="seat-m-tool-btn col-span-3 bg-zinc-800 border border-[#A6E22E]/40 text-[#A6E22E] py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 active:opacity-70"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"
-                    />
-                  </svg>
-                  Select / Move
-                </button>
-                <button
-                  onclick="
-                    setTool('sq1');
-                    seatMPanelClose();
-                  "
-                  data-m-tool="sq1"
-                  class="seat-m-tool-btn bg-zinc-800 border border-[#66D9EF]/40 text-[#66D9EF] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
-                >
-                  <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <rect
-                      x="4"
-                      y="4"
-                      width="16"
-                      height="16"
-                      rx="2"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  Square
-                </button>
-                <button
-                  onclick="
-                    setTool('ci1');
-                    seatMPanelClose();
-                  "
-                  data-m-tool="ci1"
-                  class="seat-m-tool-btn bg-zinc-800 border border-[#AE81FF]/40 text-[#AE81FF] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
-                >
-                  <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="12" cy="12" r="9" stroke-width="2" />
-                  </svg>
-                  Circle
-                </button>
-                <button
-                  onclick="
-                    setTool('eraser');
-                    seatMPanelClose();
-                  "
-                  data-m-tool="eraser"
-                  class="seat-m-tool-btn bg-zinc-800 border border-[#F92672]/40 text-[#F92672] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
-                >
-                  <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                  Delete
-                </button>
-                <button
-                  onclick="
-                    setTool('manSq');
-                    seatMPanelClose();
-                  "
-                  data-m-tool="manSq"
-                  class="seat-m-tool-btn bg-zinc-800 border border-[#FD971F]/40 text-[#FD971F] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
-                >
-                  <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <rect
-                      x="4"
-                      y="4"
-                      width="16"
-                      height="16"
-                      rx="2"
-                      stroke-width="2"
-                    />
-                  </svg>
-                  Label □
-                </button>
-                <button
-                  onclick="
-                    setTool('manCi');
-                    seatMPanelClose();
-                  "
-                  data-m-tool="manCi"
-                  class="seat-m-tool-btn bg-zinc-800 border border-[#FD971F]/40 text-[#FD971F] py-4 rounded-lg text-xs font-bold flex flex-col items-center gap-1.5 active:opacity-70"
-                >
-                  <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle cx="12" cy="12" r="9" stroke-width="2" />
-                  </svg>
-                  Label ○
-                </button>
-              </div>
-              <div
-                class="px-3 pb-4 grid grid-cols-2 gap-2 border-t border-zinc-800 pt-3"
-              >
-                <button
-                  id="seat-m-snap"
-                  onclick="
-                    toggleSeatSnap();
-                    seatMSyncSnap();
-                  "
-                  class="bg-zinc-800 border border-[#A6E22E]/50 text-[#A6E22E] py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 active:opacity-70"
-                >
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M4 6h16M4 12h8m-8 6h16"
-                    />
-                  </svg>
-                  Snap On
-                </button>
-                <button
-                  onclick="clearAllSeats()"
-                  class="bg-zinc-800 border border-zinc-700 text-[#F92672] py-2.5 rounded-lg text-xs font-bold active:opacity-70"
-                >
-                  Clear All
-                </button>
-              </div>
-            </div>
-
-            <!-- STAGING PANEL -->
-            <div
-              id="seat-m-panel-staging"
-              class="hidden overflow-y-auto p-3 pb-4"
-              style="max-height: calc(78dvh - 98px)"
-            >
-              <p class="text-[10px] text-zinc-500 italic mb-2.5">
-                Drag a name onto a seat on the canvas to assign it.
-              </p>
-              <div
-                id="seat-m-staging-list"
-                class="grid grid-cols-2 gap-1.5"
-              ></div>
-            </div>
-
-            <!-- PAIRS / CONSTRAINTS PANEL -->
-            <div
-              id="seat-m-panel-pairs"
-              class="hidden overflow-y-auto p-3 pb-4"
-              style="max-height: calc(78dvh - 98px)"
-            >
-              <div class="flex gap-2 mb-2">
-                <select
-                  id="seat-m-cs1"
-                  class="flex-1 min-w-0 bg-zinc-950 border border-zinc-700 text-[#E6DB74] text-xs rounded p-2 outline-none"
-                ></select>
-                <select
-                  id="seat-m-cs2"
-                  class="flex-1 min-w-0 bg-zinc-950 border border-zinc-700 text-[#E6DB74] text-xs rounded p-2 outline-none"
-                ></select>
-              </div>
-              <div class="flex gap-2 mb-3">
-                <button
-                  onclick="seatMAddConstraint('together')"
-                  class="flex-1 bg-zinc-800 border border-zinc-700 text-[#A6E22E] text-xs py-2 rounded font-bold active:opacity-70"
-                >
-                  + Together
-                </button>
-                <button
-                  onclick="seatMAddConstraint('apart')"
-                  class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F92672] text-xs py-2 rounded font-bold active:opacity-70"
-                >
-                  + Apart
-                </button>
-              </div>
-              <ul id="seat-m-pairs-list" class="space-y-1.5 text-xs"></ul>
-            </div>
-          </div>
-
           <!-- Floating Exit Projector Button -->
           <button
             id="seat-exit-fullscreen-btn"
@@ -2787,40 +2408,17 @@
                     class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
                   >
                     <p
-                      class="text-xs font-bold text-[#66D9EF] uppercase tracking-wider"
+                      class="text-xs font-bold text-[#A6E22E] uppercase tracking-wider"
                     >
-                      💻 On Desktop
+                      📐 Tips
                     </p>
                     <p class="text-sm text-zinc-300">
-                      The sidebar contains all tools, constraints, and the
-                      staging area. <strong>Snap On</strong> keeps seats aligned
-                      to the grid. <strong>Ctrl+scroll</strong> to zoom — the
-                      grid, seats, and text boxes all scale together. Use
+                      <strong>Snap On</strong> keeps seats aligned to the grid.
+                      <strong>Ctrl+scroll</strong> to zoom — the grid, seats,
+                      and text boxes all scale together. Use
                       <strong>Projector Mode</strong> to go fullscreen for
-                      display on a classroom screen.
-                    </p>
-                  </div>
-                  <div
-                    class="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-2"
-                  >
-                    <p
-                      class="text-xs font-bold text-[#E6DB74] uppercase tracking-wider"
-                    >
-                      📱 On Phone
-                    </p>
-                    <p class="text-sm text-zinc-300">
-                      The canvas fills the full screen for maximum drawing
-                      space. A slim <strong>top bar</strong> shows the active
-                      tool name, undo/redo buttons, the primary action (Load
-                      Roster / Assign Seats), and a
-                      <strong>☰ menu</strong> button. Tap ☰ to open the bottom
-                      panel, which has three tabs:
-                      <strong>Tools</strong> (switch tool, toggle snap, clear
-                      all), <strong>Staging</strong> (unassigned members — drag
-                      a name chip from here onto a seat on the canvas), and
-                      <strong>Pairs</strong> (manage Together/Apart
-                      constraints). Tapping a tool closes the panel
-                      automatically so you can get straight back to drawing.
+                      display on a classroom screen. The Seating tab is a
+                      desktop-only feature.
                     </p>
                   </div>
                 </div>
@@ -3155,7 +2753,6 @@
           r.disabled = seatRedoStack.length === 0;
           r.style.opacity = r.disabled ? "0.3" : "1";
         }
-        seatMSyncUndoRedo();
       }
 
       let hasUnsavedChanges = false;
@@ -6157,7 +5754,6 @@
           });
           seatSeatsLoaded = true;
           btn.textContent = "Assign Seats";
-          seatMSyncPrimary();
           renderSeats();
           markUnsaved();
         } else {
@@ -6169,7 +5765,6 @@
         seatSeatsLoaded = false;
         const btn = document.getElementById("seat-primary-btn");
         if (btn) btn.textContent = "Load Roster";
-        seatMSyncPrimary();
       }
 
       // ---- Tool ----
@@ -6265,7 +5860,6 @@
             tbMode = null;
           }
         }
-        seatMSyncTool(tool);
         renderSeats();
       }
 
@@ -6369,7 +5963,6 @@
         });
         s1.innerHTML = opts;
         s2.innerHTML = opts;
-        seatMSyncPairSelects();
       }
 
       function syncSeatConstraintList() {
@@ -6385,392 +5978,7 @@
         constraints.apart.forEach((p, i) => {
           list.innerHTML += `<li class="flex justify-between items-center text-zinc-300 bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700 text-xs"><span class="truncate pr-2">${getMemberName(p[0])} & ${getMemberName(p[1])} <span class="text-[#F92672] font-bold uppercase ml-1">Apart</span></span><button onclick="removeConstraint('apart',${i}); syncSeatConstraintList();" class="text-zinc-500 font-bold hover:text-[#F92672] text-base leading-none">&times;</button></li>`;
         });
-        // Also sync mobile pairs list if open
-        seatMSyncPairs();
       }
-
-      // ══════════════════════════════════════════
-      // MOBILE SEATING PANEL
-      // ══════════════════════════════════════════
-      let _seatMTab = "tools";
-      let _seatMOpen = false;
-
-      function seatMPanelToggle() {
-        _seatMOpen ? seatMPanelClose() : seatMPanelOpen();
-      }
-      function seatMPanelOpen() {
-        _seatMOpen = true;
-        document
-          .getElementById("seat-m-sheet")
-          .classList.remove("translate-y-full");
-        document.getElementById("seat-m-backdrop").classList.remove("hidden");
-        // Refresh current tab content
-        if (_seatMTab === "staging") seatMSyncStaging();
-        if (_seatMTab === "pairs") {
-          seatMSyncPairs();
-          seatMSyncPairSelects();
-        }
-      }
-      function seatMPanelClose() {
-        _seatMOpen = false;
-        document
-          .getElementById("seat-m-sheet")
-          .classList.add("translate-y-full");
-        document.getElementById("seat-m-backdrop").classList.add("hidden");
-      }
-
-      function seatMSetTab(tab) {
-        _seatMTab = tab;
-        if (!_seatMOpen) seatMPanelOpen();
-        else {
-          if (tab === "staging") seatMSyncStaging();
-          if (tab === "pairs") {
-            seatMSyncPairs();
-            seatMSyncPairSelects();
-          }
-        }
-        const tabs = ["tools", "staging", "pairs"];
-        tabs.forEach((t) => {
-          const btn = document.getElementById("seat-m-tab-" + t);
-          const panel = document.getElementById("seat-m-panel-" + t);
-          const active = t === tab;
-          if (btn) {
-            btn.className = `flex-1 py-2 text-xs font-bold border-b-2 ${active ? "border-[#A6E22E] text-[#A6E22E]" : "border-transparent text-zinc-400"}`;
-          }
-          if (panel) panel.classList.toggle("hidden", !active);
-        });
-      }
-
-      // Sync mobile tool label + active button highlight
-      function seatMSyncTool(tool) {
-        const labels = {
-          select: "Select",
-          sq1: "Square",
-          ci1: "Circle",
-          eraser: "Delete",
-          manSq: "Label □",
-          manCi: "Label ○",
-          textbox: "Textbox",
-        };
-        const colors = {
-          select: "#A6E22E",
-          sq1: "#66D9EF",
-          ci1: "#AE81FF",
-          eraser: "#F92672",
-          manSq: "#FD971F",
-          manCi: "#FD971F",
-          textbox: "#E6DB74",
-        };
-        const lbl = document.getElementById("seat-m-tool-label");
-        if (lbl) {
-          lbl.textContent = labels[tool] || tool;
-          lbl.style.color = colors[tool] || "#F8F8F2";
-        }
-        document.querySelectorAll(".seat-m-tool-btn").forEach((b) => {
-          b.classList.toggle("seat-m-active", b.dataset.mTool === tool);
-        });
-      }
-
-      // Sync snap button in mobile sheet
-      function seatMSyncSnap() {
-        const btn = document.getElementById("seat-m-snap");
-        if (!btn) return;
-        if (seatSnapToGrid) {
-          btn.className = btn.className
-            .replace("border-zinc-700 text-zinc-400", "")
-            .trim();
-          btn.classList.add("border-[#A6E22E]/50", "text-[#A6E22E]");
-          btn.querySelector("svg") ? (btn.innerHTML = btn.innerHTML) : null;
-          btn.childNodes.forEach((n) => {
-            if (n.nodeType === 3) n.textContent = " Snap On";
-          });
-        } else {
-          btn.classList.remove("border-[#A6E22E]/50", "text-[#A6E22E]");
-          btn.classList.add("border-zinc-700", "text-zinc-400");
-          btn.childNodes.forEach((n) => {
-            if (n.nodeType === 3) n.textContent = " Snap Off";
-          });
-        }
-      }
-
-      // Sync mobile primary button text
-      function seatMSyncPrimary() {
-        const btn = document.getElementById("seat-m-primary");
-        const src = document.getElementById("seat-primary-btn");
-        if (btn && src) btn.textContent = src.textContent;
-      }
-
-      // Sync mobile undo/redo
-      function seatMSyncUndoRedo() {
-        const mu = document.getElementById("seat-m-undo");
-        const mr = document.getElementById("seat-m-redo");
-        const du = document.getElementById("seat-undo-btn");
-        const dr = document.getElementById("seat-redo-btn");
-        if (mu && du) {
-          mu.disabled = du.disabled;
-          mu.style.opacity = du.style.opacity;
-        }
-        if (mr && dr) {
-          mr.disabled = dr.disabled;
-          mr.style.opacity = dr.style.opacity;
-        }
-      }
-
-      // Populate staging panel
-      function seatMSyncStaging() {
-        const list = document.getElementById("seat-m-staging-list");
-        const countEl = document.getElementById("seat-m-staging-count");
-        if (!list) return;
-        const assignedIds = new Set();
-        seats.forEach((s) => {
-          if (s.occupantId) assignedIds.add(s.occupantId);
-          if (s.sectionOccupants)
-            s.sectionOccupants.forEach((id) => {
-              if (id) assignedIds.add(id);
-            });
-        });
-        const unassigned = allMembers.filter((m) => !assignedIds.has(m.id));
-        if (countEl) countEl.textContent = unassigned.length;
-        list.innerHTML = "";
-        if (unassigned.length === 0) {
-          list.innerHTML =
-            '<div class="col-span-2 text-zinc-500 text-sm text-center py-4">Everyone is seated ✓</div>';
-          return;
-        }
-        unassigned.forEach((m) => {
-          const div = document.createElement("div");
-          div.className =
-            "member-item border rounded-md text-xs font-medium shadow-sm";
-          div.draggable = false;
-          div.innerHTML = `<span class="member-name-text flex-1 select-none">${m.name}</span>`;
-          // Drag from staging on mobile: mousedown drag (same as desktop staging)
-          div.addEventListener(
-            "mousedown",
-            stagingItemMousedown.bind(null, m, div),
-          );
-          list.appendChild(div);
-        });
-      }
-
-      // Shared staging drag handler (used by both desktop and mobile staging items)
-      function stagingItemMousedown(m, div, ev) {
-        if (ev.button !== 0) return;
-        ev.stopPropagation();
-        let x0 = ev.clientX,
-          y0 = ev.clientY,
-          dragging = false;
-        let ghost = null,
-          hlChip = null,
-          hlSeat = null;
-        const onMove = (ev2) => {
-          if (!dragging && Math.hypot(ev2.clientX - x0, ev2.clientY - y0) > 6) {
-            dragging = true;
-            seatMPanelClose(); // close sheet so canvas is visible
-            div.style.opacity = "0.35";
-            document.body.style.cursor = "grabbing";
-            ghost = document.createElement("div");
-            ghost.style.cssText =
-              "position:fixed;pointer-events:none;z-index:9999;background:rgba(0,0,0,0.28);border:1.5px solid rgba(255,255,255,0.22);border-radius:4px;padding:3px 8px;color:#F8F8F2;font-size:12px;font-weight:600;text-align:center;line-height:1.4;white-space:pre-line;transform:translate(-50%,-50%);opacity:0.9;cursor:grabbing;user-select:none;";
-            ghost.innerText = m.name.trim().split(/\s+/).join("\n");
-            document.body.appendChild(ghost);
-          }
-          if (!dragging) return;
-          ghost.style.left = ev2.clientX + "px";
-          ghost.style.top = ev2.clientY + "px";
-          // Highlight target chip
-          let foundChip = null;
-          document.querySelectorAll(".seat-name-chip").forEach((c) => {
-            if (c.dataset.dragging) return;
-            const r = c.getBoundingClientRect();
-            if (
-              ev2.clientX >= r.left &&
-              ev2.clientX <= r.right &&
-              ev2.clientY >= r.top &&
-              ev2.clientY <= r.bottom
-            )
-              foundChip = c;
-          });
-          if (hlChip && hlChip !== foundChip) {
-            hlChip.style.outline = "";
-            hlChip = null;
-          }
-          if (foundChip && foundChip !== hlChip) {
-            hlChip = foundChip;
-            foundChip.style.outline = "2px solid #A6E22E";
-          }
-          // Highlight empty seat
-          let foundSeat = null;
-          if (!foundChip) {
-            document
-              .querySelectorAll(".seat-el[data-seat-id]")
-              .forEach((el) => {
-                const r = el.getBoundingClientRect();
-                if (
-                  ev2.clientX >= r.left &&
-                  ev2.clientX <= r.right &&
-                  ev2.clientY >= r.top &&
-                  ev2.clientY <= r.bottom
-                ) {
-                  const ts = seats.find((s) => s.id === el.dataset.seatId);
-                  if (ts && !ts.manual) foundSeat = el;
-                }
-              });
-          }
-          if (hlSeat && hlSeat !== foundSeat) {
-            hlSeat.style.outline = "";
-            hlSeat = null;
-          }
-          if (foundSeat && foundSeat !== hlSeat) {
-            hlSeat = foundSeat;
-            foundSeat.style.outline = "2px solid #A6E22E";
-            foundSeat.style.outlineOffset = "2px";
-          }
-        };
-        const onUp = (ev2) => {
-          document.removeEventListener("mousemove", onMove);
-          document.removeEventListener("mouseup", onUp);
-          document.body.style.cursor = "";
-          if (hlChip) {
-            hlChip.style.outline = "";
-            hlChip = null;
-          }
-          if (hlSeat) {
-            hlSeat.style.outline = "";
-            hlSeat = null;
-          }
-          if (ghost) {
-            ghost.remove();
-            ghost = null;
-          }
-          div.style.opacity = "1";
-          if (!dragging) return;
-          pushSeatUndoNow();
-          const dx = ev2.clientX,
-            dy = ev2.clientY;
-          // Try chip-to-chip swap first
-          let handled = false;
-          document.querySelectorAll(".seat-name-chip").forEach((chip) => {
-            if (handled) return;
-            const r = chip.getBoundingClientRect();
-            if (dx < r.left || dx > r.right || dy < r.top || dy > r.bottom)
-              return;
-            const el = chip.closest("[data-seat-id]");
-            if (!el) return;
-            const ts = seats.find((s) => s.id === el.dataset.seatId);
-            if (!ts || ts.manual) return;
-            if ((ts.sections || 1) > 1) {
-              const j = parseInt(chip.dataset.sectionIdx ?? "-1");
-              if (j >= 0) {
-                const old = ts.sectionOccupants[j];
-                ts.sectionOccupants[j] = m.id;
-                if (old) staging.push(old);
-                handled = true;
-              }
-            } else {
-              const old = ts.occupantId;
-              ts.occupantId = m.id;
-              if (old) staging.push(old);
-              handled = true;
-            }
-          });
-          if (handled) {
-            renderSeats();
-            markUnsaved();
-            return;
-          }
-          // Try empty seat
-          document.querySelectorAll(".seat-el[data-seat-id]").forEach((el) => {
-            if (handled) return;
-            const r = el.getBoundingClientRect();
-            if (dx < r.left || dx > r.right || dy < r.top || dy > r.bottom)
-              return;
-            const ts = seats.find((s) => s.id === el.dataset.seatId);
-            if (!ts || ts.manual) return;
-            if ((ts.sections || 1) > 1) {
-              const idx = (ts.sectionOccupants || []).indexOf(null);
-              if (idx >= 0) {
-                ts.sectionOccupants[idx] = m.id;
-                handled = true;
-              }
-            } else if (!ts.occupantId) {
-              ts.occupantId = m.id;
-              handled = true;
-            }
-          });
-          if (handled) {
-            renderSeats();
-            markUnsaved();
-          }
-        };
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-      }
-
-      // Populate pairs panel
-      function seatMSyncPairs() {
-        const list = document.getElementById("seat-m-pairs-list");
-        const countEl = document.getElementById("seat-m-pairs-count");
-        const total = constraints.together.length + constraints.apart.length;
-        if (countEl) countEl.textContent = total;
-        if (!list) return;
-        list.innerHTML = "";
-        if (total === 0) {
-          list.innerHTML =
-            '<li class="text-zinc-600 italic py-1">No pairs yet</li>';
-          return;
-        }
-        constraints.together.forEach((p, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700"><span class="truncate pr-2 text-[#A6E22E] font-semibold">${getMemberName(p[0])} <span class="text-zinc-500 font-normal">&amp;</span> ${getMemberName(p[1])}</span><button onclick="removeConstraint('together',${i});seatMSyncPairs();syncSeatConstraintList();" class="text-zinc-500 hover:text-[#F92672] font-bold text-base leading-none shrink-0">&times;</button></li>`;
-        });
-        constraints.apart.forEach((p, i) => {
-          list.innerHTML += `<li class="flex justify-between items-center bg-zinc-800 px-2 py-1.5 rounded border border-zinc-700"><span class="truncate pr-2 text-[#F92672] font-semibold">${getMemberName(p[0])} <span class="text-zinc-500 font-normal">&amp;</span> ${getMemberName(p[1])}</span><button onclick="removeConstraint('apart',${i});seatMSyncPairs();syncSeatConstraintList();" class="text-zinc-500 hover:text-[#F92672] font-bold text-base leading-none shrink-0">&times;</button></li>`;
-        });
-      }
-
-      // Populate mobile pair selects
-      function seatMSyncPairSelects() {
-        ["seat-m-cs1", "seat-m-cs2"].forEach((id) => {
-          const sel = document.getElementById(id);
-          if (!sel) return;
-          const cur = sel.value;
-          sel.innerHTML =
-            '<option value="">Select…</option>' +
-            allMembers
-              .map((m) => `<option value="${m.id}">${m.name}</option>`)
-              .join("");
-          if (cur) sel.value = cur;
-        });
-      }
-
-      // Add constraint from mobile panel
-      function seatMAddConstraint(type) {
-        const v1 = document.getElementById("seat-m-cs1")?.value;
-        const v2 = document.getElementById("seat-m-cs2")?.value;
-        if (!v1 || !v2 || v1 === v2)
-          return showModal("Select two different members.");
-        const opp = type === "together" ? "apart" : "together";
-        if (
-          constraints[opp].some(
-            (p) => (p[0] === v1 && p[1] === v2) || (p[0] === v2 && p[1] === v1),
-          )
-        )
-          return showModal(
-            `Already set as "${opp}". Remove that constraint first.`,
-          );
-        if (
-          constraints[type].some(
-            (p) => (p[0] === v1 && p[1] === v2) || (p[0] === v2 && p[1] === v1),
-          )
-        )
-          return;
-        constraints[type].push([v1, v2]);
-        syncSeatConstraintList();
-        seatMSyncPairs();
-        renderConstraintList();
-        markUnsaved();
-      }
-
-      // ══════════════════════════════════════════
 
       // ---- Projector ----
       function toggleSeatProjector() {
@@ -8959,7 +8167,6 @@
         ) {
           btn.textContent = "Assign Seats";
           seatSeatsLoaded = true;
-          seatMSyncPrimary();
         }
         const assignedIds = new Set();
         seats.forEach((s) => {
@@ -8971,11 +8178,6 @@
         });
         const unassigned = allMembers.filter((m) => !assignedIds.has(m.id));
         if (tally) tally.innerText = unassigned.length; // count of names in staging area
-        // Sync mobile staging count badge
-        const mCount = document.getElementById("seat-m-staging-count");
-        if (mCount) mCount.textContent = unassigned.length;
-        // Refresh mobile staging panel if it's currently open
-        if (_seatMOpen && _seatMTab === "staging") seatMSyncStaging();
         area.innerHTML = "";
         if (allMembers.length === 0) {
           area.innerHTML =
