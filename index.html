@@ -400,6 +400,8 @@
         }
         #export-preview {
           width: 100% !important;
+          will-change: transform;
+          touch-action: none;
         }
       }
 
@@ -2896,7 +2898,7 @@
       function updateExportTransform() {
         const preview = document.getElementById("export-preview");
         if (preview)
-          preview.style.transform = `translate(${exportPanX}px, ${exportPanY}px) scale(${exportZoom})`;
+          preview.style.transform = `translate3d(${exportPanX}px, ${exportPanY}px, 0) scale(${exportZoom})`;
       }
 
       // Pan the export preview by drag
@@ -2941,7 +2943,8 @@
             touchStartX = 0,
             touchStartY = 0,
             touchInitX = 0,
-            touchInitY = 0;
+            touchInitY = 0,
+            touchRafId = null;
           container.addEventListener(
             "touchstart",
             (ev) => {
@@ -2958,15 +2961,25 @@
             "touchmove",
             (ev) => {
               if (!touchPanning || ev.touches.length !== 1) return;
-              exportPanX = touchInitX + (ev.touches[0].clientX - touchStartX);
-              exportPanY = touchInitY + (ev.touches[0].clientY - touchStartY);
-              updateExportTransform();
               ev.preventDefault();
+              const tx = ev.touches[0].clientX;
+              const ty = ev.touches[0].clientY;
+              if (touchRafId) return; // already a frame queued
+              touchRafId = requestAnimationFrame(() => {
+                touchRafId = null;
+                exportPanX = touchInitX + (tx - touchStartX);
+                exportPanY = touchInitY + (ty - touchStartY);
+                updateExportTransform();
+              });
             },
             { passive: false },
           );
           container.addEventListener("touchend", () => {
             touchPanning = false;
+            if (touchRafId) {
+              cancelAnimationFrame(touchRafId);
+              touchRafId = null;
+            }
           });
         });
       })();
@@ -4024,20 +4037,33 @@
       }
 
       function getCanvasBounds() {
-        let maxX = 80,
-          maxY = 80;
+        let minX = Infinity,
+          minY = Infinity,
+          maxX = -Infinity,
+          maxY = -Infinity;
         teams.forEach((g) => {
           const estHeight = 62 + g.members.length * 34;
+          if (g.x < minX) minX = g.x;
+          if (g.y < minY) minY = g.y;
           if (g.x + 240 > maxX) maxX = g.x + 240;
           if (g.y + estHeight > maxY) maxY = g.y + estHeight;
         });
         textboxes
           .filter((t) => t.canvas === "teams")
           .forEach((t) => {
+            if (t.x < minX) minX = t.x;
+            if (t.y < minY) minY = t.y;
             if (t.x + (t.w || 200) > maxX) maxX = t.x + (t.w || 200);
             if (t.y + (t.minH || 40) > maxY) maxY = t.y + (t.minH || 40);
           });
-        return { width: maxX, height: maxY };
+        // Fallback if nothing present
+        if (!isFinite(minX)) {
+          minX = 0;
+          minY = 0;
+          maxX = 80;
+          maxY = 80;
+        }
+        return { minX, minY, width: maxX - minX, height: maxY - minY };
       }
 
       function generateCleanPrintPreview(bounds) {
@@ -4047,6 +4073,8 @@
         previewBox.innerHTML = "";
 
         const PAD = 40;
+        const offX = -(bounds.minX || 0);
+        const offY = -(bounds.minY || 0);
         const W = bounds.width + PAD * 2;
         const H = bounds.height + PAD * 2;
         const svgNS = "http://www.w3.org/2000/svg";
@@ -4082,8 +4110,8 @@
         teams.forEach((g) => {
           const c = exportTeamColors[g.colorIndex || 0];
           const cardH = HEADER_H + g.members.length * ROW_H + 8;
-          const cx = g.x + PAD;
-          const cy = g.y + PAD;
+          const cx = g.x + offX + PAD;
+          const cy = g.y + offY + PAD;
 
           // Card background
           const cardBg = document.createElementNS(svgNS, "rect");
@@ -4195,8 +4223,8 @@
           .forEach((t) => {
             const g = document.createElementNS(svgNS, "g");
             const rot = t.rotation || 0;
-            const tx = (t.x || 0) + PAD;
-            const ty = (t.y || 0) + PAD;
+            const tx = (t.x || 0) + offX + PAD;
+            const ty = (t.y || 0) + offY + PAD;
             if (rot !== 0) {
               g.setAttribute("transform", `rotate(${rot}, ${tx}, ${ty})`);
             }
