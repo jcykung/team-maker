@@ -3121,9 +3121,17 @@
       }
 
       // Adjust layout when entering Projector view
+      let _preProjectorZoom = null;
       document.addEventListener("fullscreenchange", () => {
-        if (document.fullscreenElement) {
+        const teamsContainer = document.getElementById("canvas-container");
+        if (document.fullscreenElement === teamsContainer) {
+          // Entering Teams projector: save zoom, then fit
+          _preProjectorZoom = canvasZoom;
           setTimeout(fitTeamsToScreen, 150);
+        } else if (!document.fullscreenElement && _preProjectorZoom !== null) {
+          // Exiting Teams projector: restore zoom
+          setCanvasZoom(_preProjectorZoom);
+          _preProjectorZoom = null;
         }
       });
 
@@ -6417,14 +6425,26 @@
         else document.exitFullscreen();
       }
 
+      let _preProjectorSeatZoom = null;
       document.addEventListener("fullscreenchange", () => {
         const btn = document.getElementById("seat-exit-fullscreen-btn");
-        if (btn)
-          btn.style.display =
-            document.fullscreenElement ===
-            document.getElementById("seating-canvas-container")
-              ? "flex"
-              : "none";
+        const seatContainer = document.getElementById(
+          "seating-canvas-container",
+        );
+        const isSeatingFullscreen =
+          document.fullscreenElement === seatContainer;
+        if (btn) btn.style.display = isSeatingFullscreen ? "flex" : "none";
+        if (isSeatingFullscreen) {
+          // Entering Seating projector: save current zoom
+          _preProjectorSeatZoom = seatCanvasZoom;
+        } else if (
+          !document.fullscreenElement &&
+          _preProjectorSeatZoom !== null
+        ) {
+          // Exiting Seating projector: restore zoom
+          setSeatZoom(_preProjectorSeatZoom);
+          _preProjectorSeatZoom = null;
+        }
       });
 
       // ---- Colors ----
