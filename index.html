@@ -6715,9 +6715,8 @@
             if ([...ev.dataTransfer.types].includes("seat-member")) {
               ev.preventDefault();
               const isFull = occ.indexOf(null) === -1;
-              el.style.outline = isFull
-                ? "2px solid #F92672"
-                : "2px solid #A6E22E";
+              el.style.outline = isFull ? "" : "2px solid #A6E22E";
+              el.style.outlineOffset = isFull ? "" : "2px";
             }
           });
           el.addEventListener("dragleave", () => {
@@ -6736,6 +6735,14 @@
             const emptyIdx = occ.indexOf(null);
             if (emptyIdx === -1) return; // no room
             occ[emptyIdx] = draggedId;
+            // Place chip at cursor drop position in seat-local coords
+            { const elR = el.getBoundingClientRect();
+              if (!seat.chipOffsets) seat.chipOffsets = [];
+              seat.chipOffsets[emptyIdx] = {
+                x: (ev.clientX - elR.left) / seatCanvasZoom,
+                y: (ev.clientY - elR.top)  / seatCanvasZoom,
+              };
+            }
             if (srcSeat) {
               if (srcSecIdx !== "" && (srcSeat.sections || 1) > 1)
                 srcSeat.sectionOccupants[parseInt(srcSecIdx)] = null;
@@ -7056,6 +7063,10 @@
                     if (ei >= 0) {
                       pushSeatUndoNow();
                       ts.sectionOccupants[ei] = myMemberId;
+                      { const tsr = bestSeatEl.getBoundingClientRect();
+                        if (!ts.chipOffsets) ts.chipOffsets = [];
+                        ts.chipOffsets[ei] = { x: (dropX - tsr.left) / seatCanvasZoom, y: (dropY - tsr.top) / seatCanvasZoom };
+                      }
                       occ[capI] = null;
                       renderSeats();
                       markUnsaved();
@@ -7321,6 +7332,10 @@
                       const ei = (ts3.sectionOccupants || []).indexOf(null);
                       if (ei >= 0) {
                         ts3.sectionOccupants[ei] = myId;
+                        { const tsr3 = bestSeatEl3.getBoundingClientRect();
+                          if (!ts3.chipOffsets) ts3.chipOffsets = [];
+                          ts3.chipOffsets[ei] = { x: (dropX - tsr3.left) / seatCanvasZoom, y: (dropY - tsr3.top) / seatCanvasZoom };
+                        }
                         seat.occupantId = null;
                         renderSeats();
                         markUnsaved();
@@ -7375,8 +7390,11 @@
           if (seat.manual) return; // Label containers: no interaction
           if ([...e.dataTransfer.types].includes("seat-member")) {
             e.preventDefault();
-            el.style.outline = "2px solid #A6E22E";
-            el.style.outlineOffset = "2px";
+            // Only highlight if seat can accept a chip (not manual/label, not already occupied)
+            if (!seat.manual && !seat.occupantId) {
+              el.style.outline = "2px solid #A6E22E";
+              el.style.outlineOffset = "2px";
+            }
           }
         });
         el.addEventListener("dragleave", () => {
@@ -8721,14 +8739,21 @@
         const nameInput = document.getElementById("sp-name-input");
         const name = nameInput.value.trim();
         if (!name) return showModal("Please enter a name for this arrangement.");
-        if (seats.length === 0 && textboxes.filter(t => t.canvas === "seating").length === 0)
-          return showModal("Nothing to save — add seats or text boxes first.");
+        if (seats.length === 0)
+          return showModal("Nothing to save — add seats to the room first.");
         const plans = getAllSeatingPlans();
+        // Strip all occupants & chip positions so the plan is roster-agnostic
+        const layoutSeats = JSON.parse(JSON.stringify(seats)).map(s => {
+          const ls = { ...s, occupantId: null };
+          if (ls.sectionOccupants) ls.sectionOccupants = new Array(ls.sectionOccupants.length).fill(null);
+          if (ls.chipOffsets) ls.chipOffsets = [];
+          return ls;
+        });
         const plan = {
           id: "sp_" + generateId(),
           name,
-          seats: JSON.parse(JSON.stringify(seats)),
-          textboxes: JSON.parse(JSON.stringify(textboxes.filter(t => t.canvas === "seating"))),
+          seats: layoutSeats,
+          textboxes: [],
           createdAt: Date.now(),
         };
         plans.unshift(plan);
@@ -9347,6 +9372,10 @@
                     const ei = (ts.sectionOccupants || []).indexOf(null);
                     if (ei >= 0) {
                       ts.sectionOccupants[ei] = m.id;
+                      { const tsrSt = bestSeatEl.getBoundingClientRect();
+                        if (!ts.chipOffsets) ts.chipOffsets = [];
+                        ts.chipOffsets[ei] = { x: (dropX - tsrSt.left) / seatCanvasZoom, y: (dropY - tsrSt.top) / seatCanvasZoom };
+                      }
                       renderSeats();
                       markUnsaved();
                       return;
@@ -9492,6 +9521,9 @@
           return r;
         }
 
+        // Name text layer — appended last so names always render above shapes
+        const nameLayer = document.createElementNS(svgNS, "g");
+
         // Draw seats
         seats.forEach((seat) => {
           const isCircle = seat.shape === "circle";
@@ -9568,7 +9600,7 @@
                 g.appendChild(t);
               });
             } else if (seat.occupantId) {
-              addTextLines(g, seat.occupantId, cx, cy, pal, seat.w - 8);
+              addTextLines(nameLayer, seat.occupantId, cx, cy, pal, seat.w - 8);
             } else {
               const hint = document.createElementNS(svgNS, "text");
               hint.setAttribute("x", cx);
@@ -9630,7 +9662,7 @@
               t.setAttribute("font-weight", "700");
               t.setAttribute("fill", pal.text);
               t.textContent = word;
-              svg.appendChild(t);
+              nameLayer.appendChild(t);
             });
           });
         });
@@ -9670,6 +9702,9 @@
             });
             svg.appendChild(g);
           });
+
+        // Name layer on top — drawn last so names are never obscured by shapes
+        svg.appendChild(nameLayer);
 
         // Serialize SVG and show as image
         const serializer = new XMLSerializer();
