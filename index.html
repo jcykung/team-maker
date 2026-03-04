@@ -2070,7 +2070,7 @@
               title="Rotate map 90° clockwise — names stay upright"
               class="px-2.5 py-1.5 hover:bg-zinc-700 transition outline-none"
             >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#AE81FF">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 8A9 9 0 1 0 20.5 13"/>
                 <polyline points="20 2 20 8 14 8"/>
               </svg>
@@ -5774,6 +5774,7 @@
           // pointer-events none when not editing so mouse events reach the container
           `pointer-events:${isEditing ? "auto" : "none"}`,
           box.w ? `width:${box.w - 20}px` : "width:auto",
+
         ].join(";");
 
         textEl.addEventListener("input", () => {
@@ -6664,59 +6665,69 @@
       function rotateSeatMapCW(pushUndo) {
         if (pushUndo) pushSeatUndoNow();
 
-        // --- Step 1: Rotate every object 90° CW around origin ---
-        // In screen coords (Y-down), 90° CW is (x,y) → (−y, x)
+        const seatTbs = textboxes.filter((t) => t.canvas === "seating");
+
+        // Rotate the entire map 90° CW as a rigid body — like rotating a photograph.
+        //
+        // Key insight: CSS rotation is always around the element's CENTER.
+        // So the visual center of every object is always (x + w/2, y + h/2)
+        // regardless of seat.rotation or box.rotation.
+        //
+        // 90° CW transform for a center point (cx, cy):
+        //   newCx =  cy
+        //   newCy = -cx
+        //
+        // Then place the new bounding box around the new center with w and h swapped.
+        // seat.rotation and box.rotation are NEVER touched — they stay as-is.
+
         seats.forEach((seat) => {
-          const oldCx = seat.x + seat.w / 2;
-          const oldCy = seat.y + seat.h / 2;
-          const newCx = -oldCy;
-          const newCy =  oldCx;
+          const cx = seat.x + seat.w / 2;
+          const cy = seat.y + seat.h / 2;
+          const newCx = -cy;
+          const newCy =  cx;
           const newW = seat.h;
           const newH = seat.w;
-
-          // Chip offsets 90° CW in seat-local space around seat centre (w/2, h/2):
-          // (ox,oy) → (oldH − oy, ox)
-          if (seat.chipOffsets && seat.chipOffsets.length) {
-            const oldH = seat.h;
-            seat.chipOffsets = seat.chipOffsets.map((off) => ({
-              x: oldH - off.y,
-              y: off.x,
-            }));
-          }
-
           seat.x = newCx - newW / 2;
           seat.y = newCy - newH / 2;
           seat.w = newW;
           seat.h = newH;
-          // Seat shape rotates CW; counter-rotate names to keep text upright
-          seat.rotation     = ((seat.rotation     || 0) + 90)  % 360;
-          seat.nameRotation = ((seat.nameRotation  || 0) - 90 + 360) % 360;
-        });
-
-        const seatTbs = textboxes.filter((t) => t.canvas === "seating");
-        seatTbs.forEach((box) => {
-          // Rotate position CW: (x,y) → (−y, x); box.rotation left unchanged so text stays upright
-          const ox = box.x, oy = box.y;
-          box.x = -oy;
-          box.y =  ox;
-        });
-
-        // --- Step 2: Find bounding top-left of all objects ---
-        let minX = Infinity, minY = Infinity;
-        seats.forEach((seat) => {
-          minX = Math.min(minX, seat.x);
-          minY = Math.min(minY, seat.y);
-          if (seat.chipOffsets) {
-            seat.chipOffsets.forEach((off) => {
-              minX = Math.min(minX, seat.x + off.x - 50);
-              minY = Math.min(minY, seat.y + off.y - 50);
+          if (seat.chipOffsets && seat.chipOffsets.length) {
+            // Rotate each chip offset 90° CW around the seat's OLD center (oldW/2, oldH/2).
+            // oldW = newH, oldH = newW (already swapped above).
+            const oldW = newH, oldH = newW;
+            const ocx = oldW / 2, ocy = oldH / 2;
+            seat.chipOffsets = seat.chipOffsets.map((off) => {
+              const dx = off.x - ocx, dy = off.y - ocy;
+              // 90° CW: newDx = dy, newDy = -dx; then re-center on NEW seat center (newW/2, newH/2)
+              return {
+                x: newW / 2 + dy,
+                y: newH / 2 - dx,
+              };
             });
           }
         });
+
         seatTbs.forEach((box) => {
-          minX = Math.min(minX, box.x);
-          minY = Math.min(minY, box.y);
+          const bw = box.w || SGRID;
+          const bh = box.minH || SGRID;
+          const cx = box.x + bw / 2;
+          const cy = box.y + bh / 2;
+          const newCx = -cy;
+          const newCy =  cx;
+          const newW = bh;
+          const newH = bw;
+          box.x    = newCx - newW / 2;
+          box.y    = newCy - newH / 2;
+          box.w    = newW;
+          box.minW = newW;
+          box.minH = newH;
+          // box.rotation intentionally NOT touched
         });
+
+        // Find minimum x and y after rotation
+        let minX = Infinity, minY = Infinity;
+        seats.forEach((s) => { minX = Math.min(minX, s.x); minY = Math.min(minY, s.y); });
+        seatTbs.forEach((b) => { minX = Math.min(minX, b.x); minY = Math.min(minY, b.y); });
 
         if (!isFinite(minX)) {
           renderSeats();
@@ -6724,27 +6735,20 @@
           return;
         }
 
-        // --- Step 3: Translate everything so top-left lands at (SGRID, SGRID) ---
+        // Translate so the nearest object is one grid cell from each edge
         const offX = SGRID - minX;
         const offY = SGRID - minY;
-        seats.forEach((seat) => {
-          seat.x = Math.round(seat.x + offX);
-          seat.y = Math.round(seat.y + offY);
-        });
-        seatTbs.forEach((box) => {
-          box.x = Math.round(box.x + offX);
-          box.y = Math.round(box.y + offY);
-        });
+        seats.forEach((s) => { s.x += offX; s.y += offY; });
+        seatTbs.forEach((b) => { b.x += offX; b.y += offY; });
+
+        // Name chips are not rotated — they move with the seat as-is.
 
         renderSeats();
         if (pushUndo) markUnsaved(); else markDirtyOnly();
 
-        // Scroll to show the seats without changing zoom
         setTimeout(() => {
           const container = document.getElementById("seating-canvas-container");
-          if (container) {
-            container.scrollTo({ left: 0, top: 0, behavior: "smooth" });
-          }
+          if (container) container.scrollTo({ left: 0, top: 0, behavior: "smooth" });
         }, 30);
       }
 
@@ -9976,10 +9980,15 @@
           .forEach((box) => {
             const g = document.createElementNS(svgNS, "g");
             const rot = box.rotation || 0;
+            const bw = box.w || box.minW || 100;
+            const bh = box.minH || 40;
             const bx = box.x + offX,
               by = box.y + offY;
+            // Box group rotates around its own center
+            const gcx = bx + bw / 2, gcy = by + bh / 2;
             if (rot !== 0)
-              g.setAttribute("transform", `rotate(${rot}, ${bx}, ${by})`);
+              g.setAttribute("transform", `rotate(${rot}, ${gcx}, ${gcy})`);
+            const tg = document.createElementNS(svgNS, "g");
             const lines = (box.text || "Text").split("\n");
             const fs = box.size || 16;
             lines.forEach((line, li) => {
@@ -10001,8 +10010,9 @@
               );
               t.setAttribute("fill", "#1a1a2e");
               t.textContent = line;
-              g.appendChild(t);
+              tg.appendChild(t);
             });
+            g.appendChild(tg);
             svg.appendChild(g);
           });
 
