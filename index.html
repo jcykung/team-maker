@@ -10050,6 +10050,49 @@
         };
         img.src = url;
       }
+      // ---- Projector mode: pan-only for seating canvas ----
+      (function () {
+        const gc = () => document.getElementById("seating-canvas-container");
+        let panActive = false, panX = 0, panY = 0, panScrollX = 0, panScrollY = 0;
+
+        const isSeatingProjector = () =>
+          document.fullscreenElement === gc();
+
+        document.addEventListener("mousedown", (e) => {
+          if (!isSeatingProjector()) return;
+          if (e.button !== 0) return;
+          // In projector mode, swallow all clicks and start panning
+          e.stopPropagation();
+          e.preventDefault();
+          panActive = true;
+          panX = e.clientX;
+          panY = e.clientY;
+          const c = gc();
+          panScrollX = c.scrollLeft;
+          panScrollY = c.scrollTop;
+          c.style.cursor = "grabbing";
+        }, true); // capture phase so it runs before any other handler
+
+        document.addEventListener("mousemove", (e) => {
+          if (!panActive || !isSeatingProjector()) return;
+          const c = gc();
+          c.scrollLeft = panScrollX - (e.clientX - panX);
+          c.scrollTop  = panScrollY - (e.clientY - panY);
+        });
+
+        document.addEventListener("mouseup", (e) => {
+          if (!panActive) return;
+          panActive = false;
+          const c = gc();
+          if (c) c.style.cursor = "";
+        });
+
+        // Also block contextmenu and click in projector mode
+        document.addEventListener("contextmenu", (e) => {
+          if (isSeatingProjector()) e.preventDefault();
+        }, true);
+      })();
+
       // ---- Mobile pinch-to-zoom ----
       (function () {
         let initDist = 0,
