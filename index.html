@@ -1511,11 +1511,24 @@
           >
             <div class="p-4">
               <div class="flex items-center justify-between mb-3">
-                <h2
-                  class="text-xs font-bold text-[#FD971F] uppercase tracking-wider"
-                >
-                  Seating Plan
-                </h2>
+                <div class="flex items-center gap-2">
+                  <h2
+                    class="text-xs font-bold text-[#FD971F] uppercase tracking-wider"
+                  >
+                    Seating Plan
+                  </h2>
+                  <button
+                    onclick="openSeatingPlansModal()"
+                    title="Save / load seating arrangements"
+                    class="w-5 h-5 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-[#FD971F] hover:border-[#FD971F] transition"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                      <polyline points="17 21 17 13 7 13 7 21"/>
+                      <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                  </button>
+                </div>
                 <div class="flex items-center gap-1">
                   <button
                     id="seat-undo-btn"
@@ -2699,7 +2712,7 @@
     <!-- Custom Modal for Alerts & Confirms -->
     <div
       id="custom-modal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4"
+      class="fixed inset-0 z-[9990] flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4"
     >
       <div
         class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full border border-zinc-700 shadow-2xl transform transition-all"
@@ -2724,6 +2737,51 @@
           >
             OK
           </button>
+        </div>
+      </div>
+    </div>
+
+    </div>
+
+    <!-- Seating Plans Modal -->
+    <div
+      id="seating-plans-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4"
+      onclick="if(event.target===this)closeSeatingPlansModal()"
+    >
+      <div class="bg-zinc-900 rounded-xl max-w-lg w-full border border-zinc-700 shadow-2xl flex flex-col" style="max-height:80vh;">
+        <div class="flex items-center justify-between p-5 border-b border-zinc-700 flex-shrink-0">
+          <h3 class="text-base font-bold text-[#FD971F]">Seating Arrangements</h3>
+          <button onclick="closeSeatingPlansModal()" class="text-zinc-500 hover:text-[#F8F8F2] transition text-xl leading-none">&times;</button>
+        </div>
+
+        <!-- Save current arrangement -->
+        <div class="p-4 border-b border-zinc-700 flex-shrink-0">
+          <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider">Save Current Arrangement</p>
+          <div class="flex gap-2">
+            <input id="sp-name-input" type="text" placeholder="e.g. Room 204, Period 3…"
+              class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F8F8F2] rounded px-3 py-1.5 text-sm outline-none focus:border-[#FD971F] placeholder-zinc-600" />
+            <button onclick="saveCurrentSeatingPlan()"
+              class="bg-[#FD971F] text-zinc-900 px-4 py-1.5 rounded font-bold text-sm hover:bg-[#e8861a] transition flex-shrink-0">Save</button>
+          </div>
+        </div>
+
+        <!-- Import -->
+        <div class="px-4 py-3 border-b border-zinc-700 flex-shrink-0">
+          <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider">Import Arrangement</p>
+          <label class="cursor-pointer inline-flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#66D9EF] hover:border-[#66D9EF] text-sm px-3 py-1.5 rounded transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            Import JSON
+            <input type="file" accept=".json" onchange="importSeatingPlanJSON(event)" class="hidden" />
+          </label>
+        </div>
+
+        <!-- Saved plans list -->
+        <div class="flex-1 overflow-y-auto">
+          <div class="px-4 pt-3 pb-1">
+            <p class="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Saved Arrangements</p>
+          </div>
+          <div id="sp-list" class="px-2 pb-3"></div>
         </div>
       </div>
     </div>
@@ -3121,17 +3179,15 @@
       }
 
       // Adjust layout when entering Projector view
-      let _preProjectorZoom = null;
+      let _preTeamsProjectorZoom = null;
       document.addEventListener("fullscreenchange", () => {
         const teamsContainer = document.getElementById("canvas-container");
         if (document.fullscreenElement === teamsContainer) {
-          // Entering Teams projector: save zoom, then fit
-          _preProjectorZoom = canvasZoom;
+          _preTeamsProjectorZoom = canvasZoom;
           setTimeout(fitTeamsToScreen, 150);
-        } else if (!document.fullscreenElement && _preProjectorZoom !== null) {
-          // Exiting Teams projector: restore zoom
-          setCanvasZoom(_preProjectorZoom);
-          _preProjectorZoom = null;
+        } else if (!document.fullscreenElement && _preTeamsProjectorZoom !== null) {
+          setCanvasZoom(_preTeamsProjectorZoom);
+          _preTeamsProjectorZoom = null;
         }
       });
 
@@ -3319,6 +3375,10 @@
                         <div class="text-xs text-zinc-500 mt-0.5 ml-4">${f.allMembers ? f.allMembers.length : 0} members · ${f.teams ? f.teams.length : 0} teams${date ? " · " + date : ""}</div>
                     </div>
                     <div class="file-actions flex items-center gap-1 flex-shrink-0">
+                        <button onclick="exportSingleFileJSON('${f.id}')" title="Export this file as JSON"
+                            class="p-1.5 rounded text-zinc-500 hover:text-[#66D9EF] hover:bg-zinc-700 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        </button>
                         <button onclick="renameFilePrompt('${f.id}')" title="Rename"
                             class="p-1.5 rounded text-zinc-500 hover:text-[#E6DB74] hover:bg-zinc-700 transition">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -3375,9 +3435,17 @@
         staging = [];
         constraints = { together: [], apart: [] };
         textboxes = [];
+        seats = [];
+        selectedSeatId = null;
+        selectedSeatIds.clear();
+        seatUndoStack = [];
+        seatRedoStack = [];
+        resetSeatPrimaryBtn();
+        updateUndoRedoBtns();
         updateTab1UI();
         updateConstraintSelects();
         renderTeams();
+        renderSeats();
         updateActiveFileLabel();
 
         input.value = "";
@@ -3438,9 +3506,17 @@
               staging = [];
               constraints = { together: [], apart: [] };
               textboxes = [];
+              seats = [];
+              selectedSeatId = null;
+              selectedSeatIds.clear();
+              seatUndoStack = [];
+              seatRedoStack = [];
+              resetSeatPrimaryBtn();
+              updateUndoRedoBtns();
               updateTab1UI();
               updateConstraintSelects();
               renderTeams();
+              renderSeats();
               updateActiveFileLabel();
             }
           }
@@ -3545,6 +3621,32 @@
         const a = document.createElement("a");
         a.href = "data:text/json;charset=utf-8," + encodeURIComponent(jsonStr);
         a.download = jsonFilename;
+        a.click();
+      }
+
+      function exportSingleFileJSON(id) {
+        saveData();
+        const files = getAllFiles();
+        const f = files.find((fl) => fl.id === id);
+        if (!f) return;
+        const payload = {
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          activeFileId: f.id,
+          files: [f],
+          // Legacy compat fields
+          allMembers: f.allMembers,
+          pool: f.pool,
+          teams: f.teams,
+          staging: f.staging,
+          constraints: f.constraints,
+        };
+        const jsonStr = JSON.stringify(payload, null, 2);
+        const safeName = f.name.replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
+        const filename = `teammaker_${safeName}_${new Date().toISOString().slice(0, 10)}.json`;
+        const a = document.createElement("a");
+        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(jsonStr);
+        a.download = filename;
         a.click();
       }
 
@@ -4395,17 +4497,42 @@
           );
         }
 
+        // --- Column layout: fewest rows first, then fewest orphans (max 4 cols) ---
+        const _n = bestTeams.length;
+        let _cols = Math.min(_n, 4), _bestRows = Infinity, _bestOrphans = Infinity;
+        for (let c = 1; c <= Math.min(_n, 4); c++) {
+          const rows = Math.ceil(_n / c);
+          const orphans = (c - (_n % c)) % c;
+          if (rows < _bestRows || (rows === _bestRows && orphans < _bestOrphans)) {
+            _bestRows = rows; _bestOrphans = orphans; _cols = c;
+          }
+        }
+
+        // --- Per-row y-offset: use tallest team card in each row ---
+        // Card height = header (46px) + padding (16px) + members * ~34px per member + bottom padding
+        const CARD_HEADER = 46, CARD_PAD = 24, MEMBER_H = 34, ROW_GAP = 60;
+        const _numRows = Math.ceil(_n / _cols);
+        const _rowY = [40]; // y start of row 0
+        for (let r = 0; r < _numRows - 1; r++) {
+          const rowStart = r * _cols;
+          const rowEnd = Math.min(rowStart + _cols, _n);
+          let tallest = 0;
+          for (let k = rowStart; k < rowEnd; k++) {
+            const h = CARD_HEADER + CARD_PAD + bestTeams[k].length * MEMBER_H;
+            if (h > tallest) tallest = h;
+          }
+          _rowY.push(_rowY[r] + tallest + ROW_GAP);
+        }
+
         teams = bestTeams.map((members, i) => {
-          const cols = 4;
-          const spacingX = 260;
-          const spacingY = 320;
+          const row = Math.floor(i / _cols);
           return {
             id: "t_" + generateId(),
             name: `Team ${i + 1}`,
             colorIndex: i % teamColors.length,
             members: members,
-            x: 40 + (i % cols) * spacingX,
-            y: 40 + Math.floor(i / cols) * spacingY,
+            x: 40 + (i % _cols) * 260,
+            y: _rowY[row],
           };
         });
         staging = [];
@@ -6425,25 +6552,56 @@
         else document.exitFullscreen();
       }
 
-      let _preProjectorSeatZoom = null;
+      function fitSeatsToScreen() {
+        if (seats.length === 0 && textboxes.filter(t => t.canvas === "seating").length === 0) return;
+        const container = document.getElementById("seating-canvas-container");
+        if (!container) return;
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        seats.forEach(s => {
+          minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
+          maxX = Math.max(maxX, s.x + s.w); maxY = Math.max(maxY, s.y + s.h);
+          if ((s.sections || 1) > 1 && s.chipOffsets) {
+            s.chipOffsets.forEach(off => {
+              minX = Math.min(minX, s.x + off.x - 50); minY = Math.min(minY, s.y + off.y - 25);
+              maxX = Math.max(maxX, s.x + off.x + 50); maxY = Math.max(maxY, s.y + off.y + 25);
+            });
+          }
+        });
+        textboxes.filter(t => t.canvas === "seating").forEach(t => {
+          minX = Math.min(minX, t.x); minY = Math.min(minY, t.y);
+          maxX = Math.max(maxX, t.x + (t.w || 200)); maxY = Math.max(maxY, t.y + (t.minH || 60) + (t.size || 16) * 2);
+        });
+        if (!isFinite(minX)) return;
+        const padding = 60;
+        const boundsW = maxX - minX;
+        const boundsH = maxY - minY;
+        const newScale = Math.min((cw - padding * 2) / boundsW, (ch - padding * 2) / boundsH, 2);
+        setSeatZoom(newScale);
+        setTimeout(() => {
+          const scaledMinX = minX * newScale;
+          const scaledMinY = minY * newScale;
+          container.scrollTo({
+            left: Math.max(0, scaledMinX - (cw - boundsW * newScale) / 2),
+            top: Math.max(0, scaledMinY - (ch - boundsH * newScale) / 2),
+            behavior: "smooth",
+          });
+        }, 50);
+      }
+
+      let _preSeatProjectorZoom = null;
       document.addEventListener("fullscreenchange", () => {
         const btn = document.getElementById("seat-exit-fullscreen-btn");
-        const seatContainer = document.getElementById(
-          "seating-canvas-container",
-        );
-        const isSeatingFullscreen =
-          document.fullscreenElement === seatContainer;
-        if (btn) btn.style.display = isSeatingFullscreen ? "flex" : "none";
-        if (isSeatingFullscreen) {
-          // Entering Seating projector: save current zoom
-          _preProjectorSeatZoom = seatCanvasZoom;
-        } else if (
-          !document.fullscreenElement &&
-          _preProjectorSeatZoom !== null
-        ) {
-          // Exiting Seating projector: restore zoom
-          setSeatZoom(_preProjectorSeatZoom);
-          _preProjectorSeatZoom = null;
+        const seatContainer = document.getElementById("seating-canvas-container");
+        const isSeatingFs = document.fullscreenElement === seatContainer;
+        if (btn) btn.style.display = isSeatingFs ? "flex" : "none";
+        if (isSeatingFs) {
+          _preSeatProjectorZoom = seatCanvasZoom;
+          setTimeout(fitSeatsToScreen, 150);
+        } else if (!document.fullscreenElement && _preSeatProjectorZoom !== null) {
+          setSeatZoom(_preSeatProjectorZoom);
+          _preSeatProjectorZoom = null;
         }
       });
 
@@ -6688,6 +6846,7 @@
               document.addEventListener("mouseup", chipUp, { capture: true });
             });
             let _highlightedChip = null;
+            let _highlightedSeatEl = null;
             const chipMove = (ev) => {
               if (!chipDragging) return;
               ev.stopPropagation();
@@ -6697,21 +6856,42 @@
               off.y = ciy + dy;
               chip.style.left = off.x + "px";
               chip.style.top = off.y + "px";
-              // Highlight the chip under cursor
+
+              // If cursor is still over the source large table, highlight it green
+              // (chip will settle in place). Suppress all other highlights.
+              const elRect = el.getBoundingClientRect();
+              const overSource = ev.clientX >= elRect.left && ev.clientX <= elRect.right &&
+                                 ev.clientY >= elRect.top  && ev.clientY <= elRect.bottom;
+              if (overSource) {
+                if (_highlightedChip) { _highlightedChip.style.outline = ""; _highlightedChip = null; }
+                if (_highlightedSeatEl && _highlightedSeatEl !== el) { _highlightedSeatEl.style.outline = ""; _highlightedSeatEl = null; }
+                if (_highlightedSeatEl !== el) {
+                  _highlightedSeatEl = el;
+                  el.style.outline = "2px solid #A6E22E";
+                  el.style.outlineOffset = "2px";
+                }
+                return;
+              }
+
+              // Cursor left the source table — clear its highlight if set
+              if (_highlightedSeatEl === el) {
+                el.style.outline = "";
+                _highlightedSeatEl = null;
+              }
+
+              // Highlight chip under cursor (smallest host-seat area wins to avoid edge ambiguity)
               const allChips = document.querySelectorAll(".seat-name-chip");
-              let foundChip = null;
+              let foundChip = null, foundChipArea = Infinity;
               for (const oc of allChips) {
                 if (oc === chip) continue;
                 if (oc.dataset.dragging) continue;
                 const cr = oc.getBoundingClientRect();
-                if (
-                  ev.clientX >= cr.left &&
-                  ev.clientX <= cr.right &&
-                  ev.clientY >= cr.top &&
-                  ev.clientY <= cr.bottom
-                ) {
-                  foundChip = oc;
-                  break;
+                if (ev.clientX >= cr.left && ev.clientX <= cr.right &&
+                    ev.clientY >= cr.top  && ev.clientY <= cr.bottom) {
+                  const hostEl = oc.closest(".seat-el[data-seat-id]");
+                  const hr = hostEl ? hostEl.getBoundingClientRect() : cr;
+                  const area = hr.width * hr.height;
+                  if (area < foundChipArea) { foundChipArea = area; foundChip = oc; }
                 }
               }
               if (_highlightedChip && _highlightedChip !== foundChip) {
@@ -6721,6 +6901,39 @@
               if (foundChip && foundChip !== _highlightedChip) {
                 _highlightedChip = foundChip;
                 foundChip.style.outline = "2px solid #A6E22E";
+              }
+
+              // Highlight external empty seat under cursor (smallest area wins)
+              let foundSeatEl = null;
+              if (!foundChip) {
+                const allSeatEls = document.querySelectorAll(".seat-el[data-seat-id]");
+                let bestArea = Infinity;
+                for (const sEl of allSeatEls) {
+                  if (sEl.dataset.seatId === seat.id) continue;
+                  const r = sEl.getBoundingClientRect();
+                  if (ev.clientX >= r.left && ev.clientX <= r.right &&
+                      ev.clientY >= r.top  && ev.clientY <= r.bottom) {
+                    const ts = seats.find(s => s.id === sEl.dataset.seatId);
+                    if (ts && !ts.manual) {
+                      const isEmpty = (ts.sections || 1) > 1
+                        ? (ts.sectionOccupants || []).indexOf(null) >= 0
+                        : !ts.occupantId;
+                      if (isEmpty) {
+                        const area = r.width * r.height;
+                        if (area < bestArea) { bestArea = area; foundSeatEl = sEl; }
+                      }
+                    }
+                  }
+                }
+              }
+              if (_highlightedSeatEl && _highlightedSeatEl !== foundSeatEl) {
+                _highlightedSeatEl.style.outline = "";
+                _highlightedSeatEl = null;
+              }
+              if (foundSeatEl && foundSeatEl !== _highlightedSeatEl) {
+                _highlightedSeatEl = foundSeatEl;
+                foundSeatEl.style.outline = "2px solid #A6E22E";
+                foundSeatEl.style.outlineOffset = "2px";
               }
             };
             const chipUp = (ev) => {
@@ -6737,10 +6950,14 @@
               document.removeEventListener("mouseup", chipUp, {
                 capture: true,
               });
-              // Clear highlight
+              // Clear highlights
               if (_highlightedChip) {
                 _highlightedChip.style.outline = "";
                 _highlightedChip = null;
+              }
+              if (_highlightedSeatEl) {
+                _highlightedSeatEl.style.outline = "";
+                _highlightedSeatEl = null;
               }
 
               const dropX = ev.clientX,
@@ -6749,73 +6966,114 @@
               // Remember original position for swapping
               const origOff = { x: cix, y: ciy }; // position BEFORE drag
 
-              // Check chip-to-chip swap first (find chip the cursor is over)
+              // If cursor is still over the source large table, settle in place.
+              const elRectUp = el.getBoundingClientRect();
+              if (dropX >= elRectUp.left && dropX <= elRectUp.right &&
+                  dropY >= elRectUp.top  && dropY <= elRectUp.bottom) {
+                markUnsaved();
+                return;
+              }
+
+              // Check chip-to-chip swap — use smallest host-seat area to avoid edge ambiguity
               let swapped = false;
               const allChips = document.querySelectorAll(".seat-name-chip");
+              let swapChip = null, swapArea = Infinity;
               for (const otherChip of allChips) {
                 if (otherChip === chip) continue;
                 const cr = otherChip.getBoundingClientRect();
-                if (
-                  dropX >= cr.left &&
-                  dropX <= cr.right &&
-                  dropY >= cr.top &&
-                  dropY <= cr.bottom
-                ) {
-                  const otherEl = otherChip.closest("[data-seat-id]");
-                  if (!otherEl) continue;
-                  const otherSeat = seats.find(
-                    (s) => s.id === otherEl.dataset.seatId,
-                  );
-                  if (!otherSeat) continue;
-                  if (otherSeat.id === seat.id) {
-                    // Same table: swap positions
-                    const allMyChips = Array.from(
-                      el.querySelectorAll(".seat-name-chip"),
-                    );
-                    const otherIdx = allMyChips.indexOf(otherChip);
-                    if (otherIdx >= 0 && otherIdx !== capI) {
-                      const tmp = occ[otherIdx];
-                      occ[otherIdx] = myMemberId;
-                      occ[capI] = tmp;
-                      const otherOff = seat.chipOffsets[otherIdx];
-                      seat.chipOffsets[capI] = { ...otherOff };
-                      seat.chipOffsets[otherIdx] = { ...origOff };
-                      swapped = true;
-                    }
-                  } else if ((otherSeat.sections || 1) > 1) {
-                    // Other multi-section table: chip-to-chip swap
-                    const otherIdx = parseInt(
-                      otherChip.dataset.sectionIdx ?? "-1",
-                    );
-                    const otherOcc = otherSeat.sectionOccupants || [];
-                    if (otherIdx >= 0) {
-                      const tmp =
-                        otherOcc[otherIdx] !== undefined
-                          ? otherOcc[otherIdx]
-                          : null;
-                      otherOcc[otherIdx] = myMemberId;
+                if (dropX >= cr.left && dropX <= cr.right &&
+                    dropY >= cr.top  && dropY <= cr.bottom) {
+                  const hostEl = otherChip.closest(".seat-el[data-seat-id]");
+                  const hr = hostEl ? hostEl.getBoundingClientRect() : cr;
+                  const area = hr.width * hr.height;
+                  if (area < swapArea) { swapArea = area; swapChip = otherChip; }
+                }
+              }
+              if (swapChip) {
+                const otherEl = swapChip.closest("[data-seat-id]");
+                if (otherEl) {
+                  const otherSeat = seats.find((s) => s.id === otherEl.dataset.seatId);
+                  if (otherSeat) {
+                    if (otherSeat.id === seat.id) {
+                      // Same table: swap positions
+                      const allMyChips = Array.from(el.querySelectorAll(".seat-name-chip"));
+                      const otherIdx = allMyChips.indexOf(swapChip);
+                      if (otherIdx >= 0 && otherIdx !== capI) {
+                        const tmp = occ[otherIdx];
+                        occ[otherIdx] = myMemberId;
+                        occ[capI] = tmp;
+                        const otherOff = seat.chipOffsets[otherIdx];
+                        seat.chipOffsets[capI] = { ...otherOff };
+                        seat.chipOffsets[otherIdx] = { ...origOff };
+                        swapped = true;
+                      }
+                    } else if ((otherSeat.sections || 1) > 1) {
+                      // Other multi-section table: chip-to-chip swap
+                      const otherIdx = parseInt(swapChip.dataset.sectionIdx ?? "-1");
+                      const otherOcc = otherSeat.sectionOccupants || [];
+                      if (otherIdx >= 0) {
+                        const tmp = otherOcc[otherIdx] !== undefined ? otherOcc[otherIdx] : null;
+                        otherOcc[otherIdx] = myMemberId;
+                        occ[capI] = tmp;
+                        seat.chipOffsets[capI] = { ...origOff };
+                        swapped = true;
+                      }
+                    } else {
+                      // Other single-seat table: chip-to-chip swap
+                      const tmp = otherSeat.occupantId || null;
+                      otherSeat.occupantId = myMemberId;
                       occ[capI] = tmp;
                       seat.chipOffsets[capI] = { ...origOff };
                       swapped = true;
                     }
-                  } else {
-                    // Other single-seat table: chip-to-chip swap
-                    const tmp = otherSeat.occupantId || null;
-                    otherSeat.occupantId = myMemberId;
-                    occ[capI] = tmp;
-                    seat.chipOffsets[capI] = { ...origOff };
-                    swapped = true;
+                    if (swapped) {
+                      renderSeats();
+                      markUnsaved();
+                      return;
+                    }
                   }
-                  if (swapped) {
+                }
+              }
+
+              // No chip-to-chip swap. Check if dropped on a seat.
+              // Collect all seats whose bounding rect contains the drop point,
+              // then pick the smallest-area one (most "precise" target under cursor).
+              const allSeatEls = document.querySelectorAll(".seat-el[data-seat-id]");
+              let bestSeatEl = null, bestArea = Infinity;
+              for (const sEl of allSeatEls) {
+                if (sEl.dataset.seatId === seat.id) continue;
+                const r = sEl.getBoundingClientRect();
+                if (dropX >= r.left && dropX <= r.right && dropY >= r.top && dropY <= r.bottom) {
+                  const area = r.width * r.height;
+                  if (area < bestArea) { bestArea = area; bestSeatEl = sEl; }
+                }
+              }
+              if (bestSeatEl) {
+                const ts = seats.find(s => s.id === bestSeatEl.dataset.seatId);
+                if (ts && !ts.manual) {
+                  if ((ts.sections || 1) > 1) {
+                    const ei = (ts.sectionOccupants || []).indexOf(null);
+                    if (ei >= 0) {
+                      pushSeatUndoNow();
+                      ts.sectionOccupants[ei] = myMemberId;
+                      occ[capI] = null;
+                      renderSeats();
+                      markUnsaved();
+                      return;
+                    }
+                  } else if (!ts.occupantId) {
+                    pushSeatUndoNow();
+                    ts.occupantId = myMemberId;
+                    occ[capI] = null;
                     renderSeats();
                     markUnsaved();
                     return;
                   }
                 }
+                // Seat found but full/invalid — snap back, do not search further
               }
 
-              // No chip-to-chip swap. For large-table chips, allow free repositioning
-              // within the same table bounds — snap back if outside.
+              // Not dropped on any valid target — snap back to original position
               const chipHalfW = 30;
               const chipHalfH = 15;
               const insideX =
@@ -6957,7 +7215,31 @@
                   foundC.style.outline = "2px solid #A6E22E";
                 }
                 // Also highlight empty seat under cursor (if no chip found)
-                // (removed - single-seat chips only swap with other chips)
+                let foundSeatEl = null;
+                if (!foundC) {
+                  const allSeatEls2 = document.querySelectorAll(".seat-el[data-seat-id]");
+                  for (const sEl2 of allSeatEls2) {
+                    const r2 = sEl2.getBoundingClientRect();
+                    if (ev2.clientX >= r2.left && ev2.clientX <= r2.right && ev2.clientY >= r2.top && ev2.clientY <= r2.bottom) {
+                      const ts2 = seats.find(s => s.id === sEl2.dataset.seatId);
+                      if (ts2 && !ts2.manual && ts2.id !== seat.id) {
+                        if ((ts2.sections || 1) > 1 ? (ts2.sectionOccupants || []).indexOf(null) >= 0 : !ts2.occupantId) {
+                          foundSeatEl = sEl2;
+                          break;
+                        }
+                      }
+                    }
+                  }
+                }
+                if (_sdSeatHighlight && _sdSeatHighlight !== foundSeatEl) {
+                  _sdSeatHighlight.style.outline = "";
+                  _sdSeatHighlight = null;
+                }
+                if (foundSeatEl && foundSeatEl !== _sdSeatHighlight) {
+                  _sdSeatHighlight = foundSeatEl;
+                  foundSeatEl.style.outline = "2px solid #A6E22E";
+                  foundSeatEl.style.outlineOffset = "2px";
+                }
               };
               const sdUp = (ev2) => {
                 document.removeEventListener("mousemove", sdMove);
@@ -7021,8 +7303,38 @@
                     }
                   }
                 }
-                // Not dropped on a chip — snap back (no-op since single-seat chip
-                // stays inside its container visually, but renderSeats ensures clean state)
+                // Not dropped on a chip — check for seat drop
+                const allSeatEls3 = document.querySelectorAll(".seat-el[data-seat-id]");
+                let bestSeatEl3 = null, bestArea3 = Infinity;
+                for (const sEl3 of allSeatEls3) {
+                  const r3 = sEl3.getBoundingClientRect();
+                  if (dropX >= r3.left && dropX <= r3.right && dropY >= r3.top && dropY <= r3.bottom) {
+                    if (sEl3.dataset.seatId === seat.id) continue;
+                    const area3 = r3.width * r3.height;
+                    if (area3 < bestArea3) { bestArea3 = area3; bestSeatEl3 = sEl3; }
+                  }
+                }
+                if (bestSeatEl3) {
+                  const ts3 = seats.find(s => s.id === bestSeatEl3.dataset.seatId);
+                  if (ts3 && !ts3.manual) {
+                    if ((ts3.sections || 1) > 1) {
+                      const ei = (ts3.sectionOccupants || []).indexOf(null);
+                      if (ei >= 0) {
+                        ts3.sectionOccupants[ei] = myId;
+                        seat.occupantId = null;
+                        renderSeats();
+                        markUnsaved();
+                        return;
+                      }
+                    } else if (!ts3.occupantId) {
+                      ts3.occupantId = myId;
+                      seat.occupantId = null;
+                      renderSeats();
+                      markUnsaved();
+                      return;
+                    }
+                  }
+                }
                 renderSeats();
               };
               document.addEventListener("mousemove", sdMove);
@@ -8368,19 +8680,200 @@
           true,
         );
         document.body.appendChild(menu);
-        setTimeout(
-          () =>
-            document.addEventListener("click", closeSeatContextMenu, {
-              once: true,
-            }),
-          10,
-        );
+        setTimeout(() => {
+          const _ctxOutside = (e) => {
+            const m2 = document.getElementById("seat-context-menu");
+            if (!m2) { document.removeEventListener("mousedown", _ctxOutside, true); return; }
+            if (!m2.contains(e.target)) {
+              document.removeEventListener("mousedown", _ctxOutside, true);
+              closeSeatContextMenu();
+            }
+          };
+          document.addEventListener("mousedown", _ctxOutside, true);
+        }, 10);
       }
 
       function closeSeatContextMenu() {
         const m = document.getElementById("seat-context-menu");
         if (m) m.remove();
       }
+
+      // ====== SEATING PLANS (save/load named arrangements) ======
+      const SP_KEY = "seatingPlans";
+
+      function getAllSeatingPlans() {
+        try { return JSON.parse(localStorage.getItem(SP_KEY)) || []; } catch { return []; }
+      }
+      function saveAllSeatingPlans(plans) {
+        localStorage.setItem(SP_KEY, JSON.stringify(plans));
+      }
+
+      function openSeatingPlansModal() {
+        renderSeatingPlansList();
+        document.getElementById("sp-name-input").value = "";
+        document.getElementById("seating-plans-modal").classList.remove("hide");
+      }
+      function closeSeatingPlansModal() {
+        document.getElementById("seating-plans-modal").classList.add("hide");
+      }
+
+      function saveCurrentSeatingPlan() {
+        const nameInput = document.getElementById("sp-name-input");
+        const name = nameInput.value.trim();
+        if (!name) return showModal("Please enter a name for this arrangement.");
+        if (seats.length === 0 && textboxes.filter(t => t.canvas === "seating").length === 0)
+          return showModal("Nothing to save — add seats or text boxes first.");
+        const plans = getAllSeatingPlans();
+        const plan = {
+          id: "sp_" + generateId(),
+          name,
+          seats: JSON.parse(JSON.stringify(seats)),
+          textboxes: JSON.parse(JSON.stringify(textboxes.filter(t => t.canvas === "seating"))),
+          createdAt: Date.now(),
+        };
+        plans.unshift(plan);
+        saveAllSeatingPlans(plans);
+        nameInput.value = "";
+        renderSeatingPlansList();
+      }
+
+      function loadSeatingPlan(id) {
+        const plans = getAllSeatingPlans();
+        const plan = plans.find(p => p.id === id);
+        if (!plan) return;
+        showModal(`Load "${plan.name}"? This will replace the current arrangement.`, true, () => {
+          pushSeatUndoNow();
+          seats = JSON.parse(JSON.stringify(plan.seats || []));
+          const otherTbs = textboxes.filter(t => t.canvas !== "seating");
+          textboxes = [...otherTbs, ...JSON.parse(JSON.stringify(plan.textboxes || []))];
+          // Clear occupants so they go back to staging unless seatSeatsLoaded
+          renderSeats();
+          markUnsaved();
+          closeSeatingPlansModal();
+        });
+      }
+
+      function deleteSeatingPlan(id) {
+        const plans = getAllSeatingPlans();
+        const plan = plans.find(p => p.id === id);
+        if (!plan) return;
+        showModal(`Delete "${plan.name}"? This cannot be undone.`, true, () => {
+          saveAllSeatingPlans(plans.filter(p => p.id !== id));
+          renderSeatingPlansList();
+        });
+      }
+
+      function exportSeatingPlanJSON(id) {
+        const plans = getAllSeatingPlans();
+        const plan = plans.find(p => p.id === id);
+        if (!plan) return;
+        const payload = { version: 1, type: "seatingPlan", plan };
+        const safeName = plan.name.replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
+        const filename = `seating_${safeName}.json`;
+        const a = document.createElement("a");
+        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+        a.download = filename;
+        a.click();
+      }
+
+      function importSeatingPlanJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        event.target.value = "";
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            let plan = null;
+            if (data.type === "seatingPlan" && data.plan) {
+              plan = { ...data.plan, id: "sp_" + generateId(), createdAt: Date.now() };
+            } else if (Array.isArray(data.seats)) {
+              // Raw plan object
+              plan = { id: "sp_" + generateId(), name: file.name.replace(/\.json$/i,"") || "Imported", seats: data.seats, textboxes: data.textboxes || [], createdAt: Date.now() };
+            } else {
+              showModal("Invalid seating plan file.");
+              return;
+            }
+            const plans = getAllSeatingPlans();
+            plans.unshift(plan);
+            saveAllSeatingPlans(plans);
+            renderSeatingPlansList();
+            showModal(`Imported "${plan.name}" successfully!`);
+          } catch {
+            showModal("Error reading seating plan file.");
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function renameSeatingPlanInline(id) {
+        const plans = getAllSeatingPlans();
+        const plan = plans.find(p => p.id === id);
+        if (!plan) return;
+        const list = document.getElementById("sp-list");
+        const row = list.querySelector(`[data-sp-id="${id}"]`);
+        if (!row) return;
+        const nameSpan = row.querySelector(".sp-name-display");
+        const oldName = nameSpan.textContent;
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.value = oldName;
+        inp.className = "bg-zinc-950 border border-[#FD971F] text-[#F8F8F2] rounded text-sm px-2 py-0.5 outline-none w-full";
+        nameSpan.replaceWith(inp);
+        inp.focus(); inp.select();
+        const commit = () => {
+          const newName = inp.value.trim() || oldName;
+          const updated = getAllSeatingPlans();
+          const i = updated.findIndex(p => p.id === id);
+          if (i >= 0) { updated[i].name = newName; saveAllSeatingPlans(updated); }
+          renderSeatingPlansList();
+        };
+        inp.addEventListener("blur", commit);
+        inp.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter") inp.blur();
+          if (ev.key === "Escape") { inp.value = oldName; inp.blur(); }
+        });
+      }
+
+      function renderSeatingPlansList() {
+        const list = document.getElementById("sp-list");
+        if (!list) return;
+        const plans = getAllSeatingPlans();
+        if (plans.length === 0) {
+          list.innerHTML = '<div class="p-4 text-center text-zinc-500 text-sm">No saved arrangements yet.</div>';
+          return;
+        }
+        list.innerHTML = "";
+        plans.forEach(plan => {
+          const date = plan.createdAt ? new Date(plan.createdAt).toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" }) : "";
+          const row = document.createElement("div");
+          row.dataset.spId = plan.id;
+          row.className = "flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-zinc-800/60 transition group";
+          row.innerHTML = `
+            <div class="flex-1 min-w-0">
+              <div class="sp-name-display text-sm font-medium text-[#F8F8F2] truncate">${escapeHtml(plan.name)}</div>
+              <div class="text-xs text-zinc-500 mt-0.5">${plan.seats?.length || 0} seats · ${date}</div>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <button onclick="loadSeatingPlan('${plan.id}')" title="Load this arrangement"
+                class="bg-zinc-700 hover:bg-[#FD971F] hover:text-zinc-900 text-zinc-300 text-xs px-2.5 py-1 rounded font-medium transition">Load</button>
+              <button onclick="exportSeatingPlanJSON('${plan.id}')" title="Export as JSON"
+                class="p-1.5 rounded text-zinc-500 hover:text-[#66D9EF] hover:bg-zinc-700 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              </button>
+              <button onclick="renameSeatingPlanInline('${plan.id}')" title="Rename"
+                class="p-1.5 rounded text-zinc-500 hover:text-[#E6DB74] hover:bg-zinc-700 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              </button>
+              <button onclick="deleteSeatingPlan('${plan.id}')" title="Delete"
+                class="p-1.5 rounded text-zinc-500 hover:text-[#F92672] hover:bg-zinc-700 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>`;
+          list.appendChild(row);
+        });
+      }
+
 
       function promptSplitSeat(seatId) {
         const seat = seats.find((s) => s.id === seatId);
@@ -8749,8 +9242,10 @@
                   ) {
                     const ts3 = seats.find((s) => s.id === sEl3.dataset.seatId);
                     if (ts3 && !ts3.manual) {
-                      foundSeat = sEl3;
-                      break;
+                      const hasRoom = (ts3.sections || 1) > 1
+                        ? (ts3.sectionOccupants || []).indexOf(null) >= 0
+                        : !ts3.occupantId;
+                      if (hasRoom) { foundSeat = sEl3; break; }
                     }
                   }
                 }
@@ -8832,6 +9327,7 @@
               const allSeatEls = document.querySelectorAll(
                 ".seat-el[data-seat-id]",
               );
+              let bestSeatEl = null, bestArea = Infinity;
               for (const sEl of allSeatEls) {
                 const r = sEl.getBoundingClientRect();
                 if (
@@ -8840,9 +9336,13 @@
                   dropY >= r.top &&
                   dropY <= r.bottom
                 ) {
-                  const ts = seats.find((s) => s.id === sEl.dataset.seatId);
-                  if (!ts) continue;
-                  if (ts.manual) continue; // Label containers: no interaction
+                  const area = r.width * r.height;
+                  if (area < bestArea) { bestArea = area; bestSeatEl = sEl; }
+                }
+              }
+              if (bestSeatEl) {
+                const ts = seats.find((s) => s.id === bestSeatEl.dataset.seatId);
+                if (ts && !ts.manual) {
                   if ((ts.sections || 1) > 1) {
                     const ei = (ts.sectionOccupants || []).indexOf(null);
                     if (ei >= 0) {
