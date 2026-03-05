@@ -2670,6 +2670,7 @@
 
     // Adjust layout when entering Projector view
     let _preTeamsProjectorZoom = null;
+    let _preTeamsScrollLeft = 0, _preTeamsScrollTop = 0;
     document.addEventListener("fullscreenchange", () => {
       const teamsContainer = document.getElementById("canvas-container");
       const teamsExitBtn = document.getElementById("teams-proj-exit-btn");
@@ -2677,10 +2678,15 @@
       if (teamsExitBtn) teamsExitBtn.style.display = isTeamsFs ? "flex" : "none";
       if (isTeamsFs) {
         _preTeamsProjectorZoom = canvasZoom;
+        _preTeamsScrollLeft = teamsContainer.scrollLeft;
+        _preTeamsScrollTop  = teamsContainer.scrollTop;
         setTimeout(fitTeamsToScreen, 150);
       } else if (!document.fullscreenElement && _preTeamsProjectorZoom !== null) {
         setCanvasZoom(_preTeamsProjectorZoom); // this restores plain scale() transform
         _preTeamsProjectorZoom = null;
+        // Restore scroll position so the canvas is exactly where the user left it
+        teamsContainer.scrollLeft = _preTeamsScrollLeft;
+        teamsContainer.scrollTop  = _preTeamsScrollTop;
       }
     });
 
@@ -6325,6 +6331,7 @@
     }
 
     let _preSeatProjectorZoom = null;
+    let _preSeatScrollLeft = 0, _preSeatScrollTop = 0;
     document.addEventListener("fullscreenchange", () => {
       const btn = document.getElementById("seat-exit-fullscreen-btn");
       const seatExitBtn = document.getElementById("seat-proj-exit-btn");
@@ -6334,10 +6341,15 @@
       if (seatExitBtn) seatExitBtn.style.display = isSeatingFs ? "flex" : "none";
       if (isSeatingFs) {
         _preSeatProjectorZoom = seatCanvasZoom;
+        _preSeatScrollLeft = seatContainer.scrollLeft;
+        _preSeatScrollTop  = seatContainer.scrollTop;
         setTimeout(fitSeatsToScreen, 150);
       } else if (!document.fullscreenElement && _preSeatProjectorZoom !== null) {
         setSeatZoom(_preSeatProjectorZoom); // restores plain scale() transform
         _preSeatProjectorZoom = null;
+        // Restore scroll position so the canvas is exactly where the user left it
+        seatContainer.scrollLeft = _preSeatScrollLeft;
+        seatContainer.scrollTop  = _preSeatScrollTop;
         // Restore map to pre-rotation state if projector rotations were applied
         if (_seatProjRotSnap) {
           restoreSeatSnapshot(_seatProjRotSnap);
