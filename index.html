@@ -211,16 +211,56 @@
       display: none;
     }
 
-    :fullscreen #exit-fullscreen-btn {
-      display: flex;
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-    }
-
     :fullscreen {
       background-color: var(--canvas-bg);
+    }
+
+    /* Hide grid lines in projector (fullscreen) mode */
+    :fullscreen .bg-grid {
+      background-image: none !important;
+    }
+
+    /* ===== PROJECTOR MODE (fullscreen) overrides ===== */
+
+    /* Hide X / delete buttons on all chips */
+    :fullscreen .x-btn,
+    :fullscreen .seat-chip-del,
+    :-webkit-full-screen .x-btn,
+    :-webkit-full-screen .seat-chip-del {
+      display: none !important;
+    }
+
+    /* Block all pointer interaction on seats and name chips */
+    :fullscreen .seat-el,
+    :fullscreen .seat-name-chip,
+    :-webkit-full-screen .seat-el,
+    :-webkit-full-screen .seat-name-chip {
+      pointer-events: none !important;
+      cursor: default !important;
+    }
+
+    /* Block interaction on team cards and member chips */
+    :fullscreen .team-card,
+    :fullscreen .member-item,
+    :-webkit-full-screen .team-card,
+    :-webkit-full-screen .member-item {
+      pointer-events: none !important;
+      cursor: default !important;
+    }
+
+    /* Hide textbox dotted border in projector mode */
+    :fullscreen .tb-el,
+    :-webkit-full-screen .tb-el {
+      border-color: transparent !important;
+      background: transparent !important;
+      pointer-events: none !important;
+      cursor: default !important;
+    }
+
+    /* Hide projector-exit buttons in zoom controls by default; show only in fullscreen */
+    #teams-proj-exit-btn,
+    #seat-proj-exit-btn {
+      display: none;
     }
 
     #picker-container {
@@ -367,6 +407,15 @@
 
     #mobile-tab2-ui.projector-mode #mobile-projector-exit {
       display: flex !important;
+    }
+
+    #mobile-tab2-ui.projector-mode .x-btn {
+      display: none !important;
+    }
+
+    #mobile-tab2-ui.projector-mode .tb-el {
+      border-color: transparent !important;
+      background: transparent !important;
     }
 
     /* ===== HIDE SEATING TAB ON MOBILE ===== */
@@ -802,8 +851,8 @@
       <div id="mobile-tab2-ui">
         <!-- Floating projector-mode exit button -->
         <button id="mobile-projector-exit" onclick="exitMobileProjector()" style="display: none"
-          class="fixed top-3 right-3 z-[9999] bg-zinc-900/90 border border-zinc-600 text-[#F8F8F2] px-3 py-2 rounded-lg shadow-xl font-bold text-sm flex items-center gap-2 backdrop-blur-sm">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-zinc-900/40 border border-zinc-600/40 text-[#F8F8F2]/60 px-5 py-2.5 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 backdrop-blur-sm">
+          <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
           Exit
@@ -1080,7 +1129,7 @@
         </button>
 
         <!-- Zoom Controls -->
-        <div
+        <div id="teams-zoom-controls"
           class="fixed bottom-4 right-4 z-40 flex items-center bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 overflow-hidden">
           <button onclick="setCanvasZoom(canvasZoom - 0.1)"
             class="px-3 py-1.5 text-zinc-300 hover:text-[#F8F8F2] hover:bg-zinc-700 transition font-bold outline-none text-lg">
@@ -1094,6 +1143,31 @@
           <button onclick="setCanvasZoom(canvasZoom + 0.1)"
             class="px-3 py-1.5 text-zinc-300 hover:text-[#F8F8F2] hover:bg-zinc-700 transition font-bold outline-none text-lg">
             &plus;
+          </button>
+          <div class="w-px self-stretch bg-zinc-700 my-1"></div>
+          <button onclick="fitTeamsToScreen()" title="Fit all to screen"
+            class="px-2.5 py-1.5 text-zinc-400 hover:text-[#A6E22E] hover:bg-zinc-700 transition outline-none flex items-center">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+              <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+              <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+              <rect x="7" y="7" width="10" height="10" rx="1"/>
+            </svg>
+          </button>
+          <div class="w-px self-stretch bg-zinc-700 my-1"></div>
+          <button id="teams-proj-exit-btn" onclick="document.exitFullscreen()"
+            title="Exit Projector Mode (Esc)"
+            class="px-2.5 py-1.5 text-[#F92672] hover:bg-zinc-700 transition outline-none flex items-center gap-1.5 text-xs font-bold">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+              <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+              <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+              <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+            </svg>
+            Exit
           </button>
         </div>
 
@@ -1411,7 +1485,7 @@
         </button>
 
         <!-- Zoom + Rotate Controls -->
-        <div
+        <div id="seat-zoom-controls"
           class="fixed bottom-4 right-4 z-40 flex items-center bg-zinc-800 rounded-lg shadow-xl border border-zinc-700 overflow-hidden">
           <button onclick="setSeatZoom(seatCanvasZoom - 0.1)"
             class="px-3 py-1.5 text-zinc-300 hover:text-[#F8F8F2] hover:bg-zinc-700 transition font-bold outline-none text-lg">
@@ -1435,6 +1509,31 @@
               <path d="M20 8A9 9 0 1 0 20.5 13" />
               <polyline points="20 2 20 8 14 8" />
             </svg>
+          </button>
+          <div class="w-px self-stretch bg-zinc-700 my-1"></div>
+          <button onclick="fitSeatsToScreen()" title="Fit all to screen"
+            class="px-2.5 py-1.5 text-zinc-400 hover:text-[#A6E22E] hover:bg-zinc-700 transition outline-none flex items-center">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+              <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+              <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+              <rect x="7" y="7" width="10" height="10" rx="1"/>
+            </svg>
+          </button>
+          <div class="w-px self-stretch bg-zinc-700 my-1"></div>
+          <button id="seat-proj-exit-btn" onclick="document.exitFullscreen()"
+            title="Exit Projector Mode (Esc)"
+            class="px-2.5 py-1.5 text-[#F92672] hover:bg-zinc-700 transition outline-none flex items-center gap-1.5 text-xs font-bold">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+              <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+              <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+              <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+            </svg>
+            Exit
           </button>
         </div>
 
@@ -1664,8 +1763,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
-                  button to display teams fullscreen on a projector or TV. Press <strong>Esc</strong> or <strong>Exit
-                    Fullscreen</strong> to return.
+                  button to display teams fullscreen on a projector or TV. Teams are automatically centred and zoomed to fill the screen. In this mode the view is <strong>read-only</strong> — cards and name chips cannot be edited. <strong>Pan</strong> by dragging or using the <kbd class="bg-zinc-700 px-1 rounded text-[10px]">←↑↓→</kbd> arrow keys. The zoom controls remain available in the bottom-right corner; the
+                  <svg class="inline w-3.5 h-3.5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+                  <strong>fit button</strong> re-centres everything if you've panned away. Press <strong>Esc</strong> or the <strong>Exit</strong> button in the zoom controls to return.
                 </p>
                 <details class="adv">
                   <summary>Advanced options</summary>
@@ -1749,9 +1849,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
-                  button to display the seating plan fullscreen. Use the <strong>rotate</strong> button to spin the view
-                  so your audience or students can read the map from their own side of the room. This rotation is
-                  temporary and doesn't change your saved layout.
+                  button to display the seating plan fullscreen. The layout is automatically centred and zoomed to fill the screen, and the view is <strong>read-only</strong> — seats and name chips cannot be edited or moved. <strong>Pan</strong> by dragging or using the <kbd class="bg-zinc-700 px-1 rounded text-[10px]">←↑↓→</kbd> arrow keys. Use the <strong>rotate</strong> button to spin the view so your audience can read the map from their side of the room — the view re-centres automatically after each rotation. The
+                  <svg class="inline w-3.5 h-3.5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+                  <strong>fit button</strong> in the bottom-right controls re-centres everything if you've panned away. Rotation is temporary and resets when you exit — it never affects your saved layout. Press <strong>Esc</strong> or the <strong>Exit</strong> button to return.
                 </p>
                 <details class="adv">
                   <summary>Keyboard shortcuts &amp; advanced options</summary>
@@ -1833,8 +1933,8 @@
                     </p>
                     <p>
                       <strong>Rotating the whole plan in projector mode</strong> is different — it only rotates the view
-                      on screen so your audience can orient the map from their side of the room. It resets when you exit
-                      projector mode and never affects your saved layout.
+                      on screen and automatically re-centres and re-fits the layout so everything fills the screen
+                      perfectly after each turn. It resets when you exit projector mode and never affects your saved layout.
                     </p>
                     <p>
                       <strong>Split into sections:</strong> Right-click any seat for a context menu including <em>Split
@@ -1843,10 +1943,12 @@
                       drag name chips freely within the table.
                     </p>
                     <p>
-                      <strong>Snap &amp; zoom:</strong> Toggle <strong>Snap On</strong> to keep seats aligned to the
+                      <strong>Snap, zoom &amp; fit:</strong> Toggle <strong>Snap On</strong> to keep seats aligned to the
                       grid. Use the <span class="font-mono text-zinc-200 bg-zinc-700 px-1.5 rounded">−</span> / <span
                         class="font-mono text-zinc-200 bg-zinc-700 px-1.5 rounded">+</span> widget (bottom-right) or
-                      <strong>Ctrl+scroll</strong> to zoom.
+                      <strong>Ctrl+scroll</strong> to zoom. Click the
+                      <svg class="inline w-3.5 h-3.5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+                      <strong>fit button</strong> beside the zoom controls to instantly re-centre and zoom to show all objects — works in both normal editing and projector mode after panning away.
                     </p>
                   </div>
                 </details>
@@ -2522,13 +2624,11 @@
     function fitTeamsToScreen() {
       if (teams.length === 0) return;
       const container = document.getElementById("canvas-container");
+      const area = document.getElementById("canvas-area");
       const cw = container.clientWidth;
       const ch = container.clientHeight;
 
-      let minX = Infinity,
-        minY = Infinity,
-        maxX = -Infinity,
-        maxY = -Infinity;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       teams.forEach((g) => {
         if (g.x < minX) minX = g.x;
         if (g.y < minY) minY = g.y;
@@ -2536,32 +2636,33 @@
         if (g.x + 240 > maxX) maxX = g.x + 240;
         if (g.y + estHeight > maxY) maxY = g.y + estHeight;
       });
+      textboxes.filter(t => t.canvas === "teams").forEach(t => {
+        minX = Math.min(minX, t.x); minY = Math.min(minY, t.y);
+        maxX = Math.max(maxX, t.x + (t.w || 200)); maxY = Math.max(maxY, t.y + (t.minH || 40));
+      });
 
       if (minX === Infinity) return;
 
-      const padding = 60; // Safe area padding around the edges
-      const boundsWidth = maxX - minX;
-      const boundsHeight = maxY - minY;
-
-      const scaleX = (cw - padding * 2) / boundsWidth;
-      const scaleY = (ch - padding * 2) / boundsHeight;
-      const newScale = Math.min(scaleX, scaleY, 1.5); // Max out zoom at 1.5x to prevent absurd sizing
+      const padding = 60;
+      const boundsW = maxX - minX;
+      const boundsH = maxY - minY;
+      const newScale = Math.min((cw - padding * 2) / boundsW, (ch - padding * 2) / boundsH, 1.5);
 
       setCanvasZoom(newScale);
 
-      // Wait a split second for scale transform to apply, then smoothly scroll to center
+      // After zoom is applied, compute the ideally-centred scroll position.
+      // If the ideal value is negative (objects are near the canvas origin and
+      // the viewport is larger than the scaled content), compensate with a CSS
+      // translate so objects are truly centred rather than stuck at the top-left.
       setTimeout(() => {
-        const scaledMinX = minX * newScale;
-        const scaledMinY = minY * newScale;
-        const scaledBoundsWidth = boundsWidth * newScale;
-        const scaledBoundsHeight = boundsHeight * newScale;
-
-        const targetScrollLeft = scaledMinX - (cw - scaledBoundsWidth) / 2;
-        const targetScrollTop = scaledMinY - (ch - scaledBoundsHeight) / 2;
-
+        const idealLeft = (minX + boundsW / 2) * newScale - cw / 2;
+        const idealTop  = (minY + boundsH / 2) * newScale - ch / 2;
+        const tx = idealLeft < 0 ? -idealLeft : 0;
+        const ty = idealTop  < 0 ? -idealTop  : 0;
+        area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
         container.scrollTo({
-          left: Math.max(0, targetScrollLeft),
-          top: Math.max(0, targetScrollTop),
+          left: Math.max(0, idealLeft),
+          top:  Math.max(0, idealTop),
           behavior: "smooth",
         });
       }, 50);
@@ -2571,11 +2672,14 @@
     let _preTeamsProjectorZoom = null;
     document.addEventListener("fullscreenchange", () => {
       const teamsContainer = document.getElementById("canvas-container");
-      if (document.fullscreenElement === teamsContainer) {
+      const teamsExitBtn = document.getElementById("teams-proj-exit-btn");
+      const isTeamsFs = document.fullscreenElement === teamsContainer;
+      if (teamsExitBtn) teamsExitBtn.style.display = isTeamsFs ? "flex" : "none";
+      if (isTeamsFs) {
         _preTeamsProjectorZoom = canvasZoom;
         setTimeout(fitTeamsToScreen, 150);
       } else if (!document.fullscreenElement && _preTeamsProjectorZoom !== null) {
-        setCanvasZoom(_preTeamsProjectorZoom);
+        setCanvasZoom(_preTeamsProjectorZoom); // this restores plain scale() transform
         _preTeamsProjectorZoom = null;
       }
     });
@@ -4791,6 +4895,9 @@
       if (!el) return;
       el.classList.add("projector-mode");
       document.body.style.overflow = "hidden";
+      // Scroll teams back to the top so the first row is always visible
+      const cards = document.getElementById("mobile-team-cards");
+      if (cards) cards.scrollTop = 0;
       // Recalculate grid for the now-fullscreen dimensions
       setTimeout(applyMobileGridLayout, 30);
     }
@@ -6077,6 +6184,8 @@
       if (isProjector) {
         if (!_seatProjRotSnap) _seatProjRotSnap = snapshotSeatState();
         rotateSeatMapCW(false);
+        // Auto-fit after rotation so everything is centred and fills the screen
+        setTimeout(fitSeatsToScreen, 80);
       } else {
         rotateSeatMapCW(true);
       }
@@ -6172,6 +6281,7 @@
       if (seats.length === 0 && textboxes.filter(t => t.canvas === "seating").length === 0) return;
       const container = document.getElementById("seating-canvas-container");
       if (!container) return;
+      const area = document.getElementById("seating-canvas-area");
       const cw = container.clientWidth;
       const ch = container.clientHeight;
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -6195,12 +6305,20 @@
       const boundsH = maxY - minY;
       const newScale = Math.min((cw - padding * 2) / boundsW, (ch - padding * 2) / boundsH, 2);
       setSeatZoom(newScale);
+
+      // After zoom is applied, compute the ideally-centred scroll position.
+      // If the ideal value is negative (objects near the canvas origin and viewport
+      // larger than the scaled content), compensate with a CSS translate so objects
+      // are truly centred rather than stuck at the top-left corner.
       setTimeout(() => {
-        const scaledMinX = minX * newScale;
-        const scaledMinY = minY * newScale;
+        const idealLeft = (minX + boundsW / 2) * newScale - cw / 2;
+        const idealTop  = (minY + boundsH / 2) * newScale - ch / 2;
+        const tx = idealLeft < 0 ? -idealLeft : 0;
+        const ty = idealTop  < 0 ? -idealTop  : 0;
+        area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
         container.scrollTo({
-          left: Math.max(0, scaledMinX - (cw - boundsW * newScale) / 2),
-          top: Math.max(0, scaledMinY - (ch - boundsH * newScale) / 2),
+          left: Math.max(0, idealLeft),
+          top:  Math.max(0, idealTop),
           behavior: "smooth",
         });
       }, 50);
@@ -6209,14 +6327,16 @@
     let _preSeatProjectorZoom = null;
     document.addEventListener("fullscreenchange", () => {
       const btn = document.getElementById("seat-exit-fullscreen-btn");
+      const seatExitBtn = document.getElementById("seat-proj-exit-btn");
       const seatContainer = document.getElementById("seating-canvas-container");
       const isSeatingFs = document.fullscreenElement === seatContainer;
-      if (btn) btn.style.display = isSeatingFs ? "flex" : "none";
+      if (btn) btn.style.display = "none"; // old top-right button always hidden now
+      if (seatExitBtn) seatExitBtn.style.display = isSeatingFs ? "flex" : "none";
       if (isSeatingFs) {
         _preSeatProjectorZoom = seatCanvasZoom;
         setTimeout(fitSeatsToScreen, 150);
       } else if (!document.fullscreenElement && _preSeatProjectorZoom !== null) {
-        setSeatZoom(_preSeatProjectorZoom);
+        setSeatZoom(_preSeatProjectorZoom); // restores plain scale() transform
         _preSeatProjectorZoom = null;
         // Restore map to pre-rotation state if projector rotations were applied
         if (_seatProjRotSnap) {
@@ -6427,6 +6547,7 @@
 
           // ✕ button ON the chip
           const del = document.createElement("button");
+          del.className = "seat-chip-del";
           del.innerHTML = "&times;";
           del.style.cssText =
             "position:absolute;top:-5px;right:-5px;background:rgba(40,38,34,0.85);color:rgba(200,195,180,0.7);border:1px solid rgba(200,195,180,0.2);border-radius:3px;width:14px;height:14px;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;padding:0;font-weight:bold;transition:color 0.15s;";
@@ -6990,6 +7111,7 @@
 
           // X button on chip itself
           const del = document.createElement("button");
+          del.className = "seat-chip-del";
           del.innerHTML = "&times;";
           del.title = "Remove";
           del.style.cssText =
@@ -9388,6 +9510,8 @@
       document.addEventListener("mousedown", (e) => {
         if (!isSeatingProjector()) return;
         if (e.button !== 0) return;
+        // Allow clicks on zoom/rotate controls
+        if (e.target.closest("#seat-zoom-controls")) return;
         // In projector mode, swallow all clicks and start panning
         e.stopPropagation();
         e.preventDefault();
@@ -9418,6 +9542,66 @@
       document.addEventListener("contextmenu", (e) => {
         if (isSeatingProjector()) e.preventDefault();
       }, true);
+    })();
+
+    // ---- Projector mode: pan-only for Teams canvas ----
+    (function () {
+      const gc = () => document.getElementById("canvas-container");
+      let panActive = false, panX = 0, panY = 0, panScrollX = 0, panScrollY = 0;
+
+      const isTeamsProjector = () =>
+        document.fullscreenElement === gc();
+
+      document.addEventListener("mousedown", (e) => {
+        if (!isTeamsProjector()) return;
+        if (e.button !== 0) return;
+        // Allow clicks on zoom controls (they are position:fixed overlays)
+        if (e.target.closest("#teams-zoom-controls")) return;
+        e.stopPropagation();
+        e.preventDefault();
+        panActive = true;
+        panX = e.clientX;
+        panY = e.clientY;
+        const c = gc();
+        panScrollX = c.scrollLeft;
+        panScrollY = c.scrollTop;
+        c.style.cursor = "grabbing";
+      }, true);
+
+      document.addEventListener("mousemove", (e) => {
+        if (!panActive || !isTeamsProjector()) return;
+        const c = gc();
+        c.scrollLeft = panScrollX - (e.clientX - panX);
+        c.scrollTop = panScrollY - (e.clientY - panY);
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (!panActive) return;
+        panActive = false;
+        const c = gc();
+        if (c) c.style.cursor = "";
+      });
+
+      document.addEventListener("contextmenu", (e) => {
+        if (isTeamsProjector()) e.preventDefault();
+      }, true);
+    })();
+
+    // ---- Arrow key panning in projector mode ----
+    (function () {
+      const PAN_STEP = 80;
+      document.addEventListener("keydown", (e) => {
+        const teamsContainer = document.getElementById("canvas-container");
+        const seatContainer = document.getElementById("seating-canvas-container");
+        const isTeamsFs = document.fullscreenElement === teamsContainer;
+        const isSeatFs = document.fullscreenElement === seatContainer;
+        if (!isTeamsFs && !isSeatFs) return;
+        const c = isTeamsFs ? teamsContainer : seatContainer;
+        if (e.key === "ArrowLeft") { e.preventDefault(); c.scrollLeft -= PAN_STEP; }
+        else if (e.key === "ArrowRight") { e.preventDefault(); c.scrollLeft += PAN_STEP; }
+        else if (e.key === "ArrowUp") { e.preventDefault(); c.scrollTop -= PAN_STEP; }
+        else if (e.key === "ArrowDown") { e.preventDefault(); c.scrollTop += PAN_STEP; }
+      });
     })();
 
     // ---- Mobile pinch-to-zoom ----
