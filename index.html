@@ -1743,6 +1743,16 @@
                   <strong>Save layouts:</strong> Click the save icon next to "Seating Plan" to save and load named
                   layouts — handy if you have multiple classes or event rooms.
                 </p>
+                <p>
+                  <strong>Projector mode:</strong> Press the projector
+                  <svg class="inline w-3.5 h-3.5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                  button to display the seating plan fullscreen. Use the <strong>rotate</strong> button to spin the view
+                  so your audience or students can read the map from their own side of the room. This rotation is
+                  temporary and doesn't change your saved layout.
+                </p>
                 <details class="adv">
                   <summary>Keyboard shortcuts &amp; advanced options</summary>
                   <div class="adv-body space-y-3 text-sm text-zinc-300">
@@ -1811,9 +1821,20 @@
                       </tbody>
                     </table>
                     <p>
-                      <strong>Resize &amp; rotate:</strong> Use the Select tool (<kbd
+                      <strong>Resize &amp; rotate individual seats:</strong> Use the Select tool (<kbd
                         class="bg-zinc-700 px-1 rounded text-[10px]">V</kbd>) to click a seat and reveal corner resize
-                      handles and a top rotation handle.
+                      handles and a top rotation handle. Rotating a seat this way is permanent and saved with your
+                      layout.
+                    </p>
+                    <p>
+                      You can also <strong>rotate the entire plan</strong> using the rotate button in the bottom-right
+                      corner next to the zoom controls. This rotates everything on the canvas and is saved with your
+                      layout.
+                    </p>
+                    <p>
+                      <strong>Rotating the whole plan in projector mode</strong> is different — it only rotates the view
+                      on screen so your audience can orient the map from their side of the room. It resets when you exit
+                      projector mode and never affects your saved layout.
                     </p>
                     <p>
                       <strong>Split into sections:</strong> Right-click any seat for a context menu including <em>Split
@@ -2692,6 +2713,7 @@
       updateConstraintSelects();
       renderTeams();
       renderSeats();
+      refreshExportIfVisible();
       updateActiveFileLabel();
     }
 
@@ -2843,6 +2865,7 @@
       updateConstraintSelects();
       renderTeams();
       renderSeats();
+      refreshExportIfVisible();
       updateActiveFileLabel();
       hasUnsavedChanges = false;
       const ind2 = document.getElementById("autosave-indicator");
@@ -3470,6 +3493,13 @@
     }
 
     let currentExportMode = "teams"; // 'teams' | 'seating'
+
+    function refreshExportIfVisible() {
+      if (document.getElementById("tab3")?.classList.contains("hide")) return;
+      const bounds = getCanvasBounds();
+      if (currentExportMode === "teams") generateCleanPrintPreview(bounds);
+      else generateSeatPrintPreview();
+    }
 
     function setExportMode(mode) {
       currentExportMode = mode;
