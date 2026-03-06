@@ -207,6 +207,10 @@
       background: #75715e;
     }
 
+    ::-webkit-scrollbar-corner {
+      background: #1e1f1c;
+    }
+
     #exit-fullscreen-btn {
       display: none;
     }
@@ -1946,21 +1950,6 @@
                           </td>
                           <td class="py-1 text-zinc-300">Redo</td>
                         </tr>
-                        <tr>
-                          <td class="py-1 pr-4 whitespace-nowrap"><kbd
-                              class="bg-zinc-900 border border-zinc-600 text-[#FD971F] px-2 py-0.5 rounded font-mono shadow-sm">Alt
-                              / ⌥</kbd>
-                          </td>
-                          <td class="py-1 text-zinc-300">Hold to <strong>temporarily disable snapping</strong> while
-                            moving, resizing, or rotating</td>
-                        </tr>
-                        <tr>
-                          <td class="py-1 pr-4 whitespace-nowrap"><kbd
-                              class="bg-zinc-900 border border-zinc-600 text-[#A6E22E] px-2 py-0.5 rounded font-mono shadow-sm">Shift</kbd>
-                          </td>
-                          <td class="py-1 text-zinc-300">Hold to <strong>temporarily enable snapping</strong> while
-                            moving, resizing, or rotating (also constrains rotation to 90° steps)</td>
-                        </tr>
                       </tbody>
                     </table>
                     <p>
@@ -2002,12 +1991,6 @@
                       </svg>
                       <strong>fit button</strong> beside the zoom controls to instantly re-centre and zoom to show all
                       objects — works in both normal editing and projector mode after panning away.
-                      You can also override the snap toggle on the fly: hold <kbd
-                        class="bg-zinc-700 px-1 rounded text-[10px]">Alt / ⌥</kbd> to temporarily <em>disable</em>
-                      snapping while the key is down, or hold <kbd
-                        class="bg-zinc-700 px-1 rounded text-[10px]">Shift</kbd> to temporarily <em>enable</em>
-                      snapping. When snapping is active, rotating an object is additionally constrained to 90°
-                      increments.
                     </p>
                   </div>
                 </details>
@@ -5532,13 +5515,12 @@
             (Math.atan2(ev.clientY - ocy, ev.clientX - ocx) * 180) / Math.PI;
           const initRot = box.rotation || 0;
           const doRot = (ev2) => {
-            let angle = initRot +
+            box.rotation = Math.round(
+              initRot +
               (Math.atan2(ev2.clientY - ocy, ev2.clientX - ocx) * 180) /
               Math.PI -
-              initAngle;
-            // When snap is active, constrain rotation to 90° increments
-            if (effectiveSnap()) angle = Math.round(angle / 90) * 90;
-            box.rotation = Math.round(angle);
+              initAngle,
+            );
             el.style.transform = `rotate(${box.rotation}deg)`;
           };
           const stopRot = () => {
@@ -5744,13 +5726,12 @@
           (Math.atan2(ev.clientY - ocy, ev.clientX - ocx) * 180) / Math.PI;
         const initRot = box.rotation || 0;
         const doRot = (ev2) => {
-          let angle = initRot +
+          box.rotation = Math.round(
+            initRot +
             (Math.atan2(ev2.clientY - ocy, ev2.clientX - ocx) * 180) /
             Math.PI -
-            initAngle;
-          // When snap is active, constrain rotation to 90° increments
-          if (effectiveSnap()) angle = Math.round(angle / 90) * 90;
-          box.rotation = Math.round(angle);
+            initAngle,
+          );
           el.style.transform = `rotate(${box.rotation}deg)`;
         };
         const stopRot = () => {
@@ -5865,7 +5846,7 @@
       let nx = Math.round(tbDragInitX + (ev.clientX - tbDragStartX) / zoom);
       let ny = Math.round(tbDragInitY + (ev.clientY - tbDragStartY) / zoom);
       // Snap to grid in seating if snap is enabled
-      if (tbMode === "seating" && effectiveSnap()) {
+      if (tbMode === "seating" && seatSnapToGrid) {
         nx = Math.round(nx / SGRID) * SGRID;
         ny = Math.round(ny / SGRID) * SGRID;
       }
@@ -5929,17 +5910,8 @@
     function generateSeatId() {
       return "s_" + Math.random().toString(36).substr(2, 8);
     }
-    // ---- Modifier-key snap overrides ----
-    // ALT/OPTION held → temporarily DISABLE snap; SHIFT held → temporarily ENABLE snap
-    let _altKeyDown = false;
-    let _shiftKeyDown = false;
-    function effectiveSnap() {
-      if (_altKeyDown) return false;   // ALT overrides: snap off while held
-      if (_shiftKeyDown) return true;  // SHIFT overrides: snap on while held
-      return seatSnapToGrid;           // fall back to toggle state
-    }
     function snapS(v) {
-      return effectiveSnap() ? Math.round(v / SGRID) * SGRID : v;
+      return seatSnapToGrid ? Math.round(v / SGRID) * SGRID : v;
     }
 
     function applyHoverHighlight(el) {
@@ -8157,10 +8129,6 @@
 
     // ---- Keyboard shortcuts ----
     document.addEventListener("keydown", (ev) => {
-      // Track modifier keys for snap overrides
-      if (ev.key === "Alt") _altKeyDown = true;
-      if (ev.key === "Shift") _shiftKeyDown = true;
-
       if (ev.key === "Escape" && document.getElementById("files-modal")?.classList.contains("open")) {
         closeFilesModal();
         return;
@@ -8286,17 +8254,6 @@
       }
     });
 
-    // Clear modifier-key snap overrides when keys are released
-    document.addEventListener("keyup", (ev) => {
-      if (ev.key === "Alt") _altKeyDown = false;
-      if (ev.key === "Shift") _shiftKeyDown = false;
-    });
-    // Also clear if window loses focus (e.g. Alt+Tab away)
-    window.addEventListener("blur", () => {
-      _altKeyDown = false;
-      _shiftKeyDown = false;
-    });
-
     function showPaintPreview(c0, r0, c1, r1) {
       const p = document.getElementById("seat-paint-preview");
       if (!p) return;
@@ -8329,7 +8286,7 @@
             if (!init) return;
             let nx = init.x + dx,
               ny = init.y + dy;
-            if (effectiveSnap()) {
+            if (seatSnapToGrid) {
               nx = snapS(nx);
               ny = snapS(ny);
             }
@@ -8347,7 +8304,7 @@
             if (!init) return;
             let nx = init.x + dx;
             let ny = init.y + dy;
-            if (effectiveSnap()) {
+            if (seatSnapToGrid) {
               nx = snapS(nx);
               ny = snapS(ny);
             }
@@ -8370,7 +8327,7 @@
           seatDragInitX + (e.clientX / seatCanvasZoom - seatDragStartX);
         let ny =
           seatDragInitY + (e.clientY / seatCanvasZoom - seatDragStartY);
-        if (effectiveSnap()) {
+        if (seatSnapToGrid) {
           nx = snapS(nx);
           ny = snapS(ny);
         }
@@ -8395,19 +8352,19 @@
           nh = resizeStartH;
         // Snap: pin the fixed edge, snap the moving edge, derive width/height from diff
         if (resizeHandle.includes("e")) {
-          let rightEdge = effectiveSnap()
+          let rightEdge = seatSnapToGrid
             ? snapS(resizeStartSeatX + resizeStartW + dx)
             : resizeStartSeatX + resizeStartW + dx;
           nw = Math.max(SGRID, rightEdge - nx);
         }
         if (resizeHandle.includes("s")) {
-          let botEdge = effectiveSnap()
+          let botEdge = seatSnapToGrid
             ? snapS(resizeStartSeatY + resizeStartH + dy)
             : resizeStartSeatY + resizeStartH + dy;
           nh = Math.max(SGRID, botEdge - ny);
         }
         if (resizeHandle.includes("w")) {
-          let leftEdge = effectiveSnap()
+          let leftEdge = seatSnapToGrid
             ? snapS(resizeStartSeatX + dx)
             : resizeStartSeatX + dx;
           leftEdge = Math.min(
@@ -8418,7 +8375,7 @@
           nx = leftEdge;
         }
         if (resizeHandle.includes("n")) {
-          let topEdge = effectiveSnap()
+          let topEdge = seatSnapToGrid
             ? snapS(resizeStartSeatY + dy)
             : resizeStartSeatY + dy;
           topEdge = Math.min(
@@ -8443,13 +8400,11 @@
         }
       }
       if (rotatingSeat) {
-        let angle =
+        const angle =
           rotateStartAngle +
           (Math.atan2(e.clientY - rotateOriginY, e.clientX - rotateOriginX) *
             180) /
           Math.PI;
-        // When snap is active, constrain rotation to 90° increments
-        if (effectiveSnap()) angle = Math.round(angle / 90) * 90;
         rotatingSeat.rotation = Math.round(angle);
         const el = document.querySelector(
           `[data-seat-id="${rotatingSeat.id}"]`,
