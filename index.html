@@ -207,6 +207,10 @@
       background: #75715e;
     }
 
+    ::-webkit-scrollbar-corner {
+      background: #1e1f1c;
+    }
+
     #exit-fullscreen-btn {
       display: none;
     }
@@ -3360,6 +3364,10 @@
     function toggleProjector() {
       const container = document.getElementById("canvas-container");
       if (!document.fullscreenElement) {
+        // Deselect all objects before entering projector mode
+        selectedTextboxId = null;
+        hideSeatTbFloatingToolbar();
+        renderTeams();
         container
           .requestFullscreen()
           .catch(() => showModal("Error entering fullscreen."));
@@ -6350,11 +6358,17 @@
     function toggleSeatProjector() {
       const c = document.getElementById("seating-canvas-container");
       if (!c) return;
-      if (!document.fullscreenElement)
+      if (!document.fullscreenElement) {
+        // Deselect all objects before entering projector mode
+        selectedSeatId = null;
+        selectedSeatIds.clear();
+        selectedTextboxId = null;
+        hideSeatTbFloatingToolbar();
+        renderSeats();
         c.requestFullscreen().catch(() =>
           showModal("Error entering fullscreen."),
         );
-      else document.exitFullscreen();
+      } else document.exitFullscreen();
     }
 
     function fitSeatsToScreen() {
@@ -6979,12 +6993,14 @@
             "overflow-wrap:normal",
             "cursor:grab",
             "user-select:none",
-            "position:relative",
+            "position:absolute",
+            `left:${seat.w / 2}px`,
+            `top:${seat.h / 2}px`,
+            `transform:translate(-50%,-50%) rotate(${seat.nameRotation || 0}deg)`,
+            "transform-origin:center center",
             "box-sizing:border-box",
             "overflow:visible",
-            "z-index:3",
-            `transform:rotate(${seat.nameRotation || 0}deg)`,
-            "transform-origin:center center",
+            "z-index:10",
           ].join(";");
           setChipText(chip, seat.occupantId);
           chip.addEventListener("mouseenter", () => {
@@ -7211,7 +7227,7 @@
             markUnsaved();
           });
           chip.appendChild(del);
-          inner.appendChild(chip);
+          el.appendChild(chip); // append to el (overflow:visible) so chip can extend beyond seat bounds
         } else {
           const icon = document.createElement("div");
           icon.style.cssText = `color:${C.border};opacity:0.3;font-size:${Math.min(seat.w, seat.h) * 0.32}px;pointer-events:none;line-height:1;`;
