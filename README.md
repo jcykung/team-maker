@@ -1,4 +1,4 @@
-# 🎯 Team Maker
+# Team Maker
 
 > Quickly make random teams, manage rosters, and design seating arrangements — great for **teachers**, **coaches**, and **event planners**.
 
