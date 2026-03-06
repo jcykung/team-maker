@@ -207,10 +207,6 @@
       background: #75715e;
     }
 
-    ::-webkit-scrollbar-corner {
-      background: #1e1f1c;
-    }
-
     #exit-fullscreen-btn {
       display: none;
     }
@@ -6947,20 +6943,26 @@
             "overflow-wrap:normal",
             "cursor:grab",
             "user-select:none",
-            "position:relative",
+            // Absolutely centred on el so it is never clipped by inner's overflow:hidden
+            "position:absolute",
+            "left:50%",
+            "top:50%",
             "box-sizing:border-box",
             "overflow:visible",
-            "z-index:3",
-            `transform:rotate(${seat.nameRotation || 0}deg)`,
+            "z-index:10",
+            `transform:translate(-50%,-50%) rotate(${seat.nameRotation || 0}deg)`,
             "transform-origin:center center",
           ].join(";");
           setChipText(chip, seat.occupantId);
           chip.addEventListener("mouseenter", () => {
-            if (!chip.dataset.dragging)
+            if (!chip.dataset.dragging) {
               chip.style.outline = "2px solid #A6E22E";
+              el.style.zIndex = "20"; // float above neighbouring seats
+            }
           });
           chip.addEventListener("mouseleave", () => {
             chip.style.outline = "";
+            el.style.zIndex = isSelected ? "5" : "1";
           });
           chip.addEventListener("mousedown", (ev) => {
             if (ev.button === 2) return;
@@ -7179,7 +7181,7 @@
             markUnsaved();
           });
           chip.appendChild(del);
-          inner.appendChild(chip);
+          el.appendChild(chip);  // appended to el (overflow:visible), not inner (overflow:hidden)
         } else {
           const icon = document.createElement("div");
           icon.style.cssText = `color:${C.border};opacity:0.3;font-size:${Math.min(seat.w, seat.h) * 0.32}px;pointer-events:none;line-height:1;`;
