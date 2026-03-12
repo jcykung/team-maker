@@ -2326,16 +2326,8 @@
           class="text-zinc-500 hover:text-[#F8F8F2] transition text-xl leading-none">&times;</button>
       </div>
 
-      <!-- Save current arrangement -->
-      <div class="p-4 border-b border-zinc-700 flex-shrink-0">
-        <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider">Save Current Arrangement</p>
-        <div class="flex gap-2">
-          <input id="sp-name-input" type="text" placeholder="e.g. Room 204, Period 3…"
-            class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F8F8F2] rounded px-3 py-1.5 text-sm outline-none focus:border-[#FD971F] placeholder-zinc-600" />
-          <button onclick="saveCurrentSeatingPlan()"
-            class="bg-[#FD971F] text-zinc-900 px-4 py-1.5 rounded font-bold text-sm hover:bg-[#e8861a] transition flex-shrink-0">Save</button>
-        </div>
-      </div>
+      <!-- Save current arrangement (rendered dynamically by renderSaveSection) -->
+      <div id="sp-save-section" class="p-4 border-b border-zinc-700 flex-shrink-0"></div>
 
       <!-- Import -->
       <div class="px-4 py-3 border-b border-zinc-700 flex-shrink-0">
@@ -2370,12 +2362,30 @@
     let staging = [];
     let constraints = { together: [], apart: [] };
     let seats = []; // seating plan
-    let currentSeatingPlanName = ""; // name of the last-loaded named seating arrangement
+    let currentSeatingPlanName = ""; // name of the last-loaded/saved arrangement
+    let currentSeatingPlanId = "";   // id of the last-loaded/saved arrangement
+    let seatingPlanCleanSnapshot = ""; // JSON fingerprint of seats when last saved/loaded
     let textboxes = []; // free-floating text boxes (Teams + Seating)
 
     // ---- Undo / Redo for Seating ----
     let seatUndoStack = [];
     let seatRedoStack = [];
+
+    // Fingerprint of seat layout only (position/shape/label — ignores occupants)
+    // Used to detect whether the arrangement has changed since it was last saved/loaded.
+    function seatLayoutFingerprint() {
+      return JSON.stringify(seats.map(s => ({
+        id: s.id, shape: s.shape, x: s.x, y: s.y, w: s.w, h: s.h,
+        rotation: s.rotation, manual: s.manual, label: s.label, sections: s.sections
+      })));
+    }
+    function isSeatingPlanDirty() {
+      if (!currentSeatingPlanId) return false;
+      return seatLayoutFingerprint() !== seatingPlanCleanSnapshot;
+    }
+    function markSeatingPlanClean() {
+      seatingPlanCleanSnapshot = seatLayoutFingerprint();
+    }
 
     function snapshotSeatState() {
       return JSON.stringify({
@@ -3057,6 +3067,8 @@
       seats = f.seats || [];
       textboxes = f.textboxes || [];
       currentSeatingPlanName = ""; // clear plan name when switching files
+      currentSeatingPlanId = "";
+      seatingPlanCleanSnapshot = "";
 
       updateTab1UI();
       updateConstraintSelects();
@@ -8749,14 +8761,57 @@
 
     function openSeatingPlansModal() {
       renderSeatingPlansList();
-      document.getElementById("sp-name-input").value = "";
+      renderSaveSection();
       document.getElementById("seating-plans-modal").classList.remove("hide");
+    }
+
+    // Dynamically renders the "Save Current Arrangement" section based on dirty state
+    function renderSaveSection() {
+      const container = document.getElementById("sp-save-section");
+      if (!container) return;
+      const dirty = isSeatingPlanDirty();
+      const hasActivePlan = !!currentSeatingPlanId;
+
+      if (hasActivePlan && dirty) {
+        // Modified — offer overwrite OR save as new
+        const plans = getAllSeatingPlans();
+        const activePlan = plans.find(p => p.id === currentSeatingPlanId);
+        const activeName = escapeHtml(activePlan ? activePlan.name : currentSeatingPlanName);
+        container.innerHTML = `
+          <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider flex items-center gap-2">
+            Save Arrangement
+            <span class="text-[10px] font-bold bg-[#F92672]/20 text-[#F92672] px-1.5 py-0.5 rounded border border-[#F92672]/40 uppercase tracking-wide normal-case">Unsaved changes</span>
+          </p>
+          <div class="flex flex-col gap-2">
+            <button onclick="saveCurrentSeatingPlan('${currentSeatingPlanId}')"
+              class="w-full bg-[#FD971F] text-zinc-900 px-4 py-2 rounded font-bold text-sm hover:bg-[#e8861a] transition text-left flex items-center gap-2">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+              <span>Update <span class="font-normal opacity-80">"${activeName}"</span></span>
+            </button>
+            <div class="flex gap-2">
+              <input id="sp-name-input" type="text" placeholder="New name…"
+                class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F8F8F2] rounded px-3 py-1.5 text-sm outline-none focus:border-[#FD971F] placeholder-zinc-600" />
+              <button onclick="saveCurrentSeatingPlan()"
+                class="bg-zinc-700 border border-zinc-600 text-[#F8F8F2] px-3 py-1.5 rounded font-bold text-sm hover:bg-zinc-600 transition flex-shrink-0 whitespace-nowrap">Save as New</button>
+            </div>
+          </div>`;
+      } else {
+        // Clean or no active plan — standard save
+        container.innerHTML = `
+          <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider">Save Current Arrangement</p>
+          <div class="flex gap-2">
+            <input id="sp-name-input" type="text" placeholder="e.g. Room 204, Period 3…"
+              class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F8F8F2] rounded px-3 py-1.5 text-sm outline-none focus:border-[#FD971F] placeholder-zinc-600" />
+            <button onclick="saveCurrentSeatingPlan()"
+              class="bg-[#FD971F] text-zinc-900 px-4 py-1.5 rounded font-bold text-sm hover:bg-[#e8861a] transition flex-shrink-0">Save</button>
+          </div>`;
+      }
     }
     function closeSeatingPlansModal() {
       document.getElementById("seating-plans-modal").classList.add("hide");
     }
 
-    function saveCurrentSeatingPlan() {
+    function saveCurrentSeatingPlan(overwriteId) {
       const nameInput = document.getElementById("sp-name-input");
       const name = nameInput.value.trim();
       if (!name) return showModal("Please enter a name for this arrangement.");
@@ -8770,18 +8825,32 @@
         if (ls.chipOffsets) ls.chipOffsets = [];
         return ls;
       });
-      const plan = {
-        id: "sp_" + generateId(),
-        name,
-        seats: layoutSeats,
-        textboxes: [],
-        createdAt: Date.now(),
-      };
+      if (overwriteId) {
+        // Overwrite existing plan in-place
+        const idx = plans.findIndex(p => p.id === overwriteId);
+        if (idx >= 0) {
+          plans[idx] = { ...plans[idx], name, seats: layoutSeats, textboxes: [], updatedAt: Date.now() };
+          saveAllSeatingPlans(plans);
+          currentSeatingPlanName = name;
+          currentSeatingPlanId = overwriteId;
+          markSeatingPlanClean();
+          nameInput.value = "";
+          renderSeatingPlansList();
+          renderSaveSection(); // refresh the save UI
+          return;
+        }
+      }
+      // Save as new plan
+      const newId = "sp_" + generateId();
+      const plan = { id: newId, name, seats: layoutSeats, textboxes: [], createdAt: Date.now() };
       plans.unshift(plan);
       saveAllSeatingPlans(plans);
-      currentSeatingPlanName = name; // track as the current arrangement name
+      currentSeatingPlanName = name;
+      currentSeatingPlanId = newId;
+      markSeatingPlanClean();
       nameInput.value = "";
       renderSeatingPlansList();
+      renderSaveSection(); // refresh the save UI
     }
 
     function loadSeatingPlan(id) {
@@ -8794,6 +8863,8 @@
         const otherTbs = textboxes.filter(t => t.canvas !== "seating");
         textboxes = [...otherTbs, ...JSON.parse(JSON.stringify(plan.textboxes || []))];
         currentSeatingPlanName = plan.name; // track which arrangement is loaded
+        currentSeatingPlanId = plan.id;
+        markSeatingPlanClean();
         // Clear occupants so they go back to staging unless seatSeatsLoaded
         renderSeats();
         markUnsaved();
@@ -8807,7 +8878,14 @@
       if (!plan) return;
       showModal(`Delete "${plan.name}"? This cannot be undone.`, true, () => {
         saveAllSeatingPlans(plans.filter(p => p.id !== id));
+        // If the deleted plan was active, clear the active state
+        if (id === currentSeatingPlanId) {
+          currentSeatingPlanId = "";
+          currentSeatingPlanName = "";
+          seatingPlanCleanSnapshot = "";
+        }
         renderSeatingPlansList();
+        renderSaveSection();
       });
     }
 
@@ -8870,8 +8948,14 @@
         const newName = inp.value.trim() || oldName;
         const updated = getAllSeatingPlans();
         const i = updated.findIndex(p => p.id === id);
-        if (i >= 0) { updated[i].name = newName; saveAllSeatingPlans(updated); }
+        if (i >= 0) {
+          updated[i].name = newName;
+          saveAllSeatingPlans(updated);
+          // Keep currentSeatingPlanName in sync if this is the active plan
+          if (id === currentSeatingPlanId) currentSeatingPlanName = newName;
+        }
         renderSeatingPlansList();
+        renderSaveSection();
       };
       inp.addEventListener("blur", commit);
       inp.addEventListener("keydown", (ev) => {
