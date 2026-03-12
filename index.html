@@ -1873,7 +1873,8 @@
                 </p>
                 <p>
                   <strong>Save layouts:</strong> Click the save icon next to "Seating Plan" to save and load named
-                  layouts — handy if you have multiple classes or event rooms.
+                  layouts — handy if you have multiple classes or event rooms. The saved name also appears on the
+                  Export preview. You can also export a layout as a <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file to share a blank room arrangement with colleagues, or import one they've shared with you.
                 </p>
                 <p>
                   <strong>Projector mode:</strong> Press the projector
@@ -2057,8 +2058,8 @@
                 <ul class="text-sm text-zinc-300 space-y-1 list-disc pl-4">
                   <li><strong class="text-[#A6E22E]">Save JPG</strong> — exports a high-resolution image.</li>
                   <li><strong class="text-[#FD971F]">Save PDF</strong> — great for printing.</li>
-                  <li><strong class="text-[#F92672]">Save Backup</strong> — downloads your data as a <code
-                      class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file you can restore later.</li>
+                  <li><strong class="text-[#F92672]">Save Backup</strong> — saves your files <em>and</em> all seating arrangements as a <code
+                      class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file you can restore later. You'll be asked where to save it.</li>
                 </ul>
               </div>
             </div>
@@ -2086,7 +2087,7 @@
                 <p class="text-zinc-300 text-sm border-l-2 border-[#F92672] pl-4 py-1 bg-zinc-800/50 rounded-r">
                   ⚠️ <strong>Important:</strong> Data is stored in your browser only — it is <strong>not backed up to
                     the cloud</strong> and will be lost if you clear your browser or switch devices.
-                  Use <strong>Save Backup</strong> on the Export tab regularly, and keep the <code
+                  Use <strong>Save Backup</strong> on the Export tab regularly — it includes your files and all saved seating arrangements. Keep the <code
                     class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file somewhere safe.
                 </p>
               </div>
@@ -2369,6 +2370,7 @@
     let staging = [];
     let constraints = { together: [], apart: [] };
     let seats = []; // seating plan
+    let currentSeatingPlanName = ""; // name of the last-loaded named seating arrangement
     let textboxes = []; // free-floating text boxes (Teams + Seating)
 
     // ---- Undo / Redo for Seating ----
@@ -3054,6 +3056,7 @@
       constraints = f.constraints || { together: [], apart: [] };
       seats = f.seats || [];
       textboxes = f.textboxes || [];
+      currentSeatingPlanName = ""; // clear plan name when switching files
 
       updateTab1UI();
       updateConstraintSelects();
@@ -3816,11 +3819,14 @@
       const previewBox = document.getElementById("export-preview");
       previewBox.innerHTML = "";
 
+      const activeFile = getActiveFile();
+      const fileName = activeFile ? activeFile.name : "";
+      const LABEL_H = fileName ? 28 : 0; // extra space at top for file name
       const PAD = 40;
       const offX = -(bounds.minX || 0);
       const offY = -(bounds.minY || 0);
       const W = bounds.width + PAD * 2;
-      const H = bounds.height + PAD * 2;
+      const H = bounds.height + PAD * 2 + LABEL_H;
       const svgNS = "http://www.w3.org/2000/svg";
       const svg = document.createElementNS(svgNS, "svg");
       svg.setAttribute("xmlns", svgNS);
@@ -3837,6 +3843,19 @@
       bg.setAttribute("height", H);
       bg.setAttribute("fill", "#ffffff");
       svg.appendChild(bg);
+
+      // File name label — anchored just above the card area, safely inside the print margin
+      if (fileName) {
+        const labelT = document.createElementNS(svgNS, "text");
+        labelT.setAttribute("x", PAD);
+        labelT.setAttribute("y", PAD + LABEL_H - 18); // baseline with gap above content
+        labelT.setAttribute("font-family", "Inter, Arial, sans-serif");
+        labelT.setAttribute("font-size", "13");
+        labelT.setAttribute("font-weight", "600");
+        labelT.setAttribute("fill", "#94a3b8");
+        labelT.textContent = esc(fileName);
+        svg.appendChild(labelT);
+      }
 
       const CARD_W = 240;
       const HEADER_H = 56;
@@ -3855,7 +3874,7 @@
         const c = exportTeamColors[g.colorIndex || 0];
         const cardH = HEADER_H + g.members.length * ROW_H + 8;
         const cx = g.x + offX + PAD;
-        const cy = g.y + offY + PAD;
+        const cy = g.y + offY + PAD + LABEL_H;
 
         // Card background
         const cardBg = document.createElementNS(svgNS, "rect");
@@ -3968,7 +3987,7 @@
           const g = document.createElementNS(svgNS, "g");
           const rot = t.rotation || 0;
           const tx = (t.x || 0) + offX + PAD;
-          const ty = (t.y || 0) + offY + PAD;
+          const ty = (t.y || 0) + offY + PAD + LABEL_H;
           if (rot !== 0) {
             g.setAttribute("transform", `rotate(${rot}, ${tx}, ${ty})`);
           }
@@ -8760,6 +8779,7 @@
       };
       plans.unshift(plan);
       saveAllSeatingPlans(plans);
+      currentSeatingPlanName = name; // track as the current arrangement name
       nameInput.value = "";
       renderSeatingPlansList();
     }
@@ -8773,6 +8793,7 @@
         seats = JSON.parse(JSON.stringify(plan.seats || []));
         const otherTbs = textboxes.filter(t => t.canvas !== "seating");
         textboxes = [...otherTbs, ...JSON.parse(JSON.stringify(plan.textboxes || []))];
+        currentSeatingPlanName = plan.name; // track which arrangement is loaded
         // Clear occupants so they go back to staging unless seatSeatsLoaded
         renderSeats();
         markUnsaved();
@@ -8870,17 +8891,21 @@
       list.innerHTML = "";
       plans.forEach(plan => {
         const date = plan.createdAt ? new Date(plan.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
+        const isActive = currentSeatingPlanName && plan.name === currentSeatingPlanName;
         const row = document.createElement("div");
         row.dataset.spId = plan.id;
-        row.className = "flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-zinc-800/60 transition group";
+        row.className = `flex items-center gap-2 px-3 py-2.5 rounded-lg transition group ${isActive ? "bg-[#FD971F]/10 border border-[#FD971F]/30" : "hover:bg-zinc-800/60 border border-transparent"}`;
         row.innerHTML = `
             <div class="flex-1 min-w-0">
-              <div class="sp-name-display text-sm font-medium text-[#F8F8F2] truncate">${escapeHtml(plan.name)}</div>
+              <div class="flex items-center gap-2">
+                <div class="sp-name-display text-sm font-medium ${isActive ? "text-[#FD971F]" : "text-[#F8F8F2]"} truncate">${escapeHtml(plan.name)}</div>
+                ${isActive ? '<span class="flex-shrink-0 text-[10px] font-bold bg-[#FD971F]/20 text-[#FD971F] px-1.5 py-0.5 rounded border border-[#FD971F]/40 uppercase tracking-wide">Active</span>' : ""}
+              </div>
               <div class="text-xs text-zinc-500 mt-0.5">${plan.seats?.length || 0} seats · ${date}</div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
               <button onclick="loadSeatingPlan('${plan.id}')" title="Load this arrangement"
-                class="bg-zinc-700 hover:bg-[#FD971F] hover:text-zinc-900 text-zinc-300 text-xs px-2.5 py-1 rounded font-medium transition">Load</button>
+                class="${isActive ? "bg-[#FD971F]/20 text-[#FD971F] border border-[#FD971F]/40" : "bg-zinc-700 hover:bg-[#FD971F] hover:text-zinc-900 text-zinc-300"} text-xs px-2.5 py-1 rounded font-medium transition">Load</button>
               <button onclick="exportSeatingPlanJSON('${plan.id}')" title="Export as JSON"
                 class="p-1.5 rounded text-zinc-500 hover:text-[#66D9EF] hover:bg-zinc-700 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -9459,10 +9484,18 @@
       }
 
       const PAD = 50;
+      const activeFile = getActiveFile();
+      const fileName = activeFile ? activeFile.name : "";
+      const planName = currentSeatingPlanName || "";
+      // Reserve space above content for labels. Labels are drawn anchored just above
+      // the content area so they sit well within the printable region, not near the edge.
+      const LABEL_LINE_H = 20;
+      const labelLines = [fileName, planName].filter(Boolean);
+      const LABEL_H = labelLines.length > 0 ? labelLines.length * LABEL_LINE_H + 16 : 0;
       const offX = -minX + PAD,
-        offY = -minY + PAD;
+        offY = -minY + PAD + LABEL_H;
       const W = maxX - minX + PAD * 2;
-      const H = maxY - minY + PAD * 2;
+      const H = maxY - minY + PAD * 2 + LABEL_H;
 
       // Build SVG
       const svgNS = "http://www.w3.org/2000/svg";
@@ -9481,7 +9514,35 @@
       bg.setAttribute("fill", "#fafafa");
       svg.appendChild(bg);
 
-      // (no dot grid in export — clean white background only)
+      // File name + seating plan name labels — anchored just above the content area
+      // (baseline sits inside the top PAD zone, safely away from the print edge)
+      if (fileName) {
+        const ftEl = document.createElementNS(svgNS, "text");
+        // If both labels: fileName is the upper one
+        const ftY = planName
+          ? PAD + LABEL_H - LABEL_LINE_H - 12
+          : PAD + LABEL_H - 16;
+        ftEl.setAttribute("x", PAD);
+        ftEl.setAttribute("y", ftY);
+        ftEl.setAttribute("font-family", "Inter, Arial, sans-serif");
+        ftEl.setAttribute("font-size", "13");
+        ftEl.setAttribute("font-weight", "600");
+        ftEl.setAttribute("fill", "#94a3b8");
+        ftEl.textContent = fileName;
+        svg.appendChild(ftEl);
+      }
+      if (planName) {
+        const ptEl = document.createElementNS(svgNS, "text");
+        const ptY = PAD + LABEL_H - 16; // baseline with gap above content
+        ptEl.setAttribute("x", PAD);
+        ptEl.setAttribute("y", ptY);
+        ptEl.setAttribute("font-family", "Inter, Arial, sans-serif");
+        ptEl.setAttribute("font-size", "12");
+        ptEl.setAttribute("font-weight", "400");
+        ptEl.setAttribute("fill", "#a78bfa");
+        ptEl.textContent = planName;
+        svg.appendChild(ptEl);
+      }
 
       // Helper: add text lines (one word per line) centered in a rect
       function addTextLines(parentEl, id, cx, cy, pal, maxW) {
