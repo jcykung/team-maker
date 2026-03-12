@@ -2338,14 +2338,15 @@
 
       <!-- Import -->
       <div class="px-4 py-3 border-b border-zinc-700 flex-shrink-0">
-        <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider">Import Arrangement</p>
+        <p class="text-xs text-zinc-400 mb-1 font-semibold uppercase tracking-wider">Import a Seating Arrangement</p>
+        <p class="text-xs text-zinc-600 mb-2">Import a seating arrangement shared by someone else (.json). <span class="text-[#F92672]">This is not for full backups</span> — use the Files menu to restore backups.</p>
         <label
           class="cursor-pointer inline-flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#66D9EF] hover:border-[#66D9EF] text-sm px-3 py-1.5 rounded transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
           </svg>
-          Import JSON
+          Import Seating Arrangement
           <input type="file" accept=".json" onchange="importSeatingPlanJSON(event)" class="hidden" />
         </label>
       </div>
@@ -3167,15 +3168,46 @@
 
     // ================= BACKUP (multi-file) =================
 
+    // Save-As dialog: uses showSaveFilePicker when available, falls back to <a download>
+    async function saveFileAs(content, defaultFilename, mimeType = "application/json") {
+      if (window.showSaveFilePicker) {
+        try {
+          const ext = defaultFilename.split('.').pop();
+          const handle = await window.showSaveFilePicker({
+            suggestedName: defaultFilename,
+            types: [{
+              description: mimeType === "application/json" ? "JSON File" : "File",
+              accept: { [mimeType]: ["." + ext] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(typeof content === "string" ? content : JSON.stringify(content));
+          await writable.close();
+          return;
+        } catch (e) {
+          if (e.name === "AbortError") return; // user cancelled — do nothing
+          // fall through to legacy download on any other error
+        }
+      }
+      // Legacy fallback (Firefox, Safari, mobile)
+      const str = typeof content === "string" ? content : JSON.stringify(content);
+      const a = document.createElement("a");
+      a.href = "data:" + mimeType + ";charset=utf-8," + encodeURIComponent(str);
+      a.download = defaultFilename;
+      a.click();
+    }
+
     function exportAllFilesJSON() {
       // Save current state first
       saveData();
       const files = getAllFiles();
+      const seatingPlans = getAllSeatingPlans(); // include saved seating arrangements
       const backup = {
         version: 2,
         exportedAt: new Date().toISOString(),
         activeFileId: getActiveFileId(),
         files,
+        seatingPlans, // ← seating arrangements now included in backup
         // Legacy single-file fields for backward compat
         allMembers,
         pool,
@@ -3186,28 +3218,18 @@
       const jsonStr = JSON.stringify(backup, null, 2);
       const jsonFilename =
         "teammaker_backup_" + new Date().toISOString().slice(0, 10) + ".json";
-      if (
-        navigator.share &&
-        /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
-      ) {
+      // Mobile share sheet
+      if (navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
         try {
           const jsonBlob = new Blob([jsonStr], { type: "application/json" });
-          const jsonFile = new File([jsonBlob], jsonFilename, {
-            type: "application/json",
-          });
-          if (
-            navigator.canShare &&
-            navigator.canShare({ files: [jsonFile] })
-          ) {
+          const jsonFile = new File([jsonBlob], jsonFilename, { type: "application/json" });
+          if (navigator.canShare && navigator.canShare({ files: [jsonFile] })) {
             navigator.share({ files: [jsonFile], title: jsonFilename });
             return;
           }
         } catch (e) { }
       }
-      const a = document.createElement("a");
-      a.href = "data:text/json;charset=utf-8," + encodeURIComponent(jsonStr);
-      a.download = jsonFilename;
-      a.click();
+      saveFileAs(jsonStr, jsonFilename, "application/json");
     }
 
     function exportSingleFileJSON(id) {
@@ -3230,10 +3252,7 @@
       const jsonStr = JSON.stringify(payload, null, 2);
       const safeName = f.name.replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
       const filename = `teammaker_${safeName}_${new Date().toISOString().slice(0, 10)}.json`;
-      const a = document.createElement("a");
-      a.href = "data:text/json;charset=utf-8," + encodeURIComponent(jsonStr);
-      a.download = filename;
-      a.click();
+      saveFileAs(jsonStr, filename, "application/json");
     }
 
     // Keep old exportJSON working (now exports all files)
@@ -3255,17 +3274,22 @@
             data.files.length > 0
           ) {
             // Multi-file backup
+            const hasSeatingPlans = Array.isArray(data.seatingPlans) && data.seatingPlans.length > 0;
+            const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating arrangement(s)` : "";
             showModal(
-              `Restore ${data.files.length} file(s) from backup? This will replace all current files.`,
+              `Restore ${data.files.length} file(s)${planMsg} from backup? This will replace all current files and seating arrangements.`,
               true,
               () => {
                 saveAllFiles(data.files);
                 const activeId = data.activeFileId || data.files[0].id;
                 setActiveFileId(activeId);
+                if (hasSeatingPlans) {
+                  saveAllSeatingPlans(data.seatingPlans);
+                }
                 loadData();
                 renderFilesList();
                 showModal(
-                  `Restored ${data.files.length} file(s) successfully!`,
+                  `Restored ${data.files.length} file(s)${planMsg} successfully!`,
                 );
               },
             );
@@ -3309,14 +3333,17 @@
         try {
           const data = JSON.parse(e.target.result);
           if (data.version === 2 && Array.isArray(data.files)) {
+            const hasSeatingPlans = Array.isArray(data.seatingPlans) && data.seatingPlans.length > 0;
+            const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating arrangement(s)` : "";
             showModal(
-              `This backup contains ${data.files.length} file(s). Restore all? (Replaces current files)`,
+              `This backup contains ${data.files.length} file(s)${planMsg}. Restore all? (Replaces current files and seating arrangements)`,
               true,
               () => {
                 saveAllFiles(data.files);
                 setActiveFileId(data.activeFileId || data.files[0].id);
+                if (hasSeatingPlans) saveAllSeatingPlans(data.seatingPlans);
                 loadData();
-                showModal("All files restored!");
+                showModal(`All files${planMsg} restored!`);
               },
             );
           } else if (data.allMembers || data.allStudents) {
@@ -5955,6 +5982,26 @@
     function generateSeatId() {
       return "s_" + Math.random().toString(36).substr(2, 8);
     }
+
+    // Returns true if two seats' axis-aligned bounding boxes overlap (with a small tolerance gap)
+    function seatsOverlapAABB(a, b) {
+      const GAP = 2; // allow seats to touch but not overlap
+      return (
+        a.x < b.x + b.w - GAP &&
+        a.x + a.w - GAP > b.x &&
+        a.y < b.y + b.h - GAP &&
+        a.y + a.h - GAP > b.y
+      );
+    }
+
+    // Returns true if seat `s` overlaps any seat in the `seats` array (excluding itself by id)
+    function seatCollidesWithOthers(s, excludeIds = new Set()) {
+      return seats.some(other => {
+        if (other.id === s.id) return false;
+        if (excludeIds.has(other.id)) return false;
+        return seatsOverlapAABB(s, other);
+      });
+    }
     // ---- Modifier-key snap overrides ----
     // ALT/OPTION held → temporarily DISABLE snap; SHIFT held → temporarily ENABLE snap
     let _altKeyDown = false;
@@ -7595,11 +7642,8 @@
         const sy = seatSnapToGrid ? Math.floor(rawY / SGRID) * SGRID : rawY;
 
         const place = (shape, manual, w = SGRID, h = SGRID) => {
-          if (
-            !seats.some(
-              (s) => s.x === sx && s.y === sy && s.w === w && s.h === h,
-            )
-          ) {
+          const candidate = { id: "__candidate__", x: sx, y: sy, w, h };
+          if (!seatCollidesWithOthers(candidate)) {
             pushSeatUndoNow(); // capture state before adding seat
             const newId = generateSeatId();
             seats.push({
@@ -8047,12 +8091,8 @@
           ) {
             const px = col * SGRID,
               py = r * SGRID;
-            if (
-              !seats.some(
-                (s) =>
-                  s.x === px && s.y === py && s.w === SGRID && s.h === SGRID,
-              )
-            )
+            const candidate = { id: "__candidate__", x: px, y: py, w: SGRID, h: SGRID };
+            if (!seatCollidesWithOthers(candidate))
               seats.push({
                 id: generateSeatId(),
                 shape,
@@ -8532,12 +8572,49 @@
     document.addEventListener("mouseup", () => {
       if (multiDragging) {
         multiDragging = false;
-        multiDragInitPositions = {};
         document.body.style.userSelect = "";
-        markDirtyOnly();
+        // Check if any dragged seat now overlaps a non-dragged seat — snap all back
+        const draggedSeatIds = new Set(
+          [...selectedSeatIds].filter(id => !id.startsWith("_tb_"))
+        );
+        const hasCollision = [...draggedSeatIds].some(id => {
+          const s = seats.find(x => x.id === id);
+          return s && seatCollidesWithOthers(s, draggedSeatIds);
+        });
+        if (hasCollision) {
+          // Snap everything back to initial positions
+          selectedSeatIds.forEach(id => {
+            const init = multiDragInitPositions[id];
+            if (!init) return;
+            if (id.startsWith("_tb_")) {
+              const t = textboxes.find(x => x.id === id.slice(4));
+              if (t) { t.x = init.x; t.y = init.y; }
+            } else {
+              const s = seats.find(x => x.id === id);
+              if (s) { s.x = init.x; s.y = init.y; }
+            }
+          });
+          renderSeats();
+        } else {
+          markDirtyOnly();
+        }
+        multiDragInitPositions = {};
       }
       if (draggingSeat) {
-        if (draggingSeatMoved) markDirtyOnly();
+        if (draggingSeatMoved) {
+          // Check if final position overlaps any other seat — snap back if so
+          if (seatCollidesWithOthers(draggingSeat)) {
+            draggingSeat.x = seatDragInitX;
+            draggingSeat.y = seatDragInitY;
+            const snapEl = document.querySelector(`[data-seat-id="${draggingSeat.id}"]`);
+            if (snapEl) {
+              snapEl.style.left = seatDragInitX + "px";
+              snapEl.style.top = seatDragInitY + "px";
+            }
+          } else {
+            markDirtyOnly();
+          }
+        }
         draggingSeat = null;
         draggingSeatMoved = false;
         document.body.style.userSelect = "";
@@ -8720,10 +8797,7 @@
       const payload = { version: 1, type: "seatingPlan", plan };
       const safeName = plan.name.replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
       const filename = `seating_${safeName}.json`;
-      const a = document.createElement("a");
-      a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-      a.download = filename;
-      a.click();
+      saveFileAs(JSON.stringify(payload, null, 2), filename, "application/json");
     }
 
     function importSeatingPlanJSON(event) {
