@@ -2864,6 +2864,9 @@
         constraints,
         seats,
         textboxes,
+        activeSeatingPlanId: currentSeatingPlanId,
+        activeSeatingPlanName: currentSeatingPlanName,
+        seatingPlanCleanSnapshot,
         updatedAt: Date.now(),
       };
       saveAllFiles(files);
@@ -2912,6 +2915,9 @@
         constraints = f.constraints || { together: [], apart: [] };
         seats = f.seats || [];
         textboxes = f.textboxes || [];
+        currentSeatingPlanId = f.activeSeatingPlanId || "";
+        currentSeatingPlanName = f.activeSeatingPlanName || "";
+        seatingPlanCleanSnapshot = f.seatingPlanCleanSnapshot || "";
         if (f.id) setActiveFileId(f.id);
       }
 
@@ -3066,9 +3072,9 @@
       constraints = f.constraints || { together: [], apart: [] };
       seats = f.seats || [];
       textboxes = f.textboxes || [];
-      currentSeatingPlanName = ""; // clear plan name when switching files
-      currentSeatingPlanId = "";
-      seatingPlanCleanSnapshot = "";
+      currentSeatingPlanId = f.activeSeatingPlanId || "";
+      currentSeatingPlanName = f.activeSeatingPlanName || "";
+      seatingPlanCleanSnapshot = f.seatingPlanCleanSnapshot || "";
 
       updateTab1UI();
       updateConstraintSelects();
