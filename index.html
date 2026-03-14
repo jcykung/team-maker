@@ -1213,6 +1213,12 @@
                   </svg>
                 </button>
               </div>
+              <!-- Active plan name label -->
+              <div id="active-plan-label" class="hidden mt-1 mb-0 flex items-center gap-1.5 min-w-0">
+                <span
+                  class="text-[10px] font-bold bg-[#FD971F]/20 text-[#FD971F] px-1.5 py-0.5 rounded border border-[#FD971F]/40 uppercase tracking-wide flex-shrink-0">Active</span>
+                <span id="active-plan-name" class="text-[11px] text-[#FD971F] font-medium truncate"></span>
+              </div>
               <div class="flex items-center gap-1">
                 <button id="seat-undo-btn" onclick="seatUndo()" title="Undo (Ctrl+Z)"
                   class="w-7 h-7 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-[#FD971F] transition"
@@ -2395,6 +2401,19 @@
       if (!currentSeatingPlanId) return false;
       return seatLayoutFingerprint() !== seatingPlanCleanSnapshot;
     }
+    function updateActivePlanLabel() {
+      const labelEl = document.getElementById("active-plan-label");
+      const nameEl = document.getElementById("active-plan-name");
+      if (!labelEl || !nameEl) return;
+      if (currentSeatingPlanId && currentSeatingPlanName) {
+        nameEl.textContent = currentSeatingPlanName;
+        labelEl.classList.remove("hidden");
+      } else {
+        labelEl.classList.add("hidden");
+        nameEl.textContent = "";
+      }
+    }
+
     function markSeatingPlanClean() {
       seatingPlanCleanSnapshot = seatLayoutFingerprint();
     }
@@ -2876,6 +2895,7 @@
         constraints,
         seats,
         textboxes,
+        seatRosterLoaded: seatSeatsLoaded,
         activeSeatingPlanId: currentSeatingPlanId,
         activeSeatingPlanName: currentSeatingPlanName,
         seatingPlanCleanSnapshot,
@@ -2930,6 +2950,7 @@
         currentSeatingPlanId = f.activeSeatingPlanId || "";
         currentSeatingPlanName = f.activeSeatingPlanName || "";
         seatingPlanCleanSnapshot = f.seatingPlanCleanSnapshot || "";
+        seatSeatsLoaded = !!f.seatRosterLoaded;
         if (f.id) setActiveFileId(f.id);
       }
 
@@ -2939,6 +2960,7 @@
       renderSeats();
       refreshExportIfVisible();
       updateActiveFileLabel();
+      updateActivePlanLabel();
     }
 
     window.addEventListener("DOMContentLoaded", loadData);
@@ -3087,6 +3109,7 @@
       currentSeatingPlanId = f.activeSeatingPlanId || "";
       currentSeatingPlanName = f.activeSeatingPlanName || "";
       seatingPlanCleanSnapshot = f.seatingPlanCleanSnapshot || "";
+      seatSeatsLoaded = !!f.seatRosterLoaded;
 
       updateTab1UI();
       updateConstraintSelects();
@@ -3094,6 +3117,9 @@
       renderSeats();
       refreshExportIfVisible();
       updateActiveFileLabel();
+      updateActivePlanLabel();
+      renderSeatingPlansList();
+      renderSaveSection();
       hasUnsavedChanges = false;
       const ind2 = document.getElementById("autosave-indicator");
       if (ind2) {
@@ -3387,11 +3413,27 @@
                   incoming.push({ ...f, id: newId, updatedAt: Date.now() });
                 });
                 saveAllFiles(incoming);
-                // Merge seating plans (add, don\'t replace)
+                // Merge seating plans (add, don't replace) — remap IDs to avoid clashes
                 if (hasSeatingPlans) {
                   const existingPlans = getAllSeatingPlans();
-                  const mergedPlans = [...data.seatingPlans.map(p => ({ ...p, id: "sp_" + generateId() })), ...existingPlans];
-                  saveAllSeatingPlans(mergedPlans);
+                  // Build old→new ID map so file.activeSeatingPlanId can be updated
+                  const planIdMap = {};
+                  const remappedPlans = data.seatingPlans.map(p => {
+                    const newPlanId = "sp_" + generateId();
+                    planIdMap[p.id] = newPlanId;
+                    return { ...p, id: newPlanId };
+                  });
+                  saveAllSeatingPlans([...remappedPlans, ...existingPlans]);
+                  // Fix up activeSeatingPlanId in the files we just pushed
+                  const fixedFiles = getAllFiles();
+                  newIds.forEach(nid => {
+                    const idx = fixedFiles.findIndex(f => f.id === nid);
+                    if (idx >= 0 && fixedFiles[idx].activeSeatingPlanId) {
+                      const mapped = planIdMap[fixedFiles[idx].activeSeatingPlanId];
+                      if (mapped) fixedFiles[idx].activeSeatingPlanId = mapped;
+                    }
+                  });
+                  saveAllFiles(fixedFiles);
                 }
                 // Open the first imported file
                 loadFile(newIds[0]);
@@ -5135,11 +5177,28 @@
       setTimeout(applyMobileGridLayout, 80);
     });
 
-    // Keep mobile constraint selects in sync whenever members change
+    // Keep ALL constraint UI surfaces in sync whenever members or active team changes.
+    // Covers every dropdown and list across Teams, Seating, mobile, and the pop-out modal.
     const _origUpdateConstraintSelects = updateConstraintSelects;
     updateConstraintSelects = function () {
-      _origUpdateConstraintSelects();
-      updateMobileConstraintSelects();
+      _origUpdateConstraintSelects();          // const-s1/s2, constraint-list, tally-constraints
+      updateMobileConstraintSelects();          // mobile-const-s1/s2 dropdowns
+      renderMobileConstraintList();             // mobile-constraint-list rows
+      syncSeatConstraintSelects();              // seat-const-s1/s2 dropdowns
+      syncSeatConstraintList();                 // seat-constraint-list rows + seat-tally-constraints
+      renderModalConstraintList();              // modal-constraint-list rows (safe no-op if hidden)
+      // Re-populate the pop-out modal member selects if it happens to be open
+      const cModal = document.getElementById("constraints-modal");
+      if (cModal && !cModal.classList.contains("hide")) {
+        const ms1 = document.getElementById("modal-const-s1");
+        const ms2 = document.getElementById("modal-const-s2");
+        if (ms1 && ms2) {
+          let opts = '<option value="">Select member…</option>';
+          allMembers.forEach((m) => { opts += `<option value="${m.id}">${m.name}</option>`; });
+          ms1.innerHTML = opts;
+          ms2.innerHTML = opts;
+        }
+      }
     };
 
     // ================= TEXTBOXES =================
@@ -8881,6 +8940,7 @@
           currentSeatingPlanName = name;
           currentSeatingPlanId = overwriteId;
           markSeatingPlanClean();
+          updateActivePlanLabel();
           nameInput.value = "";
           renderSeatingPlansList();
           renderSaveSection(); // refresh the save UI
@@ -8895,6 +8955,7 @@
       currentSeatingPlanName = name;
       currentSeatingPlanId = newId;
       markSeatingPlanClean();
+      updateActivePlanLabel();
       nameInput.value = "";
       renderSeatingPlansList();
       renderSaveSection(); // refresh the save UI
@@ -8917,6 +8978,7 @@
         currentSeatingPlanName = plan.name; // track which arrangement is loaded
         currentSeatingPlanId = plan.id;
         markSeatingPlanClean();
+        updateActivePlanLabel();
         // Clear occupants so they go back to staging unless seatSeatsLoaded
         renderSeats();
         markUnsaved();
@@ -8935,6 +8997,7 @@
           currentSeatingPlanId = "";
           currentSeatingPlanName = "";
           seatingPlanCleanSnapshot = "";
+          updateActivePlanLabel();
         }
         renderSeatingPlansList();
         renderSaveSection();
@@ -9034,7 +9097,7 @@
       list.innerHTML = "";
       plans.forEach(plan => {
         const date = plan.createdAt ? new Date(plan.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
-        const isActive = currentSeatingPlanName && plan.name === currentSeatingPlanName;
+        const isActive = !!currentSeatingPlanId && plan.id === currentSeatingPlanId;
         const row = document.createElement("div");
         row.dataset.spId = plan.id;
         row.className = `flex items-center gap-2 px-3 py-2.5 rounded-lg transition group ${isActive ? "bg-[#FD971F]/10 border border-[#FD971F]/30" : "hover:bg-zinc-800/60 border border-transparent"}`;
