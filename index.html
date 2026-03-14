@@ -1874,7 +1874,9 @@
                 <p>
                   <strong>Save layouts:</strong> Click the save icon next to "Seating Plan" to save and load named
                   layouts — handy if you have multiple classes or event rooms. The saved name also appears on the
-                  Export preview. You can also export a layout as a <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file to share a blank room arrangement with colleagues, or import one they've shared with you.
+                  Export preview. You can also export a layout as a <code
+                    class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file to share a blank room arrangement
+                  with colleagues, or import one they've shared with you.
                 </p>
                 <p>
                   <strong>Projector mode:</strong> Press the projector
@@ -2058,8 +2060,9 @@
                 <ul class="text-sm text-zinc-300 space-y-1 list-disc pl-4">
                   <li><strong class="text-[#A6E22E]">Save JPG</strong> — exports a high-resolution image.</li>
                   <li><strong class="text-[#FD971F]">Save PDF</strong> — great for printing.</li>
-                  <li><strong class="text-[#F92672]">Save Backup</strong> — saves your files <em>and</em> all seating arrangements as a <code
-                      class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file you can restore later. You'll be asked where to save it.</li>
+                  <li><strong class="text-[#F92672]">Save Backup</strong> — saves your files <em>and</em> all seating
+                    arrangements as a <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file you can
+                    restore later. You'll be asked where to save it.</li>
                 </ul>
               </div>
             </div>
@@ -2087,8 +2090,9 @@
                 <p class="text-zinc-300 text-sm border-l-2 border-[#F92672] pl-4 py-1 bg-zinc-800/50 rounded-r">
                   ⚠️ <strong>Important:</strong> Data is stored in your browser only — it is <strong>not backed up to
                     the cloud</strong> and will be lost if you clear your browser or switch devices.
-                  Use <strong>Save Backup</strong> on the Export tab regularly — it includes your files and all saved seating arrangements. Keep the <code
-                    class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file somewhere safe.
+                  Use <strong>Save Backup</strong> on the Export tab regularly — it includes your files and all saved
+                  seating arrangements. Keep the <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file
+                  somewhere safe.
                 </p>
               </div>
             </div>
@@ -2332,7 +2336,8 @@
       <!-- Import -->
       <div class="px-4 py-3 border-b border-zinc-700 flex-shrink-0">
         <p class="text-xs text-zinc-400 mb-1 font-semibold uppercase tracking-wider">Import a Seating Arrangement</p>
-        <p class="text-xs text-zinc-600 mb-2">Import a seating arrangement shared by someone else (.json). <span class="text-[#F92672]">This is not for full backups</span> — use the Files menu to restore backups.</p>
+        <p class="text-xs text-zinc-600 mb-2">Import a seating arrangement shared by someone else (.json). <span
+            class="text-[#F92672]">This is not for full backups</span> — use the Files menu to restore backups.</p>
         <label
           class="cursor-pointer inline-flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#66D9EF] hover:border-[#66D9EF] text-sm px-3 py-1.5 rounded transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2371,13 +2376,16 @@
     let seatUndoStack = [];
     let seatRedoStack = [];
 
-    // Fingerprint of seat layout only (position/shape/label — ignores occupants)
+    // Fingerprint of seat layout + constraints (position/shape/label — ignores occupants)
     // Used to detect whether the arrangement has changed since it was last saved/loaded.
     function seatLayoutFingerprint() {
-      return JSON.stringify(seats.map(s => ({
-        id: s.id, shape: s.shape, x: s.x, y: s.y, w: s.w, h: s.h,
-        rotation: s.rotation, manual: s.manual, label: s.label, sections: s.sections
-      })));
+      return JSON.stringify({
+        seats: seats.map(s => ({
+          id: s.id, shape: s.shape, x: s.x, y: s.y, w: s.w, h: s.h,
+          rotation: s.rotation, manual: s.manual, label: s.label, sections: s.sections
+        })),
+        constraints: { together: constraints.together, apart: constraints.apart }
+      });
     }
     function isSeatingPlanDirty() {
       if (!currentSeatingPlanId) return false;
@@ -3258,11 +3266,13 @@
       const files = getAllFiles();
       const f = files.find((fl) => fl.id === id);
       if (!f) return;
+      const seatingPlans = getAllSeatingPlans(); // include all seating plans (with constraints)
       const payload = {
         version: 2,
         exportedAt: new Date().toISOString(),
         activeFileId: f.id,
         files: [f],
+        seatingPlans, // seating arrangements (each carries its own constraints)
         // Legacy compat fields
         allMembers: f.allMembers,
         pool: f.pool,
@@ -8835,7 +8845,7 @@
         // Overwrite existing plan in-place
         const idx = plans.findIndex(p => p.id === overwriteId);
         if (idx >= 0) {
-          plans[idx] = { ...plans[idx], name, seats: layoutSeats, textboxes: [], updatedAt: Date.now() };
+          plans[idx] = { ...plans[idx], name, seats: layoutSeats, textboxes: [], constraints: JSON.parse(JSON.stringify(constraints)), updatedAt: Date.now() };
           saveAllSeatingPlans(plans);
           currentSeatingPlanName = name;
           currentSeatingPlanId = overwriteId;
@@ -8848,7 +8858,7 @@
       }
       // Save as new plan
       const newId = "sp_" + generateId();
-      const plan = { id: newId, name, seats: layoutSeats, textboxes: [], createdAt: Date.now() };
+      const plan = { id: newId, name, seats: layoutSeats, textboxes: [], constraints: JSON.parse(JSON.stringify(constraints)), createdAt: Date.now() };
       plans.unshift(plan);
       saveAllSeatingPlans(plans);
       currentSeatingPlanName = name;
@@ -8868,6 +8878,11 @@
         seats = JSON.parse(JSON.stringify(plan.seats || []));
         const otherTbs = textboxes.filter(t => t.canvas !== "seating");
         textboxes = [...otherTbs, ...JSON.parse(JSON.stringify(plan.textboxes || []))];
+        if (plan.constraints) {
+          constraints = JSON.parse(JSON.stringify(plan.constraints));
+          updateConstraintSelects();
+          syncSeatConstraintList();
+        }
         currentSeatingPlanName = plan.name; // track which arrangement is loaded
         currentSeatingPlanId = plan.id;
         markSeatingPlanClean();
@@ -8918,7 +8933,7 @@
             plan = { ...data.plan, id: "sp_" + generateId(), createdAt: Date.now() };
           } else if (Array.isArray(data.seats)) {
             // Raw plan object
-            plan = { id: "sp_" + generateId(), name: file.name.replace(/\.json$/i, "") || "Imported", seats: data.seats, textboxes: data.textboxes || [], createdAt: Date.now() };
+            plan = { id: "sp_" + generateId(), name: file.name.replace(/\.json$/i, "") || "Imported", seats: data.seats, textboxes: data.textboxes || [], constraints: data.constraints || null, createdAt: Date.now() };
           } else {
             showModal("Invalid seating plan file.");
             return;
@@ -8926,6 +8941,13 @@
           const plans = getAllSeatingPlans();
           plans.unshift(plan);
           saveAllSeatingPlans(plans);
+          // If the imported plan carries constraints, apply them now
+          if (plan.constraints) {
+            constraints = JSON.parse(JSON.stringify(plan.constraints));
+            updateConstraintSelects();
+            syncSeatConstraintList();
+            markUnsaved();
+          }
           renderSeatingPlansList();
           showModal(`Imported "${plan.name}" successfully!`);
         } catch {
