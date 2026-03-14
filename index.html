@@ -2551,6 +2551,11 @@
       document.getElementById("canvas-zoom-label").innerText =
         Math.round(canvasZoom * 100) + "%";
       // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
+      // Clear any extended grid background that fitTeamsToScreen may have applied
+      const cont = document.getElementById("canvas-container");
+      cont.style.backgroundImage = "";
+      cont.style.backgroundSize = "";
+      cont.style.backgroundPosition = "";
     }
 
     let exportPanX = 0,
@@ -2768,6 +2773,19 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
+        // Extend grid into the empty space left of / above the canvas area
+        if (tx > 0 || ty > 0) {
+          const gs = 80 * newScale;
+          container.style.backgroundImage =
+            "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
+            "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
+          container.style.backgroundSize = `${gs}px ${gs}px`;
+          container.style.backgroundPosition = `${tx % gs}px ${ty % gs}px`;
+        } else {
+          container.style.backgroundImage = "";
+          container.style.backgroundSize = "";
+          container.style.backgroundPosition = "";
+        }
         container.scrollTo({
           left: Math.max(0, idealLeft),
           top: Math.max(0, idealTop),
@@ -6285,6 +6303,9 @@
       if (area) area.style.transform = `scale(${seatCanvasZoom})`;
       const lbl = document.getElementById("seat-zoom-label");
       if (lbl) lbl.innerText = Math.round(seatCanvasZoom * 100) + "%";
+      // Clear any extended grid background that fitSeatsToScreen may have applied
+      const cont = document.getElementById("seating-canvas-container");
+      if (cont) { cont.style.backgroundImage = ""; cont.style.backgroundSize = ""; cont.style.backgroundPosition = ""; }
       // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
     }
 
@@ -6587,6 +6608,19 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
+        // Extend grid into the empty space left of / above the canvas area
+        if (tx > 0 || ty > 0) {
+          const gs = 80 * newScale;
+          container.style.backgroundImage =
+            "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
+            "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
+          container.style.backgroundSize = `${gs}px ${gs}px`;
+          container.style.backgroundPosition = `${tx % gs}px ${ty % gs}px`;
+        } else {
+          container.style.backgroundImage = "";
+          container.style.backgroundSize = "";
+          container.style.backgroundPosition = "";
+        }
         container.scrollTo({
           left: Math.max(0, idealLeft),
           top: Math.max(0, idealTop),
@@ -8898,8 +8932,7 @@
 
     function saveCurrentSeatingPlan(overwriteId) {
       const nameInput = document.getElementById("sp-name-input");
-      const name = nameInput.value.trim();
-      if (!name) return showModal("Please enter a name for this seating plan.");
+      const name = nameInput ? nameInput.value.trim() : "";
       if (seats.length === 0)
         return showModal("Nothing to save — add seats to the room first.");
       const plans = getAllSeatingPlans();
@@ -8911,21 +8944,23 @@
         return ls;
       });
       if (overwriteId) {
-        // Overwrite existing plan in-place
+        // Overwrite existing plan in-place — no name required, keep existing name
         const idx = plans.findIndex(p => p.id === overwriteId);
         if (idx >= 0) {
-          plans[idx] = { ...plans[idx], name, seats: layoutSeats, textboxes: [], updatedAt: Date.now() };
+          const keepName = name || plans[idx].name;
+          plans[idx] = { ...plans[idx], name: keepName, seats: layoutSeats, textboxes: [], updatedAt: Date.now() };
           saveAllSeatingPlans(plans);
-          currentSeatingPlanName = name;
+          currentSeatingPlanName = keepName;
           currentSeatingPlanId = overwriteId;
           markSeatingPlanClean();
-          nameInput.value = "";
+          if (nameInput) nameInput.value = "";
           renderSeatingPlansList();
           renderSaveSection(); // refresh the save UI
           return;
         }
       }
-      // Save as new plan
+      // Save as new plan — name is required here
+      if (!name) return showModal("Please enter a name for this seating plan.");
       const newId = "sp_" + generateId();
       const plan = { id: newId, name, seats: layoutSeats, textboxes: [], createdAt: Date.now() };
       plans.unshift(plan);
@@ -8933,7 +8968,7 @@
       currentSeatingPlanName = name;
       currentSeatingPlanId = newId;
       markSeatingPlanClean();
-      nameInput.value = "";
+      if (nameInput) nameInput.value = "";
       renderSeatingPlansList();
       renderSaveSection(); // refresh the save UI
     }
