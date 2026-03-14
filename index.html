@@ -582,7 +582,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
               </svg>
-              <span id="active-file-label" class="max-w-[80px] sm:max-w-[120px] truncate">Files</span>
+              <span id="active-file-label" class="max-w-[80px] sm:max-w-[120px] truncate">Teams</span>
             </button>
             <div id="autosave-indicator"
               class="h-7 sm:h-8 px-2 flex items-center text-[10px] text-zinc-600 font-mono select-none whitespace-nowrap"
@@ -770,13 +770,6 @@
             <h2 class="text-lg font-semibold text-[#66D9EF]">
               Import Members
             </h2>
-            <div class="flex items-center">
-              <button onclick="document.getElementById('import-json').click()"
-                class="text-xs bg-zinc-800 text-[#E6DB74] px-3 py-1.5 rounded border border-zinc-700 hover:bg-zinc-700 transition flex items-center">
-                Load Backup (.json)
-              </button>
-              <input type="file" id="import-json" accept=".json" class="hidden" onchange="importJSON(event)" />
-            </div>
           </div>
 
           <div class="mb-4">
@@ -1742,13 +1735,6 @@
                       Tick <em>Remove member from pool after selection</em> so nobody is picked twice.
                       Use <strong>Reset Pool</strong> to refill without re-importing names.
                     </p>
-                    <p>
-                      To reload a saved backup directly here, click
-                      <span
-                        class="text-[#E6DB74] font-medium bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">Load
-                        Backup (.json)</span>
-                      in the top-right of the Import Members panel.
-                    </p>
                   </div>
                 </details>
               </div>
@@ -2060,7 +2046,7 @@
                 <ul class="text-sm text-zinc-300 space-y-1 list-disc pl-4">
                   <li><strong class="text-[#A6E22E]">Save JPG</strong> — exports a high-resolution image.</li>
                   <li><strong class="text-[#FD971F]">Save PDF</strong> — great for printing.</li>
-                  <li><strong class="text-[#F92672]">Save Backup</strong> — saves your files <em>and</em> all seating
+                  <li><strong class="text-[#F92672]">Save Backup</strong> — saves your teams <em>and</em> all seating
                     arrangements as a <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file you can
                     restore later. You'll be asked where to save it.</li>
                 </ul>
@@ -2074,7 +2060,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
                 </svg>
-                5. Files &amp; Auto-Save
+                5. Teams &amp; Auto-Save
               </h3>
               <div class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base">
                 <p>
@@ -2084,13 +2070,19 @@
                       class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-                    </svg> Files</span> in the header to manage multiple files — useful if you have multiple classes,
-                  teams, or events. Each file has its own roster, teams, and seating layout.
+                    </svg> Teams</span> in the header to manage multiple teams — useful if you have multiple classes,
+                  periods, or events. Each team has its own roster and seating layout.
+                </p>
+                <p>
+                  From the Teams manager you can also <strong>export an individual team</strong> as a
+                  <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> to share with a colleague, and they
+                  can bring it into their own copy using <strong>Import Team (.json)</strong> — it gets added alongside
+                  their existing teams without replacing anything.
                 </p>
                 <p class="text-zinc-300 text-sm border-l-2 border-[#F92672] pl-4 py-1 bg-zinc-800/50 rounded-r">
                   ⚠️ <strong>Important:</strong> Data is stored in your browser only — it is <strong>not backed up to
                     the cloud</strong> and will be lost if you clear your browser or switch devices.
-                  Use <strong>Save Backup</strong> on the Export tab regularly — it includes your files and all saved
+                  Use <strong>Save Backup</strong> on the Export tab regularly — it includes your teams and all saved
                   seating arrangements. Keep the <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file
                   somewhere safe.
                 </p>
@@ -2142,9 +2134,9 @@
       <!-- Header -->
       <div class="flex items-center justify-between p-5 border-b border-zinc-700">
         <div>
-          <h2 class="text-lg font-bold text-[#66D9EF]">Files</h2>
+          <h2 class="text-lg font-bold text-[#66D9EF]">Teams</h2>
           <p class="text-xs text-zinc-500 mt-0.5">
-            Each file holds a roster and its team arrangements
+            Each team holds a roster and its arrangements
           </p>
         </div>
         <button onclick="closeFilesModal()"
@@ -2161,34 +2153,46 @@
       <!-- New file input -->
       <div class="p-4 border-t border-zinc-700">
         <div class="flex gap-2">
-          <input type="text" id="new-file-name" placeholder="New file name (e.g. Group A, Period 3…)"
+          <input type="text" id="new-file-name" placeholder="New team name (e.g. Group A, Period 3…)"
             class="flex-1 bg-zinc-950 border border-zinc-700 text-[#F8F8F2] rounded text-sm px-3 py-2 outline-none focus:border-[#A6E22E] placeholder-zinc-600" />
           <button onclick="createNewFile()"
             class="bg-[#A6E22E] text-zinc-900 px-4 py-2 rounded font-bold text-sm hover:bg-[#8cc026] transition flex-shrink-0">
-            + New File
+            + New Team
           </button>
         </div>
       </div>
 
       <!-- Backup section -->
-      <div class="p-4 pt-0 flex flex-col sm:flex-row gap-2">
-        <button onclick="exportAllFilesJSON()"
-          class="flex-1 bg-zinc-800 border border-zinc-700 text-[#FD971F] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
+      <div class="p-4 pt-0 flex flex-col gap-2">
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button onclick="exportAllFilesJSON()"
+            class="flex-1 bg-zinc-800 border border-zinc-700 text-[#FD971F] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            Backup All Teams (.json)
+          </button>
+          <button onclick="document.getElementById('restore-all-json').click()"
+            class="flex-1 bg-zinc-800 border border-zinc-700 text-[#E6DB74] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"></path>
+            </svg>
+            Restore from Backup
+          </button>
+        </div>
+        <button onclick="document.getElementById('import-single-json').click()"
+          class="w-full bg-zinc-800 border border-zinc-700 text-[#66D9EF] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16">
+            </path>
           </svg>
-          Backup All Files (.json)
-        </button>
-        <button onclick="document.getElementById('restore-all-json').click()"
-          class="flex-1 bg-zinc-800 border border-zinc-700 text-[#E6DB74] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"></path>
-          </svg>
-          Restore from Backup
+          Import Team (.json) — adds to your existing teams
         </button>
         <input type="file" id="restore-all-json" accept=".json" class="hidden" onchange="restoreFromBackup(event)" />
+        <input type="file" id="import-single-json" accept=".json" class="hidden"
+          onchange="importSingleFileJSON(event)" />
       </div>
     </div>
   </div>
@@ -2828,7 +2832,7 @@
     function updateActiveFileLabel() {
       const f = getActiveFile();
       const lbl = document.getElementById("active-file-label");
-      if (lbl) lbl.textContent = f ? f.name : "Files";
+      if (lbl) lbl.textContent = f ? f.name : "Teams";
     }
 
     // ================= SAVE & LOAD =================
@@ -2960,7 +2964,7 @@
       if (!container) return;
 
       if (files.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-zinc-500 text-sm">No files yet. Create one below.</div>`;
+        container.innerHTML = `<div class="p-6 text-center text-zinc-500 text-sm">No teams yet. Create one below.</div>`;
         return;
       }
 
@@ -2986,7 +2990,7 @@
                         <div class="text-xs text-zinc-500 mt-0.5 ml-4">${f.allMembers ? f.allMembers.length : 0} members · ${f.teams ? f.teams.length : 0} teams${date ? " · " + date : ""}</div>
                     </div>
                     <div class="file-actions flex items-center gap-1 flex-shrink-0">
-                        <button onclick="exportSingleFileJSON('${f.id}')" title="Export this file as JSON"
+                        <button onclick="exportSingleFileJSON('${f.id}')" title="Export this team as JSON"
                             class="p-1.5 rounded text-zinc-500 hover:text-[#66D9EF] hover:bg-zinc-700 transition">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         </button>
@@ -3308,7 +3312,7 @@
             const hasSeatingPlans = Array.isArray(data.seatingPlans) && data.seatingPlans.length > 0;
             const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating arrangement(s)` : "";
             showModal(
-              `Restore ${data.files.length} file(s)${planMsg} from backup? This will replace all current files and seating arrangements.`,
+              `Restore ${data.files.length} team(s)${planMsg} from backup? This will replace all current teams and seating arrangements.`,
               true,
               () => {
                 saveAllFiles(data.files);
@@ -3320,13 +3324,13 @@
                 loadData();
                 renderFilesList();
                 showModal(
-                  `Restored ${data.files.length} file(s)${planMsg} successfully!`,
+                  `Restored ${data.files.length} team(s)${planMsg} successfully!`,
                 );
               },
             );
           } else if (data.allMembers || data.allStudents) {
             // Legacy single-file backup
-            showModal("Restore this backup as a new file?", true, () => {
+            showModal("Restore this backup as a new team?", true, () => {
               const id = generateId();
               const f = {
                 id,
@@ -3342,7 +3346,7 @@
               files.push(f);
               saveAllFiles(files);
               loadFile(id);
-              showModal("Imported successfully as a new file!");
+              showModal("Imported successfully as a new team!");
             });
           } else {
             showModal("Invalid backup file format.");
@@ -3355,49 +3359,76 @@
       event.target.value = "";
     }
 
-    // importJSON now delegates to restoreFromBackup logic
-    function importJSON(event) {
+
+    // Import a single file (or multi-file backup) — ADDS to existing files, never replaces
+    function importSingleFileJSON(event) {
       const file = event.target.files[0];
       if (!file) return;
+      event.target.value = "";
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const data = JSON.parse(e.target.result);
-          if (data.version === 2 && Array.isArray(data.files)) {
+
+          if (data.version === 2 && Array.isArray(data.files) && data.files.length > 0) {
+            // Multi-file backup — import each file, adding alongside existing ones
             const hasSeatingPlans = Array.isArray(data.seatingPlans) && data.seatingPlans.length > 0;
             const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating arrangement(s)` : "";
             showModal(
-              `This backup contains ${data.files.length} file(s)${planMsg}. Restore all? (Replaces current files and seating arrangements)`,
+              `Import ${data.files.length} team(s)${planMsg} from "${file.name}"? They will be added alongside your existing teams.`,
               true,
               () => {
-                saveAllFiles(data.files);
-                setActiveFileId(data.activeFileId || data.files[0].id);
-                if (hasSeatingPlans) saveAllSeatingPlans(data.seatingPlans);
-                loadData();
-                showModal(`All files${planMsg} restored!`);
-              },
+                saveData(); // flush current state first
+                const incoming = getAllFiles();
+                const newIds = [];
+                data.files.forEach(f => {
+                  const newId = generateId();
+                  newIds.push(newId);
+                  incoming.push({ ...f, id: newId, updatedAt: Date.now() });
+                });
+                saveAllFiles(incoming);
+                // Merge seating plans (add, don\'t replace)
+                if (hasSeatingPlans) {
+                  const existingPlans = getAllSeatingPlans();
+                  const mergedPlans = [...data.seatingPlans.map(p => ({ ...p, id: "sp_" + generateId() })), ...existingPlans];
+                  saveAllSeatingPlans(mergedPlans);
+                }
+                // Open the first imported file
+                loadFile(newIds[0]);
+                renderFilesList();
+                showModal(`Imported ${data.files.length} team(s)${planMsg} successfully!`);
+              }
             );
           } else if (data.allMembers || data.allStudents) {
-            allMembers = data.allMembers || data.allStudents;
-            pool = data.pool || allMembers.map((s) => s.id);
-            teams = data.teams || data.groups || [];
-            staging = data.staging || [];
-            constraints = data.constraints || { together: [], apart: [] };
-            updateTab1UI();
-            updateConstraintSelects();
-            renderTeams();
-            renderSeats();
-            showModal("Data restored to current file!");
-            markUnsaved();
+            // Legacy single-file backup
+            const importedName = file.name.replace(/\.json$/i, "") || "Imported";
+            showModal(`Import as a new team? It will be added alongside your existing teams.`, true, () => {
+              saveData();
+              const incoming = getAllFiles();
+              const newId = generateId();
+              incoming.push({
+                id: newId,
+                name: importedName,
+                allMembers: data.allMembers || data.allStudents || [],
+                pool: data.pool || [],
+                teams: data.teams || data.groups || [],
+                staging: data.staging || [],
+                constraints: data.constraints || { together: [], apart: [] },
+                updatedAt: Date.now(),
+              });
+              saveAllFiles(incoming);
+              loadFile(newId);
+              renderFilesList();
+              showModal("Imported successfully as a new team!");
+            });
           } else {
-            showModal("Invalid file format.");
+            showModal("Invalid file format. Only Team Maker .json files can be imported.");
           }
         } catch {
-          showModal("Error parsing file.");
+          showModal("Error reading file. Make sure it is a valid Team Maker .json backup.");
         }
       };
       reader.readAsText(file);
-      event.target.value = "";
     }
 
     // ================= UI & UTILS =================
