@@ -1203,7 +1203,7 @@
                 <h2 class="text-xs font-bold text-[#FD971F] uppercase tracking-wider">
                   Seating Plan
                 </h2>
-                <button onclick="openSeatingPlansModal()" title="Save / load seating arrangements"
+                <button onclick="openSeatingPlansModal()" title="Save / load seating plans"
                   class="w-5 h-5 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-[#FD971F] hover:border-[#FD971F] transition">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -1212,12 +1212,6 @@
                     <polyline points="7 3 7 8 15 8" />
                   </svg>
                 </button>
-              </div>
-              <!-- Active plan name label -->
-              <div id="active-plan-label" class="hidden mt-1 mb-0 flex items-center gap-1.5 min-w-0">
-                <span
-                  class="text-[10px] font-bold bg-[#FD971F]/20 text-[#FD971F] px-1.5 py-0.5 rounded border border-[#FD971F]/40 uppercase tracking-wide flex-shrink-0">Active</span>
-                <span id="active-plan-name" class="text-[11px] text-[#FD971F] font-medium truncate"></span>
               </div>
               <div class="flex items-center gap-1">
                 <button id="seat-undo-btn" onclick="seatUndo()" title="Undo (Ctrl+Z)"
@@ -1864,11 +1858,11 @@
                   seats to adjust manually. Click <strong>×</strong> on a chip to return that person to the sidebar.
                 </p>
                 <p>
-                  <strong>Save layouts:</strong> Click the save icon next to "Seating Plan" to save and load named
-                  layouts — handy if you have multiple classes or event rooms. The saved name also appears on the
-                  Export preview. You can also export a layout as a <code
-                    class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file to share a blank room arrangement
-                  with colleagues, or import one they've shared with you.
+                  <strong>Save plans:</strong> Click the save icon next to "Seating Plan" to save and load named
+                  plans — handy if you have multiple classes or event rooms. Plans only store seat positions and labels,
+                  not who is sitting where. You can also export a plan as a <code
+                    class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file to share a blank room layout with
+                  colleagues, or import one they've shared with you.
                 </p>
                 <p>
                   <strong>Projector mode:</strong> Press the projector
@@ -2053,8 +2047,8 @@
                   <li><strong class="text-[#A6E22E]">Save JPG</strong> — exports a high-resolution image.</li>
                   <li><strong class="text-[#FD971F]">Save PDF</strong> — great for printing.</li>
                   <li><strong class="text-[#F92672]">Save Backup</strong> — saves your teams <em>and</em> all seating
-                    arrangements as a <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file you can
-                    restore later. You'll be asked where to save it.</li>
+                    plans as a <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file you can restore
+                    later. You'll be asked where to save it.</li>
                 </ul>
               </div>
             </div>
@@ -2089,7 +2083,7 @@
                   ⚠️ <strong>Important:</strong> Data is stored in your browser only — it is <strong>not backed up to
                     the cloud</strong> and will be lost if you clear your browser or switch devices.
                   Use <strong>Save Backup</strong> on the Export tab regularly — it includes your teams and all saved
-                  seating arrangements. Keep the <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file
+                  seating plans. Keep the <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file
                   somewhere safe.
                 </p>
               </div>
@@ -2142,7 +2136,7 @@
         <div>
           <h2 class="text-lg font-bold text-[#66D9EF]">Teams</h2>
           <p class="text-xs text-zinc-500 mt-0.5">
-            Each team holds a roster and its arrangements
+            Each team holds a roster, teams, and seating
           </p>
         </div>
         <button onclick="closeFilesModal()"
@@ -2335,18 +2329,18 @@
     <div class="bg-zinc-900 rounded-xl max-w-lg w-full border border-zinc-700 shadow-2xl flex flex-col"
       style="max-height:80vh;">
       <div class="flex items-center justify-between p-5 border-b border-zinc-700 flex-shrink-0">
-        <h3 class="text-base font-bold text-[#FD971F]">Seating Arrangements</h3>
+        <h3 class="text-base font-bold text-[#FD971F]">Seating Plans</h3>
         <button onclick="closeSeatingPlansModal()"
           class="text-zinc-500 hover:text-[#F8F8F2] transition text-xl leading-none">&times;</button>
       </div>
 
-      <!-- Save current arrangement (rendered dynamically by renderSaveSection) -->
+      <!-- Save current plan (rendered dynamically by renderSaveSection) -->
       <div id="sp-save-section" class="p-4 border-b border-zinc-700 flex-shrink-0"></div>
 
       <!-- Import -->
       <div class="px-4 py-3 border-b border-zinc-700 flex-shrink-0">
-        <p class="text-xs text-zinc-400 mb-1 font-semibold uppercase tracking-wider">Import a Seating Arrangement</p>
-        <p class="text-xs text-zinc-600 mb-2">Import a seating arrangement shared by someone else (.json). <span
+        <p class="text-xs text-zinc-400 mb-1 font-semibold uppercase tracking-wider">Import a Seating Plan</p>
+        <p class="text-xs text-zinc-600 mb-2">Import a seating plan shared by someone else (.json). <span
             class="text-[#F92672]">This is not for full backups</span> — use the Files menu to restore backups.</p>
         <label
           class="cursor-pointer inline-flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#66D9EF] hover:border-[#66D9EF] text-sm px-3 py-1.5 rounded transition">
@@ -2354,7 +2348,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
           </svg>
-          Import Seating Arrangement
+          Import Seating Plan
           <input type="file" accept=".json" onchange="importSeatingPlanJSON(event)" class="hidden" />
         </label>
       </div>
@@ -2362,7 +2356,7 @@
       <!-- Saved plans list -->
       <div class="flex-1 overflow-y-auto">
         <div class="px-4 pt-3 pb-1">
-          <p class="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Saved Arrangements</p>
+          <p class="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Saved Plans</p>
         </div>
         <div id="sp-list" class="px-2 pb-3"></div>
       </div>
@@ -2389,29 +2383,16 @@
     // Fingerprint of seat layout + constraints (position/shape/label — ignores occupants)
     // Used to detect whether the arrangement has changed since it was last saved/loaded.
     function seatLayoutFingerprint() {
-      return JSON.stringify({
-        seats: seats.map(s => ({
-          id: s.id, shape: s.shape, x: s.x, y: s.y, w: s.w, h: s.h,
-          rotation: s.rotation, manual: s.manual, label: s.label, sections: s.sections
-        })),
-        constraints: { together: constraints.together, apart: constraints.apart }
-      });
+      // Only seat geometry, labels, and textboxes — not occupants or constraints.
+      // Constraints belong to the team, not the room layout.
+      return JSON.stringify(seats.map(s => ({
+        id: s.id, shape: s.shape, x: s.x, y: s.y, w: s.w, h: s.h,
+        rotation: s.rotation, manual: s.manual, label: s.label, sections: s.sections
+      })));
     }
     function isSeatingPlanDirty() {
       if (!currentSeatingPlanId) return false;
       return seatLayoutFingerprint() !== seatingPlanCleanSnapshot;
-    }
-    function updateActivePlanLabel() {
-      const labelEl = document.getElementById("active-plan-label");
-      const nameEl = document.getElementById("active-plan-name");
-      if (!labelEl || !nameEl) return;
-      if (currentSeatingPlanId && currentSeatingPlanName) {
-        nameEl.textContent = currentSeatingPlanName;
-        labelEl.classList.remove("hidden");
-      } else {
-        labelEl.classList.add("hidden");
-        nameEl.textContent = "";
-      }
     }
 
     function markSeatingPlanClean() {
@@ -2960,7 +2941,6 @@
       renderSeats();
       refreshExportIfVisible();
       updateActiveFileLabel();
-      updateActivePlanLabel();
     }
 
     window.addEventListener("DOMContentLoaded", loadData);
@@ -3117,7 +3097,6 @@
       renderSeats();
       refreshExportIfVisible();
       updateActiveFileLabel();
-      updateActivePlanLabel();
       renderSeatingPlansList();
       renderSaveSection();
       hasUnsavedChanges = false;
@@ -3336,9 +3315,9 @@
           ) {
             // Multi-file backup
             const hasSeatingPlans = Array.isArray(data.seatingPlans) && data.seatingPlans.length > 0;
-            const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating arrangement(s)` : "";
+            const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating plan(s)` : "";
             showModal(
-              `Restore ${data.files.length} team(s)${planMsg} from backup? This will replace all current teams and seating arrangements.`,
+              `Restore ${data.files.length} team(s)${planMsg} from backup? This will replace all current teams and seating plans.`,
               true,
               () => {
                 saveAllFiles(data.files);
@@ -3399,7 +3378,7 @@
           if (data.version === 2 && Array.isArray(data.files) && data.files.length > 0) {
             // Multi-file backup — import each file, adding alongside existing ones
             const hasSeatingPlans = Array.isArray(data.seatingPlans) && data.seatingPlans.length > 0;
-            const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating arrangement(s)` : "";
+            const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating plan(s)` : "";
             showModal(
               `Import ${data.files.length} team(s)${planMsg} from "${file.name}"? They will be added alongside your existing teams.`,
               true,
@@ -8871,7 +8850,7 @@
       document.getElementById("seating-plans-modal").classList.remove("hide");
     }
 
-    // Dynamically renders the "Save Current Arrangement" section based on dirty state
+    // Dynamically renders the "Save Seating Plan" section based on dirty state
     function renderSaveSection() {
       const container = document.getElementById("sp-save-section");
       if (!container) return;
@@ -8885,7 +8864,7 @@
         const activeName = escapeHtml(activePlan ? activePlan.name : currentSeatingPlanName);
         container.innerHTML = `
           <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider flex items-center gap-2">
-            Save Arrangement
+            Save Plan
             <span class="text-[10px] font-bold bg-[#F92672]/20 text-[#F92672] px-1.5 py-0.5 rounded border border-[#F92672]/40 uppercase tracking-wide normal-case">Unsaved changes</span>
           </p>
           <div class="flex flex-col gap-2">
@@ -8904,7 +8883,7 @@
       } else {
         // Clean or no active plan — standard save
         container.innerHTML = `
-          <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider">Save Current Arrangement</p>
+          <p class="text-xs text-zinc-400 mb-2 font-semibold uppercase tracking-wider">Save Seating Plan</p>
           <div class="flex gap-2">
             <input id="sp-name-input" type="text" placeholder="e.g. Room 204, Period 3…"
               class="flex-1 bg-zinc-800 border border-zinc-700 text-[#F8F8F2] rounded px-3 py-1.5 text-sm outline-none focus:border-[#FD971F] placeholder-zinc-600" />
@@ -8920,7 +8899,7 @@
     function saveCurrentSeatingPlan(overwriteId) {
       const nameInput = document.getElementById("sp-name-input");
       const name = nameInput.value.trim();
-      if (!name) return showModal("Please enter a name for this arrangement.");
+      if (!name) return showModal("Please enter a name for this seating plan.");
       if (seats.length === 0)
         return showModal("Nothing to save — add seats to the room first.");
       const plans = getAllSeatingPlans();
@@ -8935,12 +8914,11 @@
         // Overwrite existing plan in-place
         const idx = plans.findIndex(p => p.id === overwriteId);
         if (idx >= 0) {
-          plans[idx] = { ...plans[idx], name, seats: layoutSeats, textboxes: [], constraints: JSON.parse(JSON.stringify(constraints)), updatedAt: Date.now() };
+          plans[idx] = { ...plans[idx], name, seats: layoutSeats, textboxes: [], updatedAt: Date.now() };
           saveAllSeatingPlans(plans);
           currentSeatingPlanName = name;
           currentSeatingPlanId = overwriteId;
           markSeatingPlanClean();
-          updateActivePlanLabel();
           nameInput.value = "";
           renderSeatingPlansList();
           renderSaveSection(); // refresh the save UI
@@ -8949,13 +8927,12 @@
       }
       // Save as new plan
       const newId = "sp_" + generateId();
-      const plan = { id: newId, name, seats: layoutSeats, textboxes: [], constraints: JSON.parse(JSON.stringify(constraints)), createdAt: Date.now() };
+      const plan = { id: newId, name, seats: layoutSeats, textboxes: [], createdAt: Date.now() };
       plans.unshift(plan);
       saveAllSeatingPlans(plans);
       currentSeatingPlanName = name;
       currentSeatingPlanId = newId;
       markSeatingPlanClean();
-      updateActivePlanLabel();
       nameInput.value = "";
       renderSeatingPlansList();
       renderSaveSection(); // refresh the save UI
@@ -8965,20 +8942,14 @@
       const plans = getAllSeatingPlans();
       const plan = plans.find(p => p.id === id);
       if (!plan) return;
-      showModal(`Load "${plan.name}"? This will replace the current arrangement.`, true, () => {
+      showModal(`Load "${plan.name}"? This will replace the current seating plan.`, true, () => {
         pushSeatUndoNow();
         seats = JSON.parse(JSON.stringify(plan.seats || []));
         const otherTbs = textboxes.filter(t => t.canvas !== "seating");
         textboxes = [...otherTbs, ...JSON.parse(JSON.stringify(plan.textboxes || []))];
-        if (plan.constraints) {
-          constraints = JSON.parse(JSON.stringify(plan.constraints));
-          updateConstraintSelects();
-          syncSeatConstraintList();
-        }
-        currentSeatingPlanName = plan.name; // track which arrangement is loaded
+        currentSeatingPlanName = plan.name; // track which plan is loaded
         currentSeatingPlanId = plan.id;
         markSeatingPlanClean();
-        updateActivePlanLabel();
         // Clear occupants so they go back to staging unless seatSeatsLoaded
         renderSeats();
         markUnsaved();
@@ -8997,7 +8968,6 @@
           currentSeatingPlanId = "";
           currentSeatingPlanName = "";
           seatingPlanCleanSnapshot = "";
-          updateActivePlanLabel();
         }
         renderSeatingPlansList();
         renderSaveSection();
@@ -9035,13 +9005,6 @@
           const plans = getAllSeatingPlans();
           plans.unshift(plan);
           saveAllSeatingPlans(plans);
-          // If the imported plan carries constraints, apply them now
-          if (plan.constraints) {
-            constraints = JSON.parse(JSON.stringify(plan.constraints));
-            updateConstraintSelects();
-            syncSeatConstraintList();
-            markUnsaved();
-          }
           renderSeatingPlansList();
           showModal(`Imported "${plan.name}" successfully!`);
         } catch {
@@ -9091,7 +9054,7 @@
       if (!list) return;
       const plans = getAllSeatingPlans();
       if (plans.length === 0) {
-        list.innerHTML = '<div class="p-4 text-center text-zinc-500 text-sm">No saved arrangements yet.</div>';
+        list.innerHTML = '<div class="p-4 text-center text-zinc-500 text-sm">No saved plans yet.</div>';
         return;
       }
       list.innerHTML = "";
@@ -9110,7 +9073,7 @@
               <div class="text-xs text-zinc-500 mt-0.5">${plan.seats?.length || 0} seats · ${date}</div>
             </div>
             <div class="flex items-center gap-1 flex-shrink-0">
-              <button onclick="loadSeatingPlan('${plan.id}')" title="Load this arrangement"
+              <button onclick="loadSeatingPlan('${plan.id}')" title="Load this plan"
                 class="${isActive ? "bg-[#FD971F]/20 text-[#FD971F] border border-[#FD971F]/40" : "bg-zinc-700 hover:bg-[#FD971F] hover:text-zinc-900 text-zinc-300"} text-xs px-2.5 py-1 rounded font-medium transition">Load</button>
               <button onclick="exportSeatingPlanJSON('${plan.id}')" title="Export as JSON"
                 class="p-1.5 rounded text-zinc-500 hover:text-[#66D9EF] hover:bg-zinc-700 transition">
