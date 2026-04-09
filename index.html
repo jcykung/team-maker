@@ -2556,6 +2556,7 @@
       cont.style.backgroundImage = "";
       cont.style.backgroundSize = "";
       cont.style.backgroundPosition = "";
+      cont.style.backgroundAttachment = "";
     }
 
     let exportPanX = 0,
@@ -2780,11 +2781,13 @@
             "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
             "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
           container.style.backgroundSize = `${gs}px ${gs}px`;
-          container.style.backgroundPosition = `${tx % gs}px ${ty % gs}px`;
+          container.style.backgroundPosition = `${tx}px ${ty}px`;
+          container.style.backgroundAttachment = "local";
         } else {
           container.style.backgroundImage = "";
           container.style.backgroundSize = "";
           container.style.backgroundPosition = "";
+          container.style.backgroundAttachment = "";
         }
         container.scrollTo({
           left: Math.max(0, idealLeft),
@@ -6305,7 +6308,12 @@
       if (lbl) lbl.innerText = Math.round(seatCanvasZoom * 100) + "%";
       // Clear any extended grid background that fitSeatsToScreen may have applied
       const cont = document.getElementById("seating-canvas-container");
-      if (cont) { cont.style.backgroundImage = ""; cont.style.backgroundSize = ""; cont.style.backgroundPosition = ""; }
+      if (cont) {
+        cont.style.backgroundImage = "";
+        cont.style.backgroundSize = "";
+        cont.style.backgroundPosition = "";
+        cont.style.backgroundAttachment = "";
+      }
       // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
     }
 
@@ -6615,11 +6623,13 @@
             "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
             "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
           container.style.backgroundSize = `${gs}px ${gs}px`;
-          container.style.backgroundPosition = `${tx % gs}px ${ty % gs}px`;
+          container.style.backgroundPosition = `${tx}px ${ty}px`;
+          container.style.backgroundAttachment = "local";
         } else {
           container.style.backgroundImage = "";
           container.style.backgroundSize = "";
           container.style.backgroundPosition = "";
+          container.style.backgroundAttachment = "";
         }
         container.scrollTo({
           left: Math.max(0, idealLeft),
