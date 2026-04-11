@@ -229,14 +229,27 @@
       display: none;
     }
 
-    :fullscreen {
+    :fullscreen,
+    :-webkit-full-screen,
+    :-moz-full-screen,
+    :-ms-fullscreen,
+    .is-projector,
+    .projector-mode {
+      background-color: var(--canvas-bg) !important;
+    }
+
+    #canvas-container,
+    #seating-canvas-container {
       background-color: var(--canvas-bg);
     }
 
     /* Hide grid lines in projector (fullscreen) mode */
-    :fullscreen .bg-grid {
-      background-image: none !important;
-    }
+    :fullscreen, :fullscreen .bg-grid { background-image: none !important; }
+    :-webkit-full-screen, :-webkit-full-screen .bg-grid { background-image: none !important; }
+    :-moz-full-screen, :-moz-full-screen .bg-grid { background-image: none !important; }
+    :-ms-fullscreen, :-ms-fullscreen .bg-grid { background-image: none !important; }
+    .is-projector, .is-projector .bg-grid,
+    .projector-mode, .projector-mode .bg-grid { background-image: none !important; }
 
     /* ===== PROJECTOR MODE (fullscreen) overrides ===== */
 
@@ -1184,7 +1197,8 @@
         </div>
 
         <div id="canvas-area"
-          class="relative bg-grid w-[2400px] h-[2400px] transform origin-top-left transition-transform duration-75">
+          class="relative bg-grid transform origin-top-left transition-transform duration-75"
+          style="width: 2400px; height: 2400px;">
           <!-- Teams will be injected here -->
         </div>
       </div>
@@ -1550,7 +1564,7 @@
           </button>
         </div>
 
-        <div id="seating-canvas-area" class="relative bg-grid w-[2400px] h-[2400px] transform origin-top-left">
+        <div id="seating-canvas-area" class="relative bg-grid transform origin-top-left" style="width: 2400px; height: 2400px;">
           <div id="seat-paint-preview" class="absolute pointer-events-none z-10" style="
                 display: none;
                 border: 2px dashed #66d9ef;
@@ -2774,12 +2788,14 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
-        // Extend grid into the empty space left of / above the canvas area
-        if (tx > 0 || ty > 0) {
+        // Extend grid into empty space (only if NOT in projector mode)
+        const isFs = !!document.fullscreenElement;
+        if ((tx > 0 || ty > 0) && !isFs) {
           const gs = 80 * newScale;
+          const lw = newScale; // match scaled line width
           container.style.backgroundImage =
-            "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
-            "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
+            `linear-gradient(to right, var(--canvas-dots) ${lw}px, transparent ${lw}px),` +
+            `linear-gradient(to bottom, var(--canvas-dots) ${lw}px, transparent ${lw}px)`;
           container.style.backgroundSize = `${gs}px ${gs}px`;
           container.style.backgroundPosition = `${tx}px ${ty}px`;
           container.style.backgroundAttachment = "local";
@@ -2797,6 +2813,23 @@
       }, 50);
     }
 
+    function fitCanvasToTeams() {
+      const area = document.getElementById("canvas-area");
+      if (!area) return;
+      let maxX = 800, maxY = 600;
+      teams.forEach(g => {
+        const estHeight = 62 + g.members.length * 34;
+        maxX = Math.max(maxX, g.x + 240);
+        maxY = Math.max(maxY, g.y + estHeight);
+      });
+      textboxes.filter(t => t.canvas === "teams").forEach(t => {
+        maxX = Math.max(maxX, t.x + (t.w || 200));
+        maxY = Math.max(maxY, t.y + (t.minH || 40));
+      });
+      area.style.width = (maxX + 160) + "px";
+      area.style.height = (maxY + 160) + "px";
+    }
+
     // Adjust layout when entering Projector view
     let _preTeamsProjectorZoom = null;
     let _preTeamsScrollLeft = 0, _preTeamsScrollTop = 0;
@@ -2806,11 +2839,13 @@
       const isTeamsFs = document.fullscreenElement === teamsContainer;
       if (teamsExitBtn) teamsExitBtn.style.display = isTeamsFs ? "flex" : "none";
       if (isTeamsFs) {
+        teamsContainer.classList.add("is-projector");
         _preTeamsProjectorZoom = canvasZoom;
         _preTeamsScrollLeft = teamsContainer.scrollLeft;
         _preTeamsScrollTop = teamsContainer.scrollTop;
         setTimeout(fitTeamsToScreen, 150);
       } else if (!document.fullscreenElement && _preTeamsProjectorZoom !== null) {
+        teamsContainer.classList.remove("is-projector");
         setCanvasZoom(_preTeamsProjectorZoom); // this restores plain scale() transform
         _preTeamsProjectorZoom = null;
         // Restore scroll position so the canvas is exactly where the user left it
@@ -4514,6 +4549,7 @@
         editingTbId = box.id; // auto-enter edit mode on first creation
         markUnsaved();
         renderTeams();
+        fitCanvasToTeams();
         // Focus text for immediate editing
         setTimeout(() => {
           const el = document.getElementById("tb-el-" + box.id);
@@ -4537,6 +4573,7 @@
 
       // Also update mobile view
       renderTeamsMobile();
+      fitCanvasToTeams();
     }
 
     function createMemberElement(sId, sourceZone) {
@@ -4605,6 +4642,7 @@
       if (newY < 0) newY = 0;
       activeTeam.style.left = newX + "px";
       activeTeam.style.top = newY + "px";
+      fitCanvasToTeams();
     });
 
     document.addEventListener("mouseup", (e) => {
@@ -4659,6 +4697,7 @@
         if (newY < 0) newY = 0;
         activeTeam.style.left = newX + "px";
         activeTeam.style.top = newY + "px";
+        fitCanvasToTeams();
         if (e.cancelable) e.preventDefault();
       },
       { passive: false },
@@ -6065,6 +6104,8 @@
       if (tbEl) {
         tbEl.style.left = draggingTb.x + "px";
         tbEl.style.top = draggingTb.y + "px";
+        if (tbMode === "teams") fitCanvasToTeams();
+        else fitCanvasToSeats();
       }
     });
     document.addEventListener("mouseup", () => {
@@ -6616,12 +6657,14 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
-        // Extend grid into the empty space left of / above the canvas area
-        if (tx > 0 || ty > 0) {
+        // Extend grid into empty space (only if NOT in projector mode)
+        const isFs = !!document.fullscreenElement;
+        if ((tx > 0 || ty > 0) && !isFs) {
           const gs = 80 * newScale;
+          const lw = newScale; // match scaled line width
           container.style.backgroundImage =
-            "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
-            "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
+            `linear-gradient(to right, var(--canvas-dots) ${lw}px, transparent ${lw}px),` +
+            `linear-gradient(to bottom, var(--canvas-dots) ${lw}px, transparent ${lw}px)`;
           container.style.backgroundSize = `${gs}px ${gs}px`;
           container.style.backgroundPosition = `${tx}px ${ty}px`;
           container.style.backgroundAttachment = "local";
@@ -6639,6 +6682,22 @@
       }, 50);
     }
 
+    function fitCanvasToSeats() {
+      const area = document.getElementById("seating-canvas-area");
+      if (!area) return;
+      let maxX = 800, maxY = 600;
+      seats.forEach(s => {
+        maxX = Math.max(maxX, s.x + s.w);
+        maxY = Math.max(maxY, s.y + s.h);
+      });
+      textboxes.filter(t => t.canvas === "seating").forEach(t => {
+        maxX = Math.max(maxX, t.x + (t.w || 200));
+        maxY = Math.max(maxY, t.y + (t.minH || 60) + (t.size || 16) * 2);
+      });
+      area.style.width = (maxX + 160) + "px";
+      area.style.height = (maxY + 160) + "px";
+    }
+
     let _preSeatProjectorZoom = null;
     let _preSeatScrollLeft = 0, _preSeatScrollTop = 0;
     document.addEventListener("fullscreenchange", () => {
@@ -6649,11 +6708,13 @@
       if (btn) btn.style.display = "none"; // old top-right button always hidden now
       if (seatExitBtn) seatExitBtn.style.display = isSeatingFs ? "flex" : "none";
       if (isSeatingFs) {
+        seatContainer.classList.add("is-projector");
         _preSeatProjectorZoom = seatCanvasZoom;
         _preSeatScrollLeft = seatContainer.scrollLeft;
         _preSeatScrollTop = seatContainer.scrollTop;
         setTimeout(fitSeatsToScreen, 150);
       } else if (!document.fullscreenElement && _preSeatProjectorZoom !== null) {
+        seatContainer.classList.remove("is-projector");
         setSeatZoom(_preSeatProjectorZoom); // restores plain scale() transform
         _preSeatProjectorZoom = null;
         // Restore scroll position so the canvas is exactly where the user left it
@@ -6713,6 +6774,7 @@
           canvas.appendChild(buildTbEl(box, "seating-canvas-area")),
         );
       updateSeatStagingArea();
+      fitCanvasToSeats();
     }
 
     function buildSeatEl(seat) {
@@ -8462,6 +8524,7 @@
             seats = seats.filter((x) => x.id !== selectedSeatId);
             selectedSeatId = null;
             renderSeats();
+            fitCanvasToSeats();
             markUnsaved();
           }
           return;
@@ -8471,10 +8534,12 @@
           pushSeatUndoNow(); // capture before deletion
           textboxes = textboxes.filter((t) => t.id !== selectedTextboxId);
           selectedTextboxId = null;
-          hideSeatTbFloatingToolbar(); // CHANGE 1: hide toolbar when textbox deleted
+          hideSeatTbFloatingToolbar();
           markUnsaved();
           renderTeams();
+          fitCanvasToTeams();
           renderSeats();
+          fitCanvasToSeats();
           return;
         }
         return;
@@ -8510,13 +8575,14 @@
               }
             });
           } else if (selectedSeatId) {
-            const s = seats.find((x) => x.id === selectedSeatId);
+            const s = seats.find((s) => s.id === selectedSeatId);
             if (s) { s.x = Math.max(0, s.x + dx); s.y = Math.max(0, s.y + dy); }
           } else if (selectedTextboxId) {
             const tb = textboxes.find((t) => t.id === selectedTextboxId);
             if (tb) { tb.x = Math.max(0, tb.x + dx); tb.y = Math.max(0, tb.y + dy); }
           }
           renderSeats();
+          fitCanvasToSeats();
           markDirtyOnly();
           return;
         }
@@ -8633,6 +8699,7 @@
             }
           }
         });
+        fitCanvasToSeats();
         return;
       }
       if (draggingSeat) {
@@ -8656,6 +8723,7 @@
           el.style.left = nx + "px";
           el.style.top = ny + "px";
         }
+        fitCanvasToSeats();
       }
       if (resizingSeat && resizeHandle) {
         const dx = (e.clientX - resizeStartX) / seatCanvasZoom;
