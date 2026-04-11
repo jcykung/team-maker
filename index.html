@@ -146,38 +146,9 @@
       padding: 0;
     }
 
-    :root {
-      --canvas-bg: #272822; /* Monokai-ish base */
-      --canvas-dots: rgba(230, 219, 116, 0.04); /* Subtler gold dots */
-      --canvas-zoom: 1;
-      --seat-zoom: 1;
-      --canvas-tx: 0px;
-      --canvas-ty: 0px;
-      --seat-tx: 0px;
-      --seat-ty: 0px;
-    }
-
-    .bg-grid-container {
-      background-color: var(--canvas-bg);
-      background-image: 
-        linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px);
-      background-attachment: local;
-    }
-
-    #canvas-container {
-      background-size: calc(80px * var(--canvas-zoom)) calc(80px * var(--canvas-zoom));
-      background-position: var(--canvas-tx) var(--canvas-ty);
-    }
-
-    #seating-canvas-container {
-      background-size: calc(80px * var(--seat-zoom)) calc(80px * var(--seat-zoom));
-      background-position: var(--seat-tx) var(--seat-ty);
-    }
-
     .bg-grid {
-      /* Keep this for any residual uses, but the primary grid is now on the container */
-      background-image: 
+      background-color: var(--canvas-bg);
+      background-image:
         linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px),
         linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px);
       background-size: 80px 80px;
@@ -1152,13 +1123,13 @@
             <span id="tally-staging"
               class="text-[10px] text-zinc-400 bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-700 font-mono">0</span>
           </div>
-<div id="panel-staging" class="p-3 overflow-y-auto flex-1 drop-zone flex flex-col gap-1.5 bg-zinc-900"
+          <div id="panel-staging" class="p-3 overflow-y-auto flex-1 drop-zone flex flex-col gap-1.5 bg-zinc-900"
             data-zone-id="staging"></div>
         </div>
       </div>
 
       <!-- Draggable Canvas Area -->
-      <div id="canvas-container" class="flex-1 overflow-auto bg-grid-container relative select-none touch-none lg:touch-auto" style="--zoom: 1; --offset-x: 0px; --offset-y: 0px;">
+      <div id="canvas-container" class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto">
         <!-- Floating Exit Projector Button -->
         <button id="exit-fullscreen-btn" onclick="document.exitFullscreen()"
           class="bg-[#F8F8F2] text-zinc-900 px-4 py-2 rounded shadow-lg font-bold items-center space-x-2 hover:bg-white transition">
@@ -1213,7 +1184,7 @@
         </div>
 
         <div id="canvas-area"
-          class="relative w-[2400px] h-[2400px] transform origin-top-left transition-transform duration-75">
+          class="relative bg-grid w-[2400px] h-[2400px] transform origin-top-left transition-transform duration-75">
           <!-- Teams will be injected here -->
         </div>
       </div>
@@ -1505,7 +1476,8 @@
       </div>
 
       <!-- SEATING CANVAS -->
-      <div id="seating-canvas-container" class="flex-1 overflow-auto bg-grid-container relative select-none touch-none lg:touch-auto" style="--zoom: 1; --offset-x: 0px; --offset-y: 0px;">
+      <div id="seating-canvas-container"
+        class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto">
 
         <!-- Exit Fullscreen button -->
         <button id="seat-exit-fullscreen-btn" onclick="document.exitFullscreen()"
@@ -2574,17 +2546,17 @@
     // ================= ZOOM & AUTO-FIT CONTROLS =================
     function setCanvasZoom(z) {
       canvasZoom = Math.min(Math.max(0.2, z), 2.5);
-      const area = document.getElementById("canvas-area");
-      if (area) area.style.transform = `scale(${canvasZoom})`;
+      document.getElementById("canvas-area").style.transform =
+        `scale(${canvasZoom})`;
       document.getElementById("canvas-zoom-label").innerText =
         Math.round(canvasZoom * 100) + "%";
-        
+      // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
+      // Clear any extended grid background that fitTeamsToScreen may have applied
       const cont = document.getElementById("canvas-container");
-      if (cont) {
-        cont.style.setProperty('--canvas-zoom', canvasZoom);
-        cont.style.setProperty('--canvas-tx', '0px');
-        cont.style.setProperty('--canvas-ty', '0px');
-      }
+      cont.style.backgroundImage = "";
+      cont.style.backgroundSize = "";
+      cont.style.backgroundPosition = "";
+      cont.style.backgroundAttachment = "";
     }
 
     let exportPanX = 0,
@@ -2802,12 +2774,21 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
-        
-        // Update container grid to match translation and zoom
-        container.style.setProperty('--canvas-zoom', newScale);
-        container.style.setProperty('--canvas-tx', tx + 'px');
-        container.style.setProperty('--canvas-ty', ty + 'px');
-
+        // Extend grid into the empty space left of / above the canvas area
+        if (tx > 0 || ty > 0) {
+          const gs = 80 * newScale;
+          container.style.backgroundImage =
+            "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
+            "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
+          container.style.backgroundSize = `${gs}px ${gs}px`;
+          container.style.backgroundPosition = `${tx}px ${ty}px`;
+          container.style.backgroundAttachment = "local";
+        } else {
+          container.style.backgroundImage = "";
+          container.style.backgroundSize = "";
+          container.style.backgroundPosition = "";
+          container.style.backgroundAttachment = "";
+        }
         container.scrollTo({
           left: Math.max(0, idealLeft),
           top: Math.max(0, idealTop),
@@ -6325,13 +6306,15 @@
       if (area) area.style.transform = `scale(${seatCanvasZoom})`;
       const lbl = document.getElementById("seat-zoom-label");
       if (lbl) lbl.innerText = Math.round(seatCanvasZoom * 100) + "%";
-      
+      // Clear any extended grid background that fitSeatsToScreen may have applied
       const cont = document.getElementById("seating-canvas-container");
       if (cont) {
-        cont.style.setProperty('--seat-zoom', seatCanvasZoom);
-        cont.style.setProperty('--seat-tx', '0px');
-        cont.style.setProperty('--seat-ty', '0px');
+        cont.style.backgroundImage = "";
+        cont.style.backgroundSize = "";
+        cont.style.backgroundPosition = "";
+        cont.style.backgroundAttachment = "";
       }
+      // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
     }
 
     function toggleSeatSnap() {
@@ -6633,12 +6616,21 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
-        
-        // Update container grid to match translation and zoom
-        container.style.setProperty('--seat-zoom', newScale);
-        container.style.setProperty('--seat-tx', tx + 'px');
-        container.style.setProperty('--seat-ty', ty + 'px');
-
+        // Extend grid into the empty space left of / above the canvas area
+        if (tx > 0 || ty > 0) {
+          const gs = 80 * newScale;
+          container.style.backgroundImage =
+            "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
+            "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
+          container.style.backgroundSize = `${gs}px ${gs}px`;
+          container.style.backgroundPosition = `${tx}px ${ty}px`;
+          container.style.backgroundAttachment = "local";
+        } else {
+          container.style.backgroundImage = "";
+          container.style.backgroundSize = "";
+          container.style.backgroundPosition = "";
+          container.style.backgroundAttachment = "";
+        }
         container.scrollTo({
           left: Math.max(0, idealLeft),
           top: Math.max(0, idealTop),
