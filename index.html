@@ -152,6 +152,7 @@
         linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px),
         linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px);
       background-size: 80px 80px;
+      background-attachment: local;
     }
 
     .hide {
@@ -1142,7 +1143,7 @@
       </div>
 
       <!-- Draggable Canvas Area -->
-      <div id="canvas-container" class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto">
+      <div id="canvas-container" class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto bg-grid">
         <!-- Floating Exit Projector Button -->
         <button id="exit-fullscreen-btn" onclick="document.exitFullscreen()"
           class="bg-[#F8F8F2] text-zinc-900 px-4 py-2 rounded shadow-lg font-bold items-center space-x-2 hover:bg-white transition">
@@ -1197,7 +1198,7 @@
         </div>
 
         <div id="canvas-area"
-          class="relative bg-grid transform origin-top-left transition-transform duration-75"
+          class="relative transform origin-top-left transition-transform duration-75"
           style="width: 2400px; height: 2400px;">
           <!-- Teams will be injected here -->
         </div>
@@ -1491,7 +1492,7 @@
 
       <!-- SEATING CANVAS -->
       <div id="seating-canvas-container"
-        class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto">
+        class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto bg-grid">
 
         <!-- Exit Fullscreen button -->
         <button id="seat-exit-fullscreen-btn" onclick="document.exitFullscreen()"
@@ -1564,7 +1565,7 @@
           </button>
         </div>
 
-        <div id="seating-canvas-area" class="relative bg-grid transform origin-top-left" style="width: 2400px; height: 2400px;">
+        <div id="seating-canvas-area" class="relative transform origin-top-left" style="width: 2400px; height: 2400px;">
           <div id="seat-paint-preview" class="absolute pointer-events-none z-10" style="
                 display: none;
                 border: 2px dashed #66d9ef;
@@ -2558,19 +2559,32 @@
     ];
 
     // ================= ZOOM & AUTO-FIT CONTROLS =================
+    // Helper to sync the infinite background grid on the container with the scaled area
+    function syncContainerGrid(containerId, zoom, tx = 0, ty = 0) {
+      const cont = document.getElementById(containerId);
+      if (!cont) return;
+      const isFs = !!document.fullscreenElement;
+      if (isFs) {
+        cont.style.backgroundImage = "none";
+        return;
+      }
+      const gs = 80 * zoom;
+      const lw = zoom; // match scaled line width
+      cont.style.backgroundImage =
+        `linear-gradient(to right, var(--canvas-dots) ${lw}px, transparent ${lw}px),` +
+        `linear-gradient(to bottom, var(--canvas-dots) ${lw}px, transparent ${lw}px)`;
+      cont.style.backgroundSize = `${gs}px ${gs}px`;
+      cont.style.backgroundPosition = `${tx}px ${ty}px`;
+      cont.style.backgroundAttachment = "local";
+    }
+
     function setCanvasZoom(z) {
       canvasZoom = Math.min(Math.max(0.2, z), 2.5);
       document.getElementById("canvas-area").style.transform =
         `scale(${canvasZoom})`;
       document.getElementById("canvas-zoom-label").innerText =
         Math.round(canvasZoom * 100) + "%";
-      // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
-      // Clear any extended grid background that fitTeamsToScreen may have applied
-      const cont = document.getElementById("canvas-container");
-      cont.style.backgroundImage = "";
-      cont.style.backgroundSize = "";
-      cont.style.backgroundPosition = "";
-      cont.style.backgroundAttachment = "";
+      syncContainerGrid("canvas-container", canvasZoom, 0, 0);
     }
 
     let exportPanX = 0,
@@ -2788,23 +2802,7 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
-        // Extend grid into empty space (only if NOT in projector mode)
-        const isFs = !!document.fullscreenElement;
-        if ((tx > 0 || ty > 0) && !isFs) {
-          const gs = 80 * newScale;
-          const lw = newScale; // match scaled line width
-          container.style.backgroundImage =
-            `linear-gradient(to right, var(--canvas-dots) ${lw}px, transparent ${lw}px),` +
-            `linear-gradient(to bottom, var(--canvas-dots) ${lw}px, transparent ${lw}px)`;
-          container.style.backgroundSize = `${gs}px ${gs}px`;
-          container.style.backgroundPosition = `${tx}px ${ty}px`;
-          container.style.backgroundAttachment = "local";
-        } else {
-          container.style.backgroundImage = "";
-          container.style.backgroundSize = "";
-          container.style.backgroundPosition = "";
-          container.style.backgroundAttachment = "";
-        }
+        syncContainerGrid("canvas-container", newScale, tx, ty);
         container.scrollTo({
           left: Math.max(0, idealLeft),
           top: Math.max(0, idealTop),
@@ -6347,14 +6345,7 @@
       if (area) area.style.transform = `scale(${seatCanvasZoom})`;
       const lbl = document.getElementById("seat-zoom-label");
       if (lbl) lbl.innerText = Math.round(seatCanvasZoom * 100) + "%";
-      // Clear any extended grid background that fitSeatsToScreen may have applied
-      const cont = document.getElementById("seating-canvas-container");
-      if (cont) {
-        cont.style.backgroundImage = "";
-        cont.style.backgroundSize = "";
-        cont.style.backgroundPosition = "";
-        cont.style.backgroundAttachment = "";
-      }
+      syncContainerGrid("seating-canvas-container", seatCanvasZoom, 0, 0);
       // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
     }
 
@@ -6657,23 +6648,7 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
-        // Extend grid into empty space (only if NOT in projector mode)
-        const isFs = !!document.fullscreenElement;
-        if ((tx > 0 || ty > 0) && !isFs) {
-          const gs = 80 * newScale;
-          const lw = newScale; // match scaled line width
-          container.style.backgroundImage =
-            `linear-gradient(to right, var(--canvas-dots) ${lw}px, transparent ${lw}px),` +
-            `linear-gradient(to bottom, var(--canvas-dots) ${lw}px, transparent ${lw}px)`;
-          container.style.backgroundSize = `${gs}px ${gs}px`;
-          container.style.backgroundPosition = `${tx}px ${ty}px`;
-          container.style.backgroundAttachment = "local";
-        } else {
-          container.style.backgroundImage = "";
-          container.style.backgroundSize = "";
-          container.style.backgroundPosition = "";
-          container.style.backgroundAttachment = "";
-        }
+        syncContainerGrid("seating-canvas-container", newScale, tx, ty);
         container.scrollTo({
           left: Math.max(0, idealLeft),
           top: Math.max(0, idealTop),
