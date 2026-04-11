@@ -229,12 +229,22 @@
       display: none;
     }
 
-    :fullscreen {
+    :fullscreen,
+    :-webkit-full-screen,
+    :-moz-full-screen,
+    :-ms-fullscreen {
       background-color: var(--canvas-bg);
     }
 
     /* Hide grid lines in projector (fullscreen) mode */
-    :fullscreen .bg-grid {
+    :fullscreen,
+    :fullscreen .bg-grid,
+    :-webkit-full-screen,
+    :-webkit-full-screen .bg-grid,
+    :-moz-full-screen,
+    :-moz-full-screen .bg-grid,
+    :-ms-fullscreen,
+    :-ms-fullscreen .bg-grid {
       background-image: none !important;
     }
 
