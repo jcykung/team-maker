@@ -161,7 +161,7 @@ Click **Files** in the header to manage multiple files — useful if you have mu
 | **PDF export** | [jsPDF](https://github.com/parallax/jsPDF) |
 | **Image export** | [html2canvas](https://html2canvas.hertzen.com/) |
 | **Touch drag-and-drop** | [DragDropTouch polyfill](https://github.com/bernardo-castilho/dragdroptouch) |
-| **Theme** | [Monokai](https://monokai.pro/) colour scheme |
+| **Theme** | Custom dark colour scheme |
 | **Storage** | Browser `localStorage` |
 
 ---
