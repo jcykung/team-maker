@@ -178,7 +178,7 @@ Click **Files** in the header to manage multiple files — useful if you have mu
 
 ---
 
-## ☕ Support
+## Ko-fi Support
 
 If you find this useful, consider buying me a coffee!
 
