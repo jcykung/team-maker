@@ -3627,8 +3627,13 @@
       if (newMembers.length > 0) {
         allMembers = [...allMembers, ...newMembers];
         pool = [...pool, ...newMembers.map((s) => s.id)];
+        staging = [...staging, ...newMembers.map((s) => s.id)];
+        seatSeatsLoaded = true; // Ensure they show up in Seating staging area immediately
+
         updateTab1UI();
         updateConstraintSelects();
+        renderTeams();
+        renderSeats();
         markUnsaved();
       }
 
@@ -3651,6 +3656,17 @@
       teams.forEach(
         (g) => (g.members = g.members.filter((mId) => mId !== id)),
       );
+
+      // Clean up seating assignments
+      seats.forEach((s) => {
+        if (s.occupantId === id) s.occupantId = null;
+        if (s.sectionOccupants) {
+          s.sectionOccupants = s.sectionOccupants.map((mId) =>
+            mId === id ? null : mId,
+          );
+        }
+      });
+
       constraints.together = constraints.together.filter(
         (pair) => pair[0] !== id && pair[1] !== id,
       );
@@ -3661,6 +3677,7 @@
       updateTab1UI();
       updateConstraintSelects();
       renderTeams();
+      renderSeats();
       markUnsaved();
     }
 
@@ -3671,9 +3688,20 @@
         teams = [];
         staging = [];
         constraints = { together: [], apart: [] };
+
+        // Clear seating assignments
+        seats.forEach((s) => {
+          s.occupantId = null;
+          if (s.sectionOccupants) {
+            s.sectionOccupants = s.sectionOccupants.map(() => null);
+          }
+        });
+        resetSeatPrimaryBtn();
+
         updateTab1UI();
         updateConstraintSelects();
         renderTeams();
+        renderSeats();
         markUnsaved();
       });
     }
