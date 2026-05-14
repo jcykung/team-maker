@@ -14,7 +14,7 @@
   <!-- Google tag END -->
 
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Team Maker</title>
 
   <!-- Favicon -->
@@ -73,6 +73,7 @@
       color: #f8f8f2;
       height: 100vh;
       height: 100dvh;
+      touch-action: pan-x pan-y;
     }
 
     :root {
@@ -337,7 +338,7 @@
     }
 
     /* Hide sidebar and header in fullscreen on mobile */
-    @media (max-width: 768px) {
+    @media (max-width: 767px), (max-width: 1000px) and (max-height: 500px) {
       :fullscreen #left-sidebar {
         display: none !important;
       }
@@ -348,11 +349,12 @@
     }
 
     /* ===== MOBILE TEAMS VIEW ===== */
-    #mobile-tab2-ui {
+    #mobile-tab2-ui,
+    #mobile-tab5-ui {
       display: none;
     }
 
-    @media (max-width: 767px) {
+    @media (max-width: 767px), (max-width: 1000px) and (max-height: 500px) {
 
       #left-sidebar,
       #canvas-container {
@@ -360,10 +362,61 @@
       }
 
       #mobile-tab2-ui {
-        display: flex;
-        flex-direction: column;
         position: absolute;
         inset: 0;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        background: #1e1e1e;
+        z-index: 50;
+        overflow: hidden;
+      }
+
+      #mobile-tab5-ui {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        background: #1e1e1e;
+        z-index: 50;
+      }
+
+      #mobile-tab5-ui #mobile-seat-cards-inner {
+        padding-bottom: 24px;
+      }
+
+      /* Hide desktop sidebar on mobile */
+      #tab5 #seat-sidebar {
+        display: none !important;
+      }
+
+      /* Adjust zoom controls for mobile seating */
+      #tab5 #seat-zoom-controls {
+        bottom: 24px;
+        right: 16px;
+      }
+
+      /* Show canvas on mobile Seating by default */
+      #tab5 #seating-canvas-container {
+        display: block !important;
+        flex: 1;
+        position: relative;
+        overflow: auto;
+      }
+
+      /* Projector mode overrides for canvas */
+      #tab5.mobile-projector-mode #seating-canvas-container {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        /* Keep default grid background */
+      }
+      
+      #tab5.mobile-projector-mode #mobile-seating-top-bar {
+        display: none !important;
+      }
+
+      #tab5.mobile-projector-mode #mobile-seating-projector-exit {
+        display: flex !important;
       }
     }
 
@@ -374,33 +427,27 @@
     }
 
     #mobile-tab2-ui:fullscreen #mobile-team-cards,
-    #mobile-tab2-ui:-webkit-full-screen #mobile-team-cards {
-      overflow: hidden !important;
-      padding: 6px !important;
+    #mobile-tab2-ui:-webkit-full-screen #mobile-team-cards,
+    #mobile-tab2-ui.projector-mode #mobile-team-cards {
+      padding: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)) !important;
     }
 
     #mobile-tab2-ui:fullscreen #mobile-team-cards-inner,
-    #mobile-tab2-ui:-webkit-full-screen #mobile-team-cards-inner {
-      height: 100%;
-      gap: 4px !important;
+    #mobile-tab2-ui:-webkit-full-screen #mobile-team-cards-inner,
+    #mobile-tab2-ui.projector-mode #mobile-team-cards-inner {
+      gap: 6px !important;
     }
 
-    /* In fullscreen, each card fills its grid cell and clips overflow */
+    /* In fullscreen, let cards grow naturally and scroll */
     #mobile-tab2-ui:fullscreen .mobile-team-card,
-    #mobile-tab2-ui:-webkit-full-screen .mobile-team-card {
-      overflow: hidden !important;
+    #mobile-tab2-ui:-webkit-full-screen .mobile-team-card,
+    #mobile-tab2-ui.projector-mode .mobile-team-card {
       display: flex !important;
       flex-direction: column !important;
     }
 
-    #mobile-tab2-ui:fullscreen .mobile-card-members,
-    #mobile-tab2-ui:-webkit-full-screen .mobile-card-members {
-      flex: 1;
-      overflow: hidden;
-    }
-
     /* Member items — bigger touch targets on mobile */
-    @media (max-width: 767px) {
+    @media (max-width: 767px), (max-width: 1000px) and (max-height: 500px) {
       .member-item {
         padding: 10px 12px;
         min-height: 44px;
@@ -429,8 +476,17 @@
       display: none !important;
     }
 
-    #mobile-tab2-ui.projector-mode #mobile-team-cards {
-      padding: 6px !important;
+    /* Hide interactive UI elements (like drag handles) in projector mode */
+    #mobile-tab2-ui.projector-mode .mobile-card-members svg {
+      display: none !important;
+    }
+
+    /* Hide exit buttons in landscape since rotating back exits automatically */
+    @media (orientation: landscape) {
+      #mobile-seating-projector-exit,
+      #mobile-projector-exit {
+        display: none !important;
+      }
     }
 
     #mobile-tab2-ui.projector-mode #mobile-team-cards-inner {
@@ -450,14 +506,43 @@
       background: transparent !important;
     }
 
-    /* ===== HIDE SEATING TAB ON MOBILE ===== */
-    @media (max-width: 767px) {
-      #nav-tab5 {
+    /* ===== SEATING TAB ON MOBILE ===== */
+    @media (max-width: 767px), (max-width: 1000px) and (max-height: 500px) {
+      /* Hide editing tools on phone */
+      #seat-tools-section {
+        display: none !important;
+      }
+      
+      /* Hide sidebar and header in fullscreen on mobile seating */
+      #tab5.mobile-projector-mode #seat-sidebar {
         display: none !important;
       }
 
-      #export-preview-toggle {
+      .seating-mobile-fullscreen header {
         display: none !important;
+      }
+
+      /* Reorder sidebar: Staging Area at top for easy access */
+      #seat-sidebar {
+        display: flex;
+        flex-direction: column;
+      }
+      #seat-staging-section {
+        order: 1;
+        border-bottom: 1px solid #3e3d32;
+      }
+      #seat-actions-section {
+        order: 2;
+      }
+      #seat-constraints-section {
+        order: 3;
+      }
+      #export-preview-section {
+        order: 4;
+      }
+
+      #export-preview-toggle {
+        display: flex !important;
       }
 
       /* Let the container shrink to fit content instead of filling the screen */
@@ -481,6 +566,23 @@
         width: 100% !important;
         height: auto !important;
       }
+
+      /* Bigger touch targets for seating chips */
+      .seat-name-chip {
+        padding: 6px 10px !important;
+        font-size: 14px !important;
+        min-height: 40px !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+      }
+      .seat-chip-del {
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 16px !important;
+        top: -10px !important;
+        right: -10px !important;
+      }
     }
 
     /* ===== FILES MODAL ===== */
@@ -501,7 +603,7 @@
       transition: opacity 0.15s;
     }
 
-    @media (max-width: 767px) {
+    @media (max-width: 767px), (max-width: 1000px) and (max-height: 500px) {
       .file-actions {
         opacity: 1;
       }
@@ -547,19 +649,17 @@
 
 <body class="flex flex-col overflow-hidden">
   <!-- Header & Navigation -->
-  <header class="bg-zinc-900 border-b border-zinc-700 z-10 flex-shrink-0 shadow-md w-full relative">
+  <header class="bg-zinc-900 border-b border-zinc-700 z-[100] flex-shrink-0 shadow-md w-full relative">
     <div class="max-w-[1400px] mx-auto px-2 sm:px-6 lg:px-8">
       <div class="flex flex-col sm:flex-row justify-between pt-3 sm:pt-0 sm:h-[65px]">
-        <!-- Branding / Title Area -->
-        <div class="flex items-center gap-3 px-2 mb-2 sm:mb-0">
-          <div class="flex flex-col justify-center">
-            <span class="text-xl sm:text-[22px] font-bold tracking-tight text-[#F8F8F2] leading-none uppercase">TEAM
-              MAKER</span>
-            <span class="text-[11px] sm:text-xs text-[#F92672] font-mono mt-1 font-bold leading-none">&gt; Jonathan
-              Kung</span>
+        <!-- Branding Area -->
+        <div class="flex items-center justify-between gap-3 px-2 mb-2 sm:mb-0 w-full sm:w-auto">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base sm:text-[22px] font-bold tracking-tighter text-[#F8F8F2] leading-none uppercase whitespace-nowrap flex-shrink-0">TEAM MAKER</span>
+            <span class="text-[10px] sm:text-xs text-[#F92672] font-mono font-bold leading-none whitespace-nowrap truncate opacity-80 mt-0.5">&gt; Jonathan Kung</span>
           </div>
           <a href="https://ko-fi.com/coolpuddytat" target="_blank" rel="noopener" title="Support me on Ko-fi"
-            class="flex items-center gap-1 px-2 py-1 rounded-md border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:border-zinc-600 transition text-zinc-400 hover:text-[#F8F8F2] text-[11px] font-medium whitespace-nowrap flex-shrink-0">
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:border-zinc-600 transition text-[#F8F8F2] text-[11px] font-bold whitespace-nowrap flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline-block align-middle" viewBox="0 0 256 256">
               <g transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)">
                 <path d="M 35.982 81.106 c -13.1 0 -23.756 -5.859 -30.002 -16.498 C 0.451 55.282 0 45.181 0 33.895 c 0 -6.691 2.013 -12.517 5.819 -16.849 c 3.497 -3.979 8.453 -6.556 13.956 -7.258 c 6.532 -0.828 14.654 -0.896 23.097 -0.896 c 13.74 0 17.622 0.168 23.028 0.709 c 7.192 0.714 13.243 3.398 17.496 7.763 C 87.717 21.798 90 27.718 90 34.492 v 1.361 c 0 11.559 -7.727 21.233 -18.497 23.863 c -0.804 1.897 -1.8 3.784 -2.978 5.643 l -0.031 0.047 C 64.7 71.271 55.782 81.108 38.701 81.108 h -2.722 L 35.982 81.106 z" fill="#fff"/>
@@ -569,46 +669,84 @@
                 <path d="M 62.188 39.85 c 0 1.022 0.766 1.788 2.127 1.788 c 4.339 0 6.722 -2.468 6.722 -6.551 s -2.383 -6.637 -6.722 -6.637 c -1.361 0 -2.127 0.766 -2.127 1.788 v 9.615 V 39.85 z" fill="#202020"/>
                 <path d="M 20.411 39.338 c 0 5.02 2.807 9.359 6.381 12.764 c 2.383 2.298 6.127 4.681 8.678 6.212 c 0.766 0.425 1.532 0.681 2.383 0.681 c 1.022 0 1.871 -0.256 2.554 -0.681 c 2.554 -1.532 6.295 -3.914 8.593 -6.212 c 3.659 -3.403 6.466 -7.742 6.466 -12.764 c 0 -5.446 -4.083 -10.295 -9.954 -10.295 c -3.488 0 -5.871 1.788 -7.659 4.254 c -1.617 -2.468 -4.083 -4.254 -7.573 -4.254 c -5.956 0 -9.871 4.849 -9.871 10.295" fill="#ff5a16"/>
               </g>
-            </svg> <span class="hidden sm:inline">Tip me</span>
+            </svg> <span>Tip me</span>
           </a>
         </div>
 
         <!-- Navigation Tabs Area -->
-        <div class="flex items-end w-full sm:w-auto overflow-x-auto overflow-y-hidden no-scrollbar pb-0">
-          <nav class="flex space-x-1 px-1 sm:px-2 pt-2 sm:pt-0">
+        <div class="flex items-end w-full sm:w-auto sm:overflow-x-auto sm:overflow-y-hidden no-scrollbar pb-0">
+          <!-- Mobile Dropdown Nav -->
+          <div class="sm:hidden relative ml-2 mb-1.5 flex-1">
+            <button onclick="toggleMobileNavMenu()" id="mobile-nav-btn"
+              class="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm font-bold text-[#F8F8F2] active:bg-zinc-700 transition">
+              <div class="flex items-center gap-2">
+                <span class="text-zinc-500 font-medium">Menu:</span>
+                <span id="mobile-nav-label">Roster</span>
+              </div>
+              <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="mobile-nav-menu" class="hidden absolute left-0 right-0 top-full mt-2 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl z-[1000] overflow-hidden py-1 divide-y divide-zinc-800">
+              <button onclick="switchTab('tab1'); toggleMobileNavMenu();" class="w-full px-4 py-3 text-left text-sm font-medium text-zinc-300 active:bg-zinc-800 flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-zinc-600"></span> Roster
+              </button>
+              <button onclick="switchTab('tab2'); toggleMobileNavMenu();" class="w-full px-4 py-3 text-left text-sm font-medium text-zinc-300 active:bg-zinc-800 flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-[#A6E22E]"></span> Teams
+              </button>
+              <button onclick="switchTab('tab5'); toggleMobileNavMenu();" class="w-full px-4 py-3 text-left text-sm font-medium text-zinc-300 active:bg-zinc-800 flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-[#FD971F]"></span> Seating
+              </button>
+              <button onclick="switchTab('tab3'); toggleMobileNavMenu();" class="w-full px-4 py-3 text-left text-sm font-medium text-zinc-300 active:bg-zinc-800 flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-[#66D9EF]"></span> Export
+              </button>
+              <button onclick="switchTab('tab4'); toggleMobileNavMenu();" class="w-full px-4 py-3 text-left text-sm font-medium text-zinc-300 active:bg-zinc-800 flex items-center gap-3">
+                <span class="w-2 h-2 rounded-full bg-zinc-400"></span> About
+              </button>
+              <button onclick="openFilesModal(); toggleMobileNavMenu();" class="w-full px-4 py-3 text-left text-sm font-bold text-[#66D9EF] active:bg-zinc-800 flex items-center gap-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
+                </svg>
+                Files Manager
+              </button>
+            </div>
+          </div>
+
+          <!-- Desktop Tabs (Hidden on small screens) -->
+          <nav class="hidden sm:flex space-x-1 px-2 pt-2 sm:pt-0">
             <button onclick="switchTab('tab1')" id="nav-tab1"
-              class="editor-tab active px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 transition bg-zinc-850 whitespace-nowrap">
+              class="editor-tab active px-4 py-2.5 rounded-t-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 transition bg-zinc-850 whitespace-nowrap">
               Roster
             </button>
             <button onclick="switchTab('tab2')" id="nav-tab2"
-              class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
+              class="editor-tab px-4 py-2.5 rounded-t-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
               Teams
             </button>
             <button onclick="switchTab('tab5')" id="nav-tab5"
-              class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
+              class="editor-tab px-4 py-2.5 rounded-t-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
               Seating
             </button>
             <button onclick="switchTab('tab3')" id="nav-tab3"
-              class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
+              class="editor-tab px-4 py-2.5 rounded-t-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
               Export
             </button>
             <button onclick="switchTab('tab4')" id="nav-tab4"
-              class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
+              class="editor-tab px-4 py-2.5 rounded-t-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
               About
             </button>
           </nav>
           <div class="ml-auto pb-1.5 pl-2 pr-2 flex items-center gap-2 flex-shrink-0">
-            <!-- Files Manager Button -->
+            <!-- Files Manager Button (Desktop only) -->
             <button onclick="openFilesModal()"
-              class="h-7 sm:h-8 px-2.5 rounded text-[10px] sm:text-xs font-medium bg-zinc-800 text-[#66D9EF] hover:text-[#F8F8F2] hover:bg-zinc-700 transition flex items-center gap-1.5 border border-zinc-700 whitespace-nowrap">
+              class="hidden sm:flex h-8 px-2.5 rounded text-xs font-medium bg-zinc-800 text-[#66D9EF] hover:text-[#F8F8F2] hover:bg-zinc-700 transition items-center gap-1.5 border border-zinc-700 whitespace-nowrap">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
               </svg>
-              <span id="active-file-label" class="max-w-[80px] sm:max-w-[120px] truncate">Teams</span>
+              <span id="active-file-label" class="max-w-[120px] truncate">Teams</span>
             </button>
             <div id="autosave-indicator"
-              class="h-7 sm:h-8 px-2 flex items-center text-[10px] text-zinc-600 font-mono select-none whitespace-nowrap"
+              class="hidden sm:flex h-8 px-2 items-center text-[10px] text-zinc-600 font-mono select-none whitespace-nowrap"
               style="min-width: 48px; width: 48px; overflow: hidden">
               Saved
             </div>
@@ -900,12 +1038,7 @@
                   syncMobileToDesktop();
                   generateTeams();
                 "
-              class="flex-1 bg-[#A6E22E] text-zinc-900 py-3 rounded font-bold text-sm flex items-center justify-center gap-2 active:bg-[#8cc026]">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z">
-                </path>
-              </svg>
+              class="flex-1 bg-[#A6E22E] text-zinc-900 py-3 rounded font-bold text-sm flex items-center justify-center active:bg-[#8cc026]">
               Generate
             </button>
             <button onclick="toggleMobilePanel('settings')" id="mobile-settings-btn"
@@ -993,7 +1126,7 @@
         </div>
 
         <!-- Team cards area (scrollable normally, locked to screen in fullscreen) -->
-        <div id="mobile-team-cards" class="flex-1 overflow-y-auto p-2 bg-zinc-800">
+        <div id="mobile-team-cards" class="flex-1 min-h-0 overflow-y-auto p-2 bg-zinc-800" style="-webkit-overflow-scrolling: touch;">
           <div id="mobile-team-cards-inner" class="grid grid-cols-1 gap-2">
             <div class="col-span-full text-center text-zinc-500 py-16">
               <div class="text-5xl mb-4">👥</div>
@@ -1216,11 +1349,58 @@
 
     <!-- ================= TAB 5: SEATING ================= -->
     <div id="tab5" class="tab-content hide absolute inset-0 flex flex-col md:flex-row">
-      <!-- SEATING SIDEBAR -->
+      <!-- Floating projector-mode exit button (placed outside to avoid z-index trapping) -->
+      <button id="mobile-seating-projector-exit" onclick="exitMobileSeatingProjector()" style="display: none"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-zinc-900/40 border border-zinc-600/40 text-[#F8F8F2]/60 px-5 py-2.5 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 backdrop-blur-sm">
+        <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+        Exit Fullscreen
+      </button>
+
+      <!-- ===== MOBILE-ONLY SEATING UI ===== -->
+      <div id="mobile-tab5-ui">
+        <!-- Top control bar -->
+        <div id="mobile-seating-top-bar" class="bg-zinc-900 border-b border-zinc-700 flex-shrink-0">
+          <div class="flex items-center gap-2 p-3">
+            <button onclick="seatPrimaryAction()"
+              class="flex-1 bg-[#A6E22E] text-zinc-900 py-3 rounded font-bold text-sm flex items-center justify-center active:bg-[#8cc026]">
+              <span id="mobile-seat-primary-label">Assign Seats</span>
+            </button>
+            <button onclick="toggleMobileSeatingPanel('constraints')" id="mobile-seating-constraints-btn"
+              class="bg-zinc-800 border border-zinc-700 text-[#AE81FF] h-11 px-3 rounded text-sm flex items-center gap-1.5 active:bg-zinc-700">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                </path>
+              </svg>
+              <span>Rules</span>
+            </button>
+            <button onclick="enterMobileSeatingProjector()"
+              class="bg-zinc-800 border border-zinc-700 text-[#FD971F] h-11 w-11 rounded flex items-center justify-center active:bg-zinc-700 flex-shrink-0"
+              title="Projector Mode">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Collapsible: Constraints -->
+          <div id="mobile-seating-panel-constraints" class="hidden border-t border-zinc-700 p-3 bg-zinc-950">
+            <p class="text-xs text-zinc-500 mb-3 uppercase tracking-wider font-bold">Constraints</p>
+            <div id="mobile-seating-constraints-list" class="space-y-2 max-h-[40dvh] overflow-y-auto pr-1">
+              <!-- Populated by renderMobileSeatingConstraints() -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESKTOP SEATING SIDEBAR -->
       <div id="seat-sidebar"
         class="border-r border-zinc-700 flex flex-col h-[48dvh] md:h-full z-10 bg-zinc-900 shadow-xl relative flex-shrink-0 w-full md:w-[300px]">
         <!-- Actions -->
-        <div class="flex flex-col overflow-y-auto border-b border-zinc-700 flex-shrink-0">
+        <div id="seat-actions-section" class="flex flex-col overflow-y-auto border-b border-zinc-700 flex-shrink-0">
           <div class="p-4">
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
@@ -1288,7 +1468,7 @@
         </div>
 
         <!-- Tools -->
-        <div class="flex flex-col overflow-y-auto border-b border-zinc-700 flex-shrink-0">
+        <div id="seat-tools-section" class="flex flex-col overflow-y-auto border-b border-zinc-700 flex-shrink-0">
           <div
             class="px-3 py-2.5 bg-zinc-850 border-b border-zinc-700 text-xs font-bold text-[#FD971F] uppercase tracking-wider">
             Tools
@@ -1447,7 +1627,7 @@
         </div>
 
         <!-- Constraints (shared with Teams) -->
-        <div class="flex flex-col bg-zinc-900 border-b border-zinc-700 overflow-hidden"
+        <div id="seat-constraints-section" class="flex flex-col bg-zinc-900 border-b border-zinc-700 overflow-hidden"
           style="height: 190px; flex: 0 0 190px">
           <div
             class="p-2.5 bg-zinc-850 border-b border-zinc-700 text-xs font-bold text-[#FD971F] flex items-center space-x-2 flex-shrink-0">
@@ -1484,7 +1664,7 @@
         </div>
 
         <!-- Staging Area -->
-        <div class="flex flex-col bg-zinc-900 overflow-hidden" style="flex: 1 1 auto; min-height: 80px">
+        <div id="seat-staging-section" class="flex flex-col bg-zinc-900 overflow-hidden" style="flex: 1 1 auto; min-height: 80px">
           <div
             class="p-2.5 bg-zinc-850 border-b border-zinc-700 text-xs font-bold text-[#FD971F] flex items-center space-x-2 flex-shrink-0">
             <span class="uppercase tracking-wider">Staging Area</span>
@@ -1501,7 +1681,7 @@
 
       <!-- SEATING CANVAS -->
       <div id="seating-canvas-container"
-        class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto bg-grid">
+        class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto bg-grid" style="-webkit-overflow-scrolling: touch;">
 
         <!-- Exit Fullscreen button -->
         <button id="seat-exit-fullscreen-btn" onclick="document.exitFullscreen()"
@@ -3172,23 +3352,26 @@
       seatingPlanCleanSnapshot = f.seatingPlanCleanSnapshot || "";
       seatSeatsLoaded = !!f.seatRosterLoaded;
 
-      updateTab1UI();
-      updateConstraintSelects();
-      renderTeams();
-      renderSeats();
-      refreshExportIfVisible();
-      updateActiveFileLabel();
-      renderSeatingPlansList();
-      renderSaveSection();
-      hasUnsavedChanges = false;
-      const ind2 = document.getElementById("autosave-indicator");
-      if (ind2) {
-        ind2.textContent = "Saved";
-        ind2.style.color = "#6272a4";
-      }
+      // Delay UI rendering slightly to ensure modals close properly and mobile browsers repaint
+      setTimeout(() => {
+        updateTab1UI();
+        updateConstraintSelects();
+        renderTeams();
+        renderSeats();
+        refreshExportIfVisible();
+        updateActiveFileLabel();
+        renderSeatingPlansList();
+        renderSaveSection();
+        hasUnsavedChanges = false;
+        const ind2 = document.getElementById("autosave-indicator");
+        if (ind2) {
+          ind2.textContent = "Saved";
+          ind2.style.color = "#6272a4";
+        }
 
-      renderFilesList();
-      closeFilesModal();
+        renderFilesList();
+        closeFilesModal();
+      }, 50);
     }
 
     function deleteFile(id) {
@@ -3409,6 +3592,7 @@
                 }
                 loadData();
                 renderFilesList();
+                closeFilesModal();
                 showModal(
                   `Restored ${data.files.length} team(s)${planMsg} successfully!`,
                 );
@@ -3939,6 +4123,13 @@
     async function switchTab(tabId) {
       if (hasUnsavedChanges) saveData();
 
+      // Update mobile nav label immediately
+      const mobileLabel = document.getElementById("mobile-nav-label");
+      if (mobileLabel) {
+        const labels = { tab1: "Roster", tab2: "Teams", tab5: "Seating", tab3: "Export", tab4: "About" };
+        mobileLabel.textContent = labels[tabId] || "Menu";
+      }
+
       let bounds;
       if (tabId === "tab3") {
         bounds = getCanvasBounds();
@@ -3947,6 +4138,16 @@
       document
         .querySelectorAll(".tab-content")
         .forEach((el) => el.classList.add("hide"));
+      // Clean up any active mobile projector modes before switching
+      document.body.style.overflow = "";
+      document.body.classList.remove("seating-mobile-fullscreen");
+      const ui2 = document.getElementById("mobile-tab2-ui");
+      if (ui2) ui2.classList.remove("projector-mode");
+      const tab5 = document.getElementById("tab5");
+      if (tab5) tab5.classList.remove("mobile-projector-mode");
+      const sc = document.getElementById("seating-canvas-container");
+      if (sc) sc.style.touchAction = "";
+
       document.getElementById(tabId).classList.remove("hide");
 
       if (tabId === "tab3") {
@@ -3960,16 +4161,25 @@
         renderSeats();
         syncSeatConstraintSelects();
         syncSeatConstraintList();
+        updateMobileResponsiveView();
+      }
+      if (tabId === "tab2") {
+        updateMobileResponsiveView();
       }
 
       document.querySelectorAll(".editor-tab").forEach((btn) => {
-        btn.className =
-          "editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap";
+        btn.classList.remove("active", "bg-zinc-850", "text-zinc-200");
+        btn.classList.add("text-zinc-400");
         if (btn.id === "nav-" + tabId) {
-          btn.className =
-            "editor-tab active px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium transition whitespace-nowrap";
+          btn.classList.add("active", "bg-zinc-850", "text-zinc-200");
+          btn.classList.remove("text-zinc-400");
         }
       });
+    }
+
+    function toggleMobileNavMenu() {
+      const menu = document.getElementById("mobile-nav-menu");
+      if (menu) menu.classList.toggle("hidden");
     }
 
     function getCanvasBounds() {
@@ -5042,6 +5252,168 @@
       container.style.gap = "6px";
     }
 
+    function updateMobileResponsiveView() {
+      const isPhone = window.innerWidth < 768 || (window.innerWidth <= 1000 && window.innerHeight <= 500);
+      const isLandscape = window.innerWidth > window.innerHeight;
+
+      const tab5 = document.getElementById("tab5");
+      const tab2 = document.getElementById("tab2");
+
+      // Seating auto-projector
+      if (tab5 && !tab5.classList.contains("hide")) {
+        if (isPhone) {
+          // Sync primary button labels
+          const desktopBtn = document.getElementById("seat-primary-btn");
+          const mobileBtn = document.getElementById("mobile-seat-primary-label");
+          if (desktopBtn && mobileBtn) mobileBtn.textContent = desktopBtn.textContent;
+          // Sync constraints list if open
+          const constPanel = document.getElementById("mobile-seating-panel-constraints");
+          if (constPanel && !constPanel.classList.contains("hidden")) {
+            renderMobileSeatingConstraints();
+          }
+          // Ensure seating plan is visible and centered
+          setTimeout(fitCanvasToSeats, 50);
+
+          if (isLandscape && !tab5.classList.contains("mobile-projector-mode")) {
+            enterMobileSeatingProjector();
+          } else if (!isLandscape && tab5.classList.contains("mobile-projector-mode")) {
+            exitMobileSeatingProjector();
+          }
+        }
+      }
+
+      // Teams auto-projector
+      if (tab2 && !tab2.classList.contains("hide")) {
+        const ui = document.getElementById("mobile-tab2-ui");
+        if (isPhone && ui) {
+          renderTeamsMobile(); // Ensure DOM is synced
+          if (isLandscape && !ui.classList.contains("projector-mode")) {
+            enterMobileProjector();
+          } else if (!isLandscape && ui.classList.contains("projector-mode")) {
+            exitMobileProjector();
+          }
+        }
+      }
+    }
+
+    function toggleMobileSeatingPanel(panel) {
+      const constraintsEl = document.getElementById("mobile-seating-panel-constraints");
+      const constraintsBtn = document.getElementById("mobile-seating-constraints-btn");
+
+      const opening = constraintsEl.classList.contains("hidden");
+      constraintsEl.classList.toggle("hidden", !opening);
+      constraintsBtn.classList.toggle("border-[#AE81FF]", opening);
+      if (opening) renderMobileSeatingConstraints();
+    }
+
+    function enterMobileSeatingProjector() {
+      const tab5 = document.getElementById("tab5");
+      tab5.classList.add("mobile-projector-mode");
+      document.body.classList.add("seating-mobile-fullscreen");
+      // Re-enable native pinch-to-zoom for seating projector mode
+      document.body.style.touchAction = "auto";
+      
+      const canvasContainer = document.getElementById("seating-canvas-container");
+      if (canvasContainer) {
+        canvasContainer.style.touchAction = "auto";
+        // Capture state so changes in mobile projector don't affect normal mode
+        _preSeatProjectorZoom = seatCanvasZoom;
+        _preSeatScrollLeft = canvasContainer.scrollLeft;
+        _preSeatScrollTop = canvasContainer.scrollTop;
+      }
+      
+      const exitBtn = document.getElementById("mobile-seating-projector-exit");
+      if (exitBtn) exitBtn.style.display = "flex";
+
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen();
+      }
+      
+      window.scrollTo(0, 1);
+      
+      setTimeout(fitCanvasToSeats, 100);
+    }
+
+    function exitMobileSeatingProjector() {
+      const tab5 = document.getElementById("tab5");
+      tab5.classList.remove("mobile-projector-mode");
+      document.body.classList.remove("seating-mobile-fullscreen");
+      // Restore global pinch-to-zoom prevention
+      document.body.style.touchAction = "pan-x pan-y";
+      
+      const canvasContainer = document.getElementById("seating-canvas-container");
+      if (canvasContainer) canvasContainer.style.touchAction = "";
+      
+      const exitBtn = document.getElementById("mobile-seating-projector-exit");
+      if (exitBtn) exitBtn.style.display = "none";
+
+      if (document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen && document.webkitFullscreenElement) {
+        document.webkitExitFullscreen();
+      }
+      
+      if (_preSeatProjectorZoom !== null) {
+        setSeatZoom(_preSeatProjectorZoom);
+        _preSeatProjectorZoom = null;
+      }
+
+      // Force repaint to fix iOS scroll bug and refit
+      setTimeout(() => {
+        fitCanvasToSeats();
+        if (canvasContainer) {
+          canvasContainer.style.display = "none";
+          canvasContainer.offsetHeight; // trigger reflow
+          canvasContainer.style.display = "block";
+          canvasContainer.scrollLeft = _preSeatScrollLeft;
+          canvasContainer.scrollTop = _preSeatScrollTop;
+        }
+      }, 100);
+
+      if (_seatProjRotSnap) {
+        restoreSeatSnapshot(_seatProjRotSnap);
+        _seatProjRotSnap = null;
+      }
+    }
+
+    function renderMobileSeatingConstraints() {
+      const container = document.getElementById("mobile-seating-constraints-list");
+      if (!container) return;
+      
+      const allTogether = constraints.together.map((c, i) => ({ ...c, type: 'together', index: i }));
+      const allApart = constraints.apart.map((c, i) => ({ ...c, type: 'apart', index: i }));
+      const all = [...allTogether, ...allApart];
+
+      if (all.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-zinc-600 text-sm italic">No rules set</div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      all.forEach((c) => {
+        const item = document.createElement("div");
+        item.className = "flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded p-3";
+        const color = c.type === 'together' ? '#A6E22E' : '#F92672';
+        item.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-1.5 h-6 rounded-full" style="background:${color}"></div>
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[#F8F8F2] text-sm truncate">${getMemberName(c.id1)}</span>
+                <span class="text-zinc-600 text-[10px] font-bold uppercase">${c.type === 'together' ? '&' : 'vs'}</span>
+                <span class="text-[#F8F8F2] text-sm truncate">${getMemberName(c.id2)}</span>
+              </div>
+              <span class="text-[10px] uppercase font-bold tracking-widest" style="color:${color}">${c.type}</span>
+            </div>
+          </div>
+          <button onclick="removeConstraint('${c.type}', ${c.index}); renderMobileSeatingConstraints();" class="text-zinc-500 hover:text-[#F92672] p-1 text-lg">&times;</button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
     // --- Panel toggles ---
 
     function toggleMobilePanel(panel) {
@@ -5227,6 +5599,20 @@
       if (!el) return;
       el.classList.add("projector-mode");
       document.body.style.overflow = "hidden";
+      
+      const exitBtn = document.getElementById("mobile-projector-exit");
+      if (exitBtn) exitBtn.style.display = "flex";
+
+      // Attempt true fullscreen
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        document.documentElement.webkitRequestFullscreen();
+      }
+      
+      // Attempt to hide Safari chrome on rotate
+      window.scrollTo(0, 1);
+
       // Scroll teams back to the top so the first row is always visible
       const cards = document.getElementById("mobile-team-cards");
       if (cards) cards.scrollTop = 0;
@@ -5239,6 +5625,16 @@
       if (!el) return;
       el.classList.remove("projector-mode");
       document.body.style.overflow = "";
+      
+      const exitBtn = document.getElementById("mobile-projector-exit");
+      if (exitBtn) exitBtn.style.display = "none";
+
+      if (document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen && document.webkitFullscreenElement) {
+        document.webkitExitFullscreen();
+      }
+
       setTimeout(applyMobileGridLayout, 30);
     }
 
@@ -5266,7 +5662,12 @@
 
     // Re-layout on orientation change
     window.addEventListener("resize", () => {
-      setTimeout(applyMobileGridLayout, 80);
+      setTimeout(() => {
+        applyMobileGridLayout();
+        updateMobileResponsiveView();
+        const isSeatingTab = !document.getElementById("tab5")?.classList.contains("hide");
+        if (isSeatingTab) fitCanvasToSeats();
+      }, 80);
     });
 
     // Keep ALL constraint UI surfaces in sync whenever members or active team changes.
@@ -6285,6 +6686,8 @@
         });
         seatSeatsLoaded = true;
         btn.textContent = "Assign Seats";
+        const mobileLabel = document.getElementById("mobile-seat-primary-label");
+        if (mobileLabel) mobileLabel.textContent = "Assign Seats";
         renderSeats();
         markUnsaved();
       } else {
@@ -6397,7 +6800,11 @@
     function setSeatZoom(z) {
       seatCanvasZoom = Math.min(3, Math.max(0.25, parseFloat(z.toFixed(2))));
       const area = document.getElementById("seating-canvas-area");
-      if (area) area.style.transform = `scale(${seatCanvasZoom})`;
+      if (area) {
+        area.style.transform = `scale(${seatCanvasZoom})`;
+        // Scale layout size to allow panning to edges
+        setTimeout(fitCanvasToSeats, 10);
+      }
       const lbl = document.getElementById("seat-zoom-label");
       if (lbl) lbl.innerText = Math.round(seatCanvasZoom * 100) + "%";
       syncContainerGrid("seating-canvas-container", seatCanvasZoom, 0, 0);
@@ -6561,7 +6968,7 @@
     // Single entry point — permanent rotation normally, temporary in projector mode
     function handleSeatRotate() {
       const seatContainer = document.getElementById("seating-canvas-container");
-      const isProjector = document.fullscreenElement === seatContainer;
+      const isProjector = document.fullscreenElement === seatContainer || document.getElementById("tab5").classList.contains("mobile-projector-mode");
       if (isProjector) {
         if (!_seatProjRotSnap) _seatProjRotSnap = snapshotSeatState();
         rotateSeatMapCW(false);
@@ -6748,8 +7155,15 @@
         setSeatZoom(_preSeatProjectorZoom); // restores plain scale() transform
         _preSeatProjectorZoom = null;
         // Restore scroll position so the canvas is exactly where the user left it
-        seatContainer.scrollLeft = _preSeatScrollLeft;
-        seatContainer.scrollTop = _preSeatScrollTop;
+        setTimeout(() => {
+          fitCanvasToSeats();
+          // Force layout rebuild for Safari
+          seatContainer.style.display = "none";
+          seatContainer.offsetHeight;
+          seatContainer.style.display = "block";
+          seatContainer.scrollLeft = _preSeatScrollLeft;
+          seatContainer.scrollTop = _preSeatScrollTop;
+        }, 10);
         // Restore map to pre-rotation state if projector rotations were applied
         if (_seatProjRotSnap) {
           restoreSeatSnapshot(_seatProjRotSnap);
@@ -6805,6 +7219,7 @@
         );
       updateSeatStagingArea();
       fitCanvasToSeats();
+      if (window.innerWidth < 768) renderSeatsMobile();
     }
 
     function buildSeatEl(seat) {
@@ -7599,6 +8014,7 @@
       });
 
       el.addEventListener("contextmenu", (e) => {
+        if (window.innerWidth < 768) return; // No seating context menu on phone layout
         e.preventDefault();
         e.stopPropagation();
         openSeatContextMenu(e, seat.id);
