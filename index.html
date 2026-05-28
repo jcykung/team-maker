@@ -53,7 +53,7 @@
               300: "#F8F8F2",
               200: "#FFFFFF",
             },
-            monokai: {
+            accent: {
               pink: "#F92672",
               green: "#A6E22E",
               cyan: "#66D9EF",
@@ -152,6 +152,7 @@
         linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px),
         linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px);
       background-size: 80px 80px;
+      background-attachment: local;
     }
 
     .hide {
@@ -229,14 +230,27 @@
       display: none;
     }
 
-    :fullscreen {
+    :fullscreen,
+    :-webkit-full-screen,
+    :-moz-full-screen,
+    :-ms-fullscreen,
+    .is-projector,
+    .projector-mode {
+      background-color: var(--canvas-bg) !important;
+    }
+
+    #canvas-container,
+    #seating-canvas-container {
       background-color: var(--canvas-bg);
     }
 
     /* Hide grid lines in projector (fullscreen) mode */
-    :fullscreen .bg-grid {
-      background-image: none !important;
-    }
+    :fullscreen, :fullscreen .bg-grid { background-image: none !important; }
+    :-webkit-full-screen, :-webkit-full-screen .bg-grid { background-image: none !important; }
+    :-moz-full-screen, :-moz-full-screen .bg-grid { background-image: none !important; }
+    :-ms-fullscreen, :-ms-fullscreen .bg-grid { background-image: none !important; }
+    .is-projector, .is-projector .bg-grid,
+    .projector-mode, .projector-mode .bg-grid { background-image: none !important; }
 
     /* ===== PROJECTOR MODE (fullscreen) overrides ===== */
 
@@ -544,9 +558,18 @@
             <span class="text-[11px] sm:text-xs text-[#F92672] font-mono mt-1 font-bold leading-none">&gt; Jonathan
               Kung</span>
           </div>
-          <a href="https://ko-fi.com/coolpuddytat" target="_blank" rel="noopener" title="Buy me a coffee ☕"
+          <a href="https://ko-fi.com/coolpuddytat" target="_blank" rel="noopener" title="Support me on Ko-fi"
             class="flex items-center gap-1 px-2 py-1 rounded-md border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:border-zinc-600 transition text-zinc-400 hover:text-[#F8F8F2] text-[11px] font-medium whitespace-nowrap flex-shrink-0">
-            ☕ <span class="hidden sm:inline">Tip me</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline-block align-middle" viewBox="0 0 256 256">
+              <g transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)">
+                <path d="M 35.982 81.106 c -13.1 0 -23.756 -5.859 -30.002 -16.498 C 0.451 55.282 0 45.181 0 33.895 c 0 -6.691 2.013 -12.517 5.819 -16.849 c 3.497 -3.979 8.453 -6.556 13.956 -7.258 c 6.532 -0.828 14.654 -0.896 23.097 -0.896 c 13.74 0 17.622 0.168 23.028 0.709 c 7.192 0.714 13.243 3.398 17.496 7.763 C 87.717 21.798 90 27.718 90 34.492 v 1.361 c 0 11.559 -7.727 21.233 -18.497 23.863 c -0.804 1.897 -1.8 3.784 -2.978 5.643 l -0.031 0.047 C 64.7 71.271 55.782 81.108 38.701 81.108 h -2.722 L 35.982 81.106 z" fill="#fff"/>
+                <path d="M 65.336 15.261 c -5.105 -0.51 -8.678 -0.681 -22.462 -0.681 c -8.849 0 -16.337 0.085 -22.376 0.851 c -7.998 1.022 -14.805 7.147 -14.805 18.464 c 0 11.317 0.595 20.081 5.19 27.823 c 5.19 8.849 13.869 13.698 25.101 13.698 h 2.722 c 13.783 0 21.271 -7.317 25.015 -13.103 c 1.617 -2.554 2.807 -5.105 3.573 -7.659 c 9.785 -0.851 17.017 -8.934 17.017 -18.803 v -1.361 c 0 -10.634 -6.976 -18.037 -18.974 -19.23 H 65.336 z" fill="#fff"/>
+                <path d="M 5.691 33.895 c 0 -11.317 6.807 -17.442 14.805 -18.464 c 6.042 -0.766 13.53 -0.851 22.376 -0.851 c 13.783 0 17.356 0.171 22.461 0.681 c 11.998 1.19 18.974 8.593 18.974 19.23 v 1.361 c 0 9.871 -7.232 17.954 -17.017 18.803 c -0.766 2.554 -1.956 5.105 -3.573 7.659 c -3.744 5.785 -11.232 13.103 -25.015 13.103 H 35.98 c -11.232 0 -19.91 -4.849 -25.101 -13.698 c -4.595 -7.742 -5.19 -16.337 -5.19 -27.823" fill="#202020"/>
+                <path d="M 12.071 33.98 c 0 10.976 0.681 18.037 4.254 24.589 c 4.083 7.573 11.486 10.466 19.91 10.466 h 2.636 c 11.062 0 16.422 -5.361 19.401 -10.04 c 1.446 -2.383 2.722 -5.019 3.403 -8.339 l 0.51 -2.127 h 3.064 c 6.807 0 12.678 -5.529 12.678 -12.593 V 34.66 c 0 -7.912 -4.934 -12.083 -13.529 -13.103 c -4.849 -0.424 -7.742 -0.595 -21.527 -0.595 c -9.274 0 -15.91 0.085 -20.93 0.851 c -7.061 1.022 -9.871 5.02 -9.871 12.166" fill="#fff"/>
+                <path d="M 62.188 39.85 c 0 1.022 0.766 1.788 2.127 1.788 c 4.339 0 6.722 -2.468 6.722 -6.551 s -2.383 -6.637 -6.722 -6.637 c -1.361 0 -2.127 0.766 -2.127 1.788 v 9.615 V 39.85 z" fill="#202020"/>
+                <path d="M 20.411 39.338 c 0 5.02 2.807 9.359 6.381 12.764 c 2.383 2.298 6.127 4.681 8.678 6.212 c 0.766 0.425 1.532 0.681 2.383 0.681 c 1.022 0 1.871 -0.256 2.554 -0.681 c 2.554 -1.532 6.295 -3.914 8.593 -6.212 c 3.659 -3.403 6.466 -7.742 6.466 -12.764 c 0 -5.446 -4.083 -10.295 -9.954 -10.295 c -3.488 0 -5.871 1.788 -7.659 4.254 c -1.617 -2.468 -4.083 -4.254 -7.573 -4.254 c -5.956 0 -9.871 4.849 -9.871 10.295" fill="#ff5a16"/>
+              </g>
+            </svg> <span class="hidden sm:inline">Tip me</span>
           </a>
         </div>
 
@@ -1129,7 +1152,7 @@
       </div>
 
       <!-- Draggable Canvas Area -->
-      <div id="canvas-container" class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto">
+      <div id="canvas-container" class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto bg-grid">
         <!-- Floating Exit Projector Button -->
         <button id="exit-fullscreen-btn" onclick="document.exitFullscreen()"
           class="bg-[#F8F8F2] text-zinc-900 px-4 py-2 rounded shadow-lg font-bold items-center space-x-2 hover:bg-white transition">
@@ -1184,7 +1207,8 @@
         </div>
 
         <div id="canvas-area"
-          class="relative bg-grid w-[2400px] h-[2400px] transform origin-top-left transition-transform duration-75">
+          class="relative transform origin-top-left transition-transform duration-75"
+          style="width: 2400px; height: 2400px;">
           <!-- Teams will be injected here -->
         </div>
       </div>
@@ -1477,7 +1501,7 @@
 
       <!-- SEATING CANVAS -->
       <div id="seating-canvas-container"
-        class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto">
+        class="flex-1 w-full relative overflow-auto select-none touch-none lg:touch-auto bg-grid">
 
         <!-- Exit Fullscreen button -->
         <button id="seat-exit-fullscreen-btn" onclick="document.exitFullscreen()"
@@ -1550,7 +1574,7 @@
           </button>
         </div>
 
-        <div id="seating-canvas-area" class="relative bg-grid w-[2400px] h-[2400px] transform origin-top-left">
+        <div id="seating-canvas-area" class="relative transform origin-top-left" style="width: 2400px; height: 2400px;">
           <div id="seat-paint-preview" class="absolute pointer-events-none z-10" style="
                 display: none;
                 border: 2px dashed #66d9ef;
@@ -2095,8 +2119,17 @@
           <div
             class="mt-16 bg-zinc-950 rounded-2xl p-4 sm:p-10 border border-zinc-800 shadow-inner flex flex-col lg:flex-row gap-8 items-center">
             <div class="flex-1 text-center lg:text-left">
-              <h3 class="text-2xl sm:text-3xl font-bold mb-4 text-[#F92672]">
-                ☕ Support My Work
+              <h3 class="text-2xl sm:text-3xl font-bold mb-4 text-[#F92672] flex items-center justify-center lg:justify-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 flex-shrink-0" viewBox="0 0 256 256">
+                  <g transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)">
+                    <path d="M 35.982 81.106 c -13.1 0 -23.756 -5.859 -30.002 -16.498 C 0.451 55.282 0 45.181 0 33.895 c 0 -6.691 2.013 -12.517 5.819 -16.849 c 3.497 -3.979 8.453 -6.556 13.956 -7.258 c 6.532 -0.828 14.654 -0.896 23.097 -0.896 c 13.74 0 17.622 0.168 23.028 0.709 c 7.192 0.714 13.243 3.398 17.496 7.763 C 87.717 21.798 90 27.718 90 34.492 v 1.361 c 0 11.559 -7.727 21.233 -18.497 23.863 c -0.804 1.897 -1.8 3.784 -2.978 5.643 l -0.031 0.047 C 64.7 71.271 55.782 81.108 38.701 81.108 h -2.722 L 35.982 81.106 z" fill="#fff"/>
+                    <path d="M 65.336 15.261 c -5.105 -0.51 -8.678 -0.681 -22.462 -0.681 c -8.849 0 -16.337 0.085 -22.376 0.851 c -7.998 1.022 -14.805 7.147 -14.805 18.464 c 0 11.317 0.595 20.081 5.19 27.823 c 5.19 8.849 13.869 13.698 25.101 13.698 h 2.722 c 13.783 0 21.271 -7.317 25.015 -13.103 c 1.617 -2.554 2.807 -5.105 3.573 -7.659 c 9.785 -0.851 17.017 -8.934 17.017 -18.803 v -1.361 c 0 -10.634 -6.976 -18.037 -18.974 -19.23 H 65.336 z" fill="#fff"/>
+                    <path d="M 5.691 33.895 c 0 -11.317 6.807 -17.442 14.805 -18.464 c 6.042 -0.766 13.53 -0.851 22.376 -0.851 c 13.783 0 17.356 0.171 22.461 0.681 c 11.998 1.19 18.974 8.593 18.974 19.23 v 1.361 c 0 9.871 -7.232 17.954 -17.017 18.803 c -0.766 2.554 -1.956 5.105 -3.573 7.659 c -3.744 5.785 -11.232 13.103 -25.015 13.103 H 35.98 c -11.232 0 -19.91 -4.849 -25.101 -13.698 c -4.595 -7.742 -5.19 -16.337 -5.19 -27.823" fill="#202020"/>
+                    <path d="M 12.071 33.98 c 0 10.976 0.681 18.037 4.254 24.589 c 4.083 7.573 11.486 10.466 19.91 10.466 h 2.636 c 11.062 0 16.422 -5.361 19.401 -10.04 c 1.446 -2.383 2.722 -5.019 3.403 -8.339 l 0.51 -2.127 h 3.064 c 6.807 0 12.678 -5.529 12.678 -12.593 V 34.66 c 0 -7.912 -4.934 -12.083 -13.529 -13.103 c -4.849 -0.424 -7.742 -0.595 -21.527 -0.595 c -9.274 0 -15.91 0.085 -20.93 0.851 c -7.061 1.022 -9.871 5.02 -9.871 12.166" fill="#fff"/>
+                    <path d="M 62.188 39.85 c 0 1.022 0.766 1.788 2.127 1.788 c 4.339 0 6.722 -2.468 6.722 -6.551 s -2.383 -6.637 -6.722 -6.637 c -1.361 0 -2.127 0.766 -2.127 1.788 v 9.615 V 39.85 z" fill="#202020"/>
+                    <path d="M 20.411 39.338 c 0 5.02 2.807 9.359 6.381 12.764 c 2.383 2.298 6.127 4.681 8.678 6.212 c 0.766 0.425 1.532 0.681 2.383 0.681 c 1.022 0 1.871 -0.256 2.554 -0.681 c 2.554 -1.532 6.295 -3.914 8.593 -6.212 c 3.659 -3.403 6.466 -7.742 6.466 -12.764 c 0 -5.446 -4.083 -10.295 -9.954 -10.295 c -3.488 0 -5.871 1.788 -7.659 4.254 c -1.617 -2.468 -4.083 -4.254 -7.573 -4.254 c -5.956 0 -9.871 4.849 -9.871 10.295" fill="#ff5a16"/>
+                  </g>
+                </svg> Support My Work
               </h3>
               <p class="text-zinc-300 text-base sm:text-lg leading-relaxed mb-6">
                 I am a full-time high school teacher and I build tools like
@@ -2105,8 +2138,17 @@
                 motivated to keep improving it!
               </p>
               <a href="https://ko-fi.com/coolpuddytat" target="_blank" rel="noopener"
-                class="inline-block bg-[#ff38b8] text-white font-bold px-6 py-3 rounded-lg hover:opacity-90 transition text-sm">
-                ☕ Buy me a coffee on Ko-fi
+                class="inline-flex items-center gap-2 bg-[#ff38b8] text-white font-bold px-6 py-3 rounded-lg hover:opacity-90 transition text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0" viewBox="0 0 256 256">
+                  <g transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)">
+                    <path d="M 35.982 81.106 c -13.1 0 -23.756 -5.859 -30.002 -16.498 C 0.451 55.282 0 45.181 0 33.895 c 0 -6.691 2.013 -12.517 5.819 -16.849 c 3.497 -3.979 8.453 -6.556 13.956 -7.258 c 6.532 -0.828 14.654 -0.896 23.097 -0.896 c 13.74 0 17.622 0.168 23.028 0.709 c 7.192 0.714 13.243 3.398 17.496 7.763 C 87.717 21.798 90 27.718 90 34.492 v 1.361 c 0 11.559 -7.727 21.233 -18.497 23.863 c -0.804 1.897 -1.8 3.784 -2.978 5.643 l -0.031 0.047 C 64.7 71.271 55.782 81.108 38.701 81.108 h -2.722 L 35.982 81.106 z" fill="#fff"/>
+                    <path d="M 65.336 15.261 c -5.105 -0.51 -8.678 -0.681 -22.462 -0.681 c -8.849 0 -16.337 0.085 -22.376 0.851 c -7.998 1.022 -14.805 7.147 -14.805 18.464 c 0 11.317 0.595 20.081 5.19 27.823 c 5.19 8.849 13.869 13.698 25.101 13.698 h 2.722 c 13.783 0 21.271 -7.317 25.015 -13.103 c 1.617 -2.554 2.807 -5.105 3.573 -7.659 c 9.785 -0.851 17.017 -8.934 17.017 -18.803 v -1.361 c 0 -10.634 -6.976 -18.037 -18.974 -19.23 H 65.336 z" fill="#fff"/>
+                    <path d="M 5.691 33.895 c 0 -11.317 6.807 -17.442 14.805 -18.464 c 6.042 -0.766 13.53 -0.851 22.376 -0.851 c 13.783 0 17.356 0.171 22.461 0.681 c 11.998 1.19 18.974 8.593 18.974 19.23 v 1.361 c 0 9.871 -7.232 17.954 -17.017 18.803 c -0.766 2.554 -1.956 5.105 -3.573 7.659 c -3.744 5.785 -11.232 13.103 -25.015 13.103 H 35.98 c -11.232 0 -19.91 -4.849 -25.101 -13.698 c -4.595 -7.742 -5.19 -16.337 -5.19 -27.823" fill="#202020"/>
+                    <path d="M 12.071 33.98 c 0 10.976 0.681 18.037 4.254 24.589 c 4.083 7.573 11.486 10.466 19.91 10.466 h 2.636 c 11.062 0 16.422 -5.361 19.401 -10.04 c 1.446 -2.383 2.722 -5.019 3.403 -8.339 l 0.51 -2.127 h 3.064 c 6.807 0 12.678 -5.529 12.678 -12.593 V 34.66 c 0 -7.912 -4.934 -12.083 -13.529 -13.103 c -4.849 -0.424 -7.742 -0.595 -21.527 -0.595 c -9.274 0 -15.91 0.085 -20.93 0.851 c -7.061 1.022 -9.871 5.02 -9.871 12.166" fill="#fff"/>
+                    <path d="M 62.188 39.85 c 0 1.022 0.766 1.788 2.127 1.788 c 4.339 0 6.722 -2.468 6.722 -6.551 s -2.383 -6.637 -6.722 -6.637 c -1.361 0 -2.127 0.766 -2.127 1.788 v 9.615 V 39.85 z" fill="#202020"/>
+                    <path d="M 20.411 39.338 c 0 5.02 2.807 9.359 6.381 12.764 c 2.383 2.298 6.127 4.681 8.678 6.212 c 0.766 0.425 1.532 0.681 2.383 0.681 c 1.022 0 1.871 -0.256 2.554 -0.681 c 2.554 -1.532 6.295 -3.914 8.593 -6.212 c 3.659 -3.403 6.466 -7.742 6.466 -12.764 c 0 -5.446 -4.083 -10.295 -9.954 -10.295 c -3.488 0 -5.871 1.788 -7.659 4.254 c -1.617 -2.468 -4.083 -4.254 -7.573 -4.254 c -5.956 0 -9.871 4.849 -9.871 10.295" fill="#ff5a16"/>
+                  </g>
+                </svg> Buy me a coffee on Ko-fi
               </a>
             </div>
             <div
@@ -2479,7 +2521,7 @@
     let canvasZoom = 1;
     let exportZoom = 1;
 
-    // Monokai Theme Colors for Teams
+    // Theme Colors for Teams
     const teamColors = [
       {
         bg: "#F9267230",
@@ -2544,19 +2586,32 @@
     ];
 
     // ================= ZOOM & AUTO-FIT CONTROLS =================
+    // Helper to sync the infinite background grid on the container with the scaled area
+    function syncContainerGrid(containerId, zoom, tx = 0, ty = 0) {
+      const cont = document.getElementById(containerId);
+      if (!cont) return;
+      const isFs = !!document.fullscreenElement;
+      if (isFs) {
+        cont.style.backgroundImage = "none";
+        return;
+      }
+      const gs = 80 * zoom;
+      const lw = zoom; // match scaled line width
+      cont.style.backgroundImage =
+        `linear-gradient(to right, var(--canvas-dots) ${lw}px, transparent ${lw}px),` +
+        `linear-gradient(to bottom, var(--canvas-dots) ${lw}px, transparent ${lw}px)`;
+      cont.style.backgroundSize = `${gs}px ${gs}px`;
+      cont.style.backgroundPosition = `${tx}px ${ty}px`;
+      cont.style.backgroundAttachment = "local";
+    }
+
     function setCanvasZoom(z) {
       canvasZoom = Math.min(Math.max(0.2, z), 2.5);
       document.getElementById("canvas-area").style.transform =
         `scale(${canvasZoom})`;
       document.getElementById("canvas-zoom-label").innerText =
         Math.round(canvasZoom * 100) + "%";
-      // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
-      // Clear any extended grid background that fitTeamsToScreen may have applied
-      const cont = document.getElementById("canvas-container");
-      cont.style.backgroundImage = "";
-      cont.style.backgroundSize = "";
-      cont.style.backgroundPosition = "";
-      cont.style.backgroundAttachment = "";
+      syncContainerGrid("canvas-container", canvasZoom, 0, 0);
     }
 
     let exportPanX = 0,
@@ -2774,27 +2829,30 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
-        // Extend grid into the empty space left of / above the canvas area
-        if (tx > 0 || ty > 0) {
-          const gs = 80 * newScale;
-          container.style.backgroundImage =
-            "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
-            "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
-          container.style.backgroundSize = `${gs}px ${gs}px`;
-          container.style.backgroundPosition = `${tx}px ${ty}px`;
-          container.style.backgroundAttachment = "local";
-        } else {
-          container.style.backgroundImage = "";
-          container.style.backgroundSize = "";
-          container.style.backgroundPosition = "";
-          container.style.backgroundAttachment = "";
-        }
+        syncContainerGrid("canvas-container", newScale, tx, ty);
         container.scrollTo({
           left: Math.max(0, idealLeft),
           top: Math.max(0, idealTop),
           behavior: "smooth",
         });
       }, 50);
+    }
+
+    function fitCanvasToTeams() {
+      const area = document.getElementById("canvas-area");
+      if (!area) return;
+      let maxX = 800, maxY = 600;
+      teams.forEach(g => {
+        const estHeight = 62 + g.members.length * 34;
+        maxX = Math.max(maxX, g.x + 240);
+        maxY = Math.max(maxY, g.y + estHeight);
+      });
+      textboxes.filter(t => t.canvas === "teams").forEach(t => {
+        maxX = Math.max(maxX, t.x + (t.w || 200));
+        maxY = Math.max(maxY, t.y + (t.minH || 40));
+      });
+      area.style.width = (maxX + 160) + "px";
+      area.style.height = (maxY + 160) + "px";
     }
 
     // Adjust layout when entering Projector view
@@ -2806,11 +2864,13 @@
       const isTeamsFs = document.fullscreenElement === teamsContainer;
       if (teamsExitBtn) teamsExitBtn.style.display = isTeamsFs ? "flex" : "none";
       if (isTeamsFs) {
+        teamsContainer.classList.add("is-projector");
         _preTeamsProjectorZoom = canvasZoom;
         _preTeamsScrollLeft = teamsContainer.scrollLeft;
         _preTeamsScrollTop = teamsContainer.scrollTop;
         setTimeout(fitTeamsToScreen, 150);
       } else if (!document.fullscreenElement && _preTeamsProjectorZoom !== null) {
+        teamsContainer.classList.remove("is-projector");
         setCanvasZoom(_preTeamsProjectorZoom); // this restores plain scale() transform
         _preTeamsProjectorZoom = null;
         // Restore scroll position so the canvas is exactly where the user left it
@@ -3594,8 +3654,13 @@
       if (newMembers.length > 0) {
         allMembers = [...allMembers, ...newMembers];
         pool = [...pool, ...newMembers.map((s) => s.id)];
+        staging = [...staging, ...newMembers.map((s) => s.id)];
+        seatSeatsLoaded = true; // Ensure they show up in Seating staging area immediately
+
         updateTab1UI();
         updateConstraintSelects();
+        renderTeams();
+        renderSeats();
         markUnsaved();
       }
 
@@ -3618,6 +3683,17 @@
       teams.forEach(
         (g) => (g.members = g.members.filter((mId) => mId !== id)),
       );
+
+      // Clean up seating assignments
+      seats.forEach((s) => {
+        if (s.occupantId === id) s.occupantId = null;
+        if (s.sectionOccupants) {
+          s.sectionOccupants = s.sectionOccupants.map((mId) =>
+            mId === id ? null : mId,
+          );
+        }
+      });
+
       constraints.together = constraints.together.filter(
         (pair) => pair[0] !== id && pair[1] !== id,
       );
@@ -3628,6 +3704,7 @@
       updateTab1UI();
       updateConstraintSelects();
       renderTeams();
+      renderSeats();
       markUnsaved();
     }
 
@@ -3638,9 +3715,20 @@
         teams = [];
         staging = [];
         constraints = { together: [], apart: [] };
+
+        // Clear seating assignments
+        seats.forEach((s) => {
+          s.occupantId = null;
+          if (s.sectionOccupants) {
+            s.sectionOccupants = s.sectionOccupants.map(() => null);
+          }
+        });
+        resetSeatPrimaryBtn();
+
         updateTab1UI();
         updateConstraintSelects();
         renderTeams();
+        renderSeats();
         markUnsaved();
       });
     }
@@ -4514,6 +4602,7 @@
         editingTbId = box.id; // auto-enter edit mode on first creation
         markUnsaved();
         renderTeams();
+        fitCanvasToTeams();
         // Focus text for immediate editing
         setTimeout(() => {
           const el = document.getElementById("tb-el-" + box.id);
@@ -4537,6 +4626,7 @@
 
       // Also update mobile view
       renderTeamsMobile();
+      fitCanvasToTeams();
     }
 
     function createMemberElement(sId, sourceZone) {
@@ -4605,6 +4695,7 @@
       if (newY < 0) newY = 0;
       activeTeam.style.left = newX + "px";
       activeTeam.style.top = newY + "px";
+      fitCanvasToTeams();
     });
 
     document.addEventListener("mouseup", (e) => {
@@ -4659,6 +4750,7 @@
         if (newY < 0) newY = 0;
         activeTeam.style.left = newX + "px";
         activeTeam.style.top = newY + "px";
+        fitCanvasToTeams();
         if (e.cancelable) e.preventDefault();
       },
       { passive: false },
@@ -6065,6 +6157,8 @@
       if (tbEl) {
         tbEl.style.left = draggingTb.x + "px";
         tbEl.style.top = draggingTb.y + "px";
+        if (tbMode === "teams") fitCanvasToTeams();
+        else fitCanvasToSeats();
       }
     });
     document.addEventListener("mouseup", () => {
@@ -6306,14 +6400,7 @@
       if (area) area.style.transform = `scale(${seatCanvasZoom})`;
       const lbl = document.getElementById("seat-zoom-label");
       if (lbl) lbl.innerText = Math.round(seatCanvasZoom * 100) + "%";
-      // Clear any extended grid background that fitSeatsToScreen may have applied
-      const cont = document.getElementById("seating-canvas-container");
-      if (cont) {
-        cont.style.backgroundImage = "";
-        cont.style.backgroundSize = "";
-        cont.style.backgroundPosition = "";
-        cont.style.backgroundAttachment = "";
-      }
+      syncContainerGrid("seating-canvas-container", seatCanvasZoom, 0, 0);
       // Do NOT manually update backgroundSize — transform:scale handles grid scaling uniformly
     }
 
@@ -6616,27 +6703,29 @@
         const tx = idealLeft < 0 ? -idealLeft : 0;
         const ty = idealTop < 0 ? -idealTop : 0;
         area.style.transform = `translate(${tx}px, ${ty}px) scale(${newScale})`;
-        // Extend grid into the empty space left of / above the canvas area
-        if (tx > 0 || ty > 0) {
-          const gs = 80 * newScale;
-          container.style.backgroundImage =
-            "linear-gradient(to right, var(--canvas-dots) 1px, transparent 1px)," +
-            "linear-gradient(to bottom, var(--canvas-dots) 1px, transparent 1px)";
-          container.style.backgroundSize = `${gs}px ${gs}px`;
-          container.style.backgroundPosition = `${tx}px ${ty}px`;
-          container.style.backgroundAttachment = "local";
-        } else {
-          container.style.backgroundImage = "";
-          container.style.backgroundSize = "";
-          container.style.backgroundPosition = "";
-          container.style.backgroundAttachment = "";
-        }
+        syncContainerGrid("seating-canvas-container", newScale, tx, ty);
         container.scrollTo({
           left: Math.max(0, idealLeft),
           top: Math.max(0, idealTop),
           behavior: "smooth",
         });
       }, 50);
+    }
+
+    function fitCanvasToSeats() {
+      const area = document.getElementById("seating-canvas-area");
+      if (!area) return;
+      let maxX = 800, maxY = 600;
+      seats.forEach(s => {
+        maxX = Math.max(maxX, s.x + s.w);
+        maxY = Math.max(maxY, s.y + s.h);
+      });
+      textboxes.filter(t => t.canvas === "seating").forEach(t => {
+        maxX = Math.max(maxX, t.x + (t.w || 200));
+        maxY = Math.max(maxY, t.y + (t.minH || 60) + (t.size || 16) * 2);
+      });
+      area.style.width = (maxX + 160) + "px";
+      area.style.height = (maxY + 160) + "px";
     }
 
     let _preSeatProjectorZoom = null;
@@ -6649,11 +6738,13 @@
       if (btn) btn.style.display = "none"; // old top-right button always hidden now
       if (seatExitBtn) seatExitBtn.style.display = isSeatingFs ? "flex" : "none";
       if (isSeatingFs) {
+        seatContainer.classList.add("is-projector");
         _preSeatProjectorZoom = seatCanvasZoom;
         _preSeatScrollLeft = seatContainer.scrollLeft;
         _preSeatScrollTop = seatContainer.scrollTop;
         setTimeout(fitSeatsToScreen, 150);
       } else if (!document.fullscreenElement && _preSeatProjectorZoom !== null) {
+        seatContainer.classList.remove("is-projector");
         setSeatZoom(_preSeatProjectorZoom); // restores plain scale() transform
         _preSeatProjectorZoom = null;
         // Restore scroll position so the canvas is exactly where the user left it
@@ -6713,6 +6804,7 @@
           canvas.appendChild(buildTbEl(box, "seating-canvas-area")),
         );
       updateSeatStagingArea();
+      fitCanvasToSeats();
     }
 
     function buildSeatEl(seat) {
@@ -8462,6 +8554,7 @@
             seats = seats.filter((x) => x.id !== selectedSeatId);
             selectedSeatId = null;
             renderSeats();
+            fitCanvasToSeats();
             markUnsaved();
           }
           return;
@@ -8471,10 +8564,12 @@
           pushSeatUndoNow(); // capture before deletion
           textboxes = textboxes.filter((t) => t.id !== selectedTextboxId);
           selectedTextboxId = null;
-          hideSeatTbFloatingToolbar(); // CHANGE 1: hide toolbar when textbox deleted
+          hideSeatTbFloatingToolbar();
           markUnsaved();
           renderTeams();
+          fitCanvasToTeams();
           renderSeats();
+          fitCanvasToSeats();
           return;
         }
         return;
@@ -8510,13 +8605,14 @@
               }
             });
           } else if (selectedSeatId) {
-            const s = seats.find((x) => x.id === selectedSeatId);
+            const s = seats.find((s) => s.id === selectedSeatId);
             if (s) { s.x = Math.max(0, s.x + dx); s.y = Math.max(0, s.y + dy); }
           } else if (selectedTextboxId) {
             const tb = textboxes.find((t) => t.id === selectedTextboxId);
             if (tb) { tb.x = Math.max(0, tb.x + dx); tb.y = Math.max(0, tb.y + dy); }
           }
           renderSeats();
+          fitCanvasToSeats();
           markDirtyOnly();
           return;
         }
@@ -8633,6 +8729,7 @@
             }
           }
         });
+        fitCanvasToSeats();
         return;
       }
       if (draggingSeat) {
@@ -8656,6 +8753,7 @@
           el.style.left = nx + "px";
           el.style.top = ny + "px";
         }
+        fitCanvasToSeats();
       }
       if (resizingSeat && resizeHandle) {
         const dx = (e.clientX - resizeStartX) / seatCanvasZoom;
@@ -9719,13 +9817,13 @@
       svg.setAttribute("height", H);
       svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
       svg.style.cssText =
-        "background:#fafafa;border-radius:8px;display:block;box-shadow:0 4px 24px rgba(0,0,0,0.18);max-width:100%;";
+        "background:#ffffff;border-radius:8px;display:block;box-shadow:0 4px 24px rgba(0,0,0,0.18);max-width:100%;";
 
       // Background
       const bg = document.createElementNS(svgNS, "rect");
       bg.setAttribute("width", W);
       bg.setAttribute("height", H);
-      bg.setAttribute("fill", "#fafafa");
+      bg.setAttribute("fill", "#ffffff");
       svg.appendChild(bg);
 
       // File name + seating plan name labels — anchored just above the content area
