@@ -2183,30 +2183,29 @@
             Each team holds a roster, teams, and seating
           </p>
         </div>
-        <button onclick="closeFilesModal()"
-          class="text-zinc-500 hover:text-[#F8F8F2] transition text-2xl leading-none font-bold">
-          &times;
-        </button>
+        <div class="flex items-center gap-3"><button onclick="sortFilesAndFolders()" class="text-xs text-zinc-400 hover:text-[#E6DB74]">A to Z</button><button onclick="closeFilesModal()" class="text-zinc-500 hover:text-[#F8F8F2] transition text-2xl leading-none font-bold">&times;</button></div>
       </div>
 
       <!-- File list -->
-      <div id="files-list" class="divide-y divide-zinc-800 max-h-[45vh] overflow-y-auto">
+      <div id="files-list" class="divide-y divide-zinc-800 max-h-[45vh] overflow-y-auto" oncontextmenu="showFileContextMenu(event)">
         <!-- Populated by renderFilesList() -->
       </div>
 
       <!-- New file input -->
       <div class="p-4 border-t border-zinc-700">
         <div class="flex gap-2">
-          <input type="text" id="new-file-name" placeholder="New team name (e.g. Group A, Period 3…)"
+          <input type="text" id="new-file-name" placeholder="New team name"
             class="flex-1 bg-zinc-950 border border-zinc-700 text-[#F8F8F2] rounded text-sm px-3 py-2 outline-none focus:border-[#A6E22E] placeholder-zinc-600" />
           <button onclick="createNewFile()"
             class="bg-[#A6E22E] text-zinc-900 px-4 py-2 rounded font-bold text-sm hover:bg-[#8cc026] transition flex-shrink-0">
             + New Team
           </button>
+          <button onclick="createNewFolder()" title="Create folder"
+            class="bg-zinc-800 border border-zinc-700 text-[#66D9EF] px-3 py-2 rounded font-bold text-sm hover:bg-zinc-700 transition">+ Folder</button>
         </div>
       </div>
 
-      <!-- Backup section -->
+      <!-- Backup and transfer actions -->
       <div class="p-4 pt-0 flex flex-col gap-2">
         <div class="flex flex-col sm:flex-row gap-2">
           <button onclick="exportAllFilesJSON()"
@@ -2215,7 +2214,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
             </svg>
-            Backup All Teams (.json)
+            Create Backup File
           </button>
           <button onclick="document.getElementById('restore-all-json').click()"
             class="flex-1 bg-zinc-800 border border-zinc-700 text-[#E6DB74] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
@@ -2223,7 +2222,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"></path>
             </svg>
-            Restore from Backup
+            Restore Backup File
           </button>
         </div>
         <button onclick="document.getElementById('import-single-json').click()"
@@ -2232,12 +2231,31 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16">
             </path>
           </svg>
-          Import Team (.json) — adds to your existing teams
+          Import Teams
+        </button>
+        <button onclick="openExportTeamsModal()"
+          class="w-full bg-zinc-800 border border-zinc-700 text-[#A6E22E] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
+          Export Teams
         </button>
         <input type="file" id="restore-all-json" accept=".json" class="hidden" onchange="restoreFromBackup(event)" />
         <input type="file" id="import-single-json" accept=".json" class="hidden"
           onchange="importSingleFileJSON(event)" />
       </div>
+    </div>
+  </div>
+
+  <div id="file-context-menu" class="fixed z-[9995] hidden bg-zinc-900 border border-zinc-700 rounded shadow-2xl py-1 min-w-40 text-sm">
+    <button id="context-rename" class="w-full text-left px-3 py-2 hover:bg-zinc-800 text-zinc-200">Rename</button>
+    <button id="context-delete" class="w-full text-left px-3 py-2 hover:bg-zinc-800 text-[#F92672]">Delete</button>
+    <button id="context-new-folder" class="w-full text-left px-3 py-2 hover:bg-zinc-800 text-[#66D9EF]">New folder</button>
+  </div>
+
+  <div id="team-selection-modal" class="fixed inset-0 z-[9993] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between p-5 border-b border-zinc-700"><h3 id="team-selection-title" class="text-lg font-bold text-[#66D9EF]">Select Teams</h3><button onclick="closeTeamSelectionModal()" class="text-zinc-500 text-2xl">&times;</button></div>
+      <div class="p-3 border-b border-zinc-700 flex gap-2"><button onclick="setAllTeamSelections(true)" class="text-xs text-[#A6E22E]">Select all</button><button onclick="setAllTeamSelections(false)" class="text-xs text-zinc-400">Clear all</button></div>
+      <div id="team-selection-list" class="overflow-y-auto p-3 flex-1"></div>
+      <div class="p-4 border-t border-zinc-700 flex justify-end gap-2"><button onclick="closeTeamSelectionModal()" class="px-3 py-2 text-sm text-zinc-400">Cancel</button><button id="team-selection-confirm" class="px-3 py-2 bg-[#A6E22E] text-zinc-900 rounded text-sm font-bold">Continue</button></div>
     </div>
   </div>
 
@@ -2458,39 +2476,24 @@
       updateUndoRedoBtns();
     }
 
-    // Push undo immediately (before action happens) - correct approach
-    function pushSeatUndoNow() {
-      pushSeatUndo();
-    }
+    function pushSeatUndoNow() { pushSeatUndo(); }
 
-    // Trigger autosave without pushing to undo stack (used after drags)
     function markDirtyOnly() {
       hasUnsavedChanges = true;
       const ind = document.getElementById("autosave-indicator");
-      if (ind) {
-        ind.textContent = "···";
-        ind.style.color = "#6272a4";
-      }
+      if (ind) { ind.textContent = "···"; ind.style.color = "#6272a4"; }
       clearTimeout(_autoSaveTimer);
-      _autoSaveTimer = setTimeout(() => {
-        saveData();
-      }, 800);
+      _autoSaveTimer = setTimeout(() => saveData(), 800);
     }
 
     function seatUndo() {
-      if (seatUndoStack.length === 0) return;
-      seatRedoStack.push(snapshotSeatState());
-      const prev = seatUndoStack.pop();
-      restoreSeatSnapshot(prev);
-      updateUndoRedoBtns();
+      if (!seatUndoStack.length) return;
+      seatRedoStack.push(snapshotSeatState()); restoreSeatSnapshot(seatUndoStack.pop()); updateUndoRedoBtns();
     }
 
     function seatRedo() {
-      if (seatRedoStack.length === 0) return;
-      seatUndoStack.push(snapshotSeatState());
-      const next = seatRedoStack.pop();
-      restoreSeatSnapshot(next);
-      updateUndoRedoBtns();
+      if (!seatRedoStack.length) return;
+      seatUndoStack.push(snapshotSeatState()); restoreSeatSnapshot(seatRedoStack.pop()); updateUndoRedoBtns();
     }
 
     function restoreSeatSnapshot(json) {
@@ -2884,11 +2887,16 @@
     // ================= MULTI-FILE SYSTEM =================
 
     const FILES_KEY = "teamMakerFiles";
+    const FOLDERS_KEY = "teamMakerFolders";
     const ACTIVE_KEY = "teamMakerActiveFile";
 
     function getAllFiles() {
       try {
-        return JSON.parse(localStorage.getItem(FILES_KEY)) || [];
+        return (JSON.parse(localStorage.getItem(FILES_KEY)) || []).map(file => ({
+          ...file,
+          folderId: file.folderId || null,
+          sortOrder: Number.isFinite(file.sortOrder) ? file.sortOrder : 0,
+        }));
       } catch {
         return [];
       }
@@ -2898,37 +2906,39 @@
       localStorage.setItem(FILES_KEY, JSON.stringify(files));
     }
 
-    function getActiveFileId() {
-      return localStorage.getItem(ACTIVE_KEY);
+    function getAllFolders() {
+      try {
+        return JSON.parse(localStorage.getItem(FOLDERS_KEY)) || [];
+      } catch {
+        return [];
+      }
     }
 
-    function setActiveFileId(id) {
-      localStorage.setItem(ACTIVE_KEY, id);
+    function saveAllFolders(folders) {
+      localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
     }
 
-    function getActiveFile() {
-      const files = getAllFiles();
-      const id = getActiveFileId();
-      return files.find((f) => f.id === id) || files[0] || null;
+    function getFolder(id) {
+      return getAllFolders().find(folder => folder.id === id) || null;
     }
 
-    function updateActiveFileLabel() {
-      const f = getActiveFile();
-      const lbl = document.getElementById("active-file-label");
-      if (lbl) lbl.textContent = f ? f.name : "Teams";
+    function isFolderDescendant(folderId, possibleParentId, folders = getAllFolders()) {
+      let current = folders.find(folder => folder.id === possibleParentId);
+      while (current) {
+        if (current.parentId === folderId) return true;
+        current = folders.find(folder => folder.id === current.parentId);
+      }
+      return false;
     }
 
     // ================= SAVE & LOAD =================
     let _autoSaveTimer = null;
     function markUnsaved() {
-      // Autosave only — undo is pushed BEFORE mutations via pushSeatUndoNow()
       hasUnsavedChanges = true;
       const ind = document.getElementById("autosave-indicator");
       if (ind) ind.textContent = "···";
       clearTimeout(_autoSaveTimer);
-      _autoSaveTimer = setTimeout(() => {
-        saveData();
-      }, 800);
+      _autoSaveTimer = setTimeout(() => saveData(), 800);
     }
 
     function saveData() {
@@ -2936,42 +2946,16 @@
       let id = getActiveFileId();
       if (!id || !files.find((f) => f.id === id)) {
         id = generateId();
-        files.push({
-          id,
-          name: "Default",
-          allMembers: [],
-          pool: [],
-          teams: [],
-          staging: [],
-          constraints: { together: [], apart: [] },
-          updatedAt: Date.now(),
-        });
+        files.push({ id, name: "Default", folderId: null, sortOrder: 0, allMembers: [], pool: [], teams: [], staging: [], constraints: { together: [], apart: [] }, updatedAt: Date.now() });
         saveAllFiles(files);
         setActiveFileId(id);
       }
       const idx = files.findIndex((f) => f.id === id);
-      files[idx] = {
-        ...files[idx],
-        allMembers,
-        pool,
-        teams,
-        staging,
-        constraints,
-        seats,
-        textboxes,
-        seatRosterLoaded: seatSeatsLoaded,
-        activeSeatingPlanId: currentSeatingPlanId,
-        activeSeatingPlanName: currentSeatingPlanName,
-        seatingPlanCleanSnapshot,
-        updatedAt: Date.now(),
-      };
+      files[idx] = { ...files[idx], allMembers, pool, teams, staging, constraints, seats, textboxes, seatRosterLoaded: seatSeatsLoaded, activeSeatingPlanId: currentSeatingPlanId, activeSeatingPlanName: currentSeatingPlanName, seatingPlanCleanSnapshot, updatedAt: Date.now() };
       saveAllFiles(files);
       hasUnsavedChanges = false;
       const ind = document.getElementById("autosave-indicator");
-      if (ind) {
-        ind.textContent = "Saved";
-        ind.style.color = "#6272a4";
-      }
+      if (ind) { ind.textContent = "Saved"; ind.style.color = "#6272a4"; }
       updateActiveFileLabel();
     }
 
@@ -3093,6 +3077,120 @@
       });
     }
 
+    function renderFilesList() {
+      const files = getAllFiles();
+      const folders = getAllFolders();
+      const container = document.getElementById("files-list");
+      if (!container) return;
+      container.innerHTML = "";
+      if (!files.length && !folders.length) {
+        container.innerHTML = `<div class="p-6 text-center text-zinc-500 text-sm">No teams or folders yet. Create one below.</div>`;
+        return;
+      }
+      const activeId = getActiveFileId();
+      const renderBranch = (parentId, depth) => {
+        folders.filter(folder => (folder.parentId || null) === parentId).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)).forEach(folder => {
+          const row = document.createElement("div");
+          row.className = "folder-item flex items-center gap-2 px-3 py-2 hover:bg-zinc-800/60 transition cursor-pointer";
+          row.draggable = true; row.dataset.itemType = "folder"; row.dataset.itemId = folder.id; row.style.paddingLeft = `${12 + depth * 18}px`;
+          row.innerHTML = `<button class="folder-toggle text-zinc-400 w-5">${folder.collapsed ? "▸" : "▾"}</button><span class="text-[#E6DB74]">▰</span><span class="folder-name-display flex-1 truncate font-medium">${escapeHtml(folder.name)}</span>`;
+          row.querySelector(".folder-toggle").onclick = event => { event.stopPropagation(); folder.collapsed = !folder.collapsed; saveAllFolders(folders); renderFilesList(); };
+          row.querySelector(".folder-name-display").onclick = event => { event.stopPropagation(); renameFolderPrompt(folder.id); };
+          row.oncontextmenu = event => showFileContextMenu(event, "folder", folder.id);
+          row.ondragstart = event => event.dataTransfer.setData("text/plain", JSON.stringify({ type: "folder", id: folder.id }));
+          row.ondragover = event => event.preventDefault(); row.ondrop = event => { event.preventDefault(); moveDraggedItem(event, "folder", folder.id); };
+          container.appendChild(row);
+          if (!folder.collapsed) renderBranch(folder.id, depth + 1);
+        });
+        files.filter(file => (file.folderId || null) === parentId).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)).forEach(file => {
+          const row = document.createElement("div");
+          row.className = `file-item flex items-center gap-2 px-3 py-2 ${file.id === activeId ? "bg-zinc-800" : "hover:bg-zinc-800/50"} transition cursor-pointer`;
+          row.style.paddingLeft = `${38 + depth * 18}px`; row.draggable = true; row.dataset.itemType = "file"; row.dataset.itemId = file.id;
+          row.innerHTML = `<span class="text-zinc-500">▱</span><span class="file-name-display flex-1 min-w-0 truncate text-sm font-medium text-[#F8F8F2]">${escapeHtml(file.name)}</span><span class="text-xs text-zinc-600">${file.allMembers ? file.allMembers.length : 0}</span>`;
+          row.onclick = () => loadFile(file.id); row.querySelector(".file-name-display").onclick = event => { event.stopPropagation(); renameFilePrompt(file.id); };
+          row.oncontextmenu = event => showFileContextMenu(event, "file", file.id);
+          row.ondragstart = event => event.dataTransfer.setData("text/plain", JSON.stringify({ type: "file", id: file.id }));
+          row.ondragover = event => event.preventDefault(); row.ondrop = event => { event.preventDefault(); moveDraggedItem(event, "file", file.id); };
+          container.appendChild(row);
+        });
+      };
+      renderBranch(null, 0);
+    }
+
+    function createNewFolder(parentId = null) {
+      const name = prompt("Folder name:", "New Folder");
+      if (!name || !name.trim()) return;
+      const folders = getAllFolders();
+      folders.push({ id: "folder_" + generateId(), name: name.trim(), parentId, collapsed: false, sortOrder: folders.length });
+      saveAllFolders(folders); renderFilesList();
+    }
+
+    function renameFolderPrompt(id) {
+      const folders = getAllFolders(); const folder = folders.find(item => item.id === id);
+      if (!folder) return;
+      const name = prompt("Rename folder:", folder.name);
+      if (name && name.trim()) { folder.name = name.trim(); saveAllFolders(folders); renderFilesList(); }
+    }
+
+    function renameFilePrompt(id) {
+      const files = getAllFiles(); const file = files.find(item => item.id === id);
+      if (!file) return;
+      const name = prompt("Rename team:", file.name);
+      if (name && name.trim()) { file.name = name.trim(); file.updatedAt = Date.now(); saveAllFiles(files); updateActiveFileLabel(); renderFilesList(); }
+    }
+
+    function deleteFolder(id) {
+      const folders = getAllFolders(); const folder = folders.find(item => item.id === id);
+      if (!folder) return;
+      const ids = folders.filter(item => item.id === id || isFolderDescendant(id, item.id, folders)).map(item => item.id);
+      const files = getAllFiles(); const removed = files.filter(file => ids.includes(file.folderId));
+      showModal(`Delete "${folder.name}" and its ${removed.length} team(s)? This cannot be undone.`, true, () => {
+        saveAllFolders(folders.filter(item => !ids.includes(item.id))); const remaining = files.filter(file => !ids.includes(file.folderId)); saveAllFiles(remaining);
+        if (removed.some(file => file.id === getActiveFileId())) { setActiveFileId(remaining[0]?.id || ""); loadData(); }
+        renderFilesList();
+      });
+    }
+
+    function showFileContextMenu(event, type = null, id = null) {
+      event.preventDefault(); event.stopPropagation(); const menu = document.getElementById("file-context-menu");
+      menu.dataset.itemType = type || "root"; menu.dataset.itemId = id || ""; menu.style.left = `${Math.min(event.clientX, window.innerWidth - 170)}px`; menu.style.top = `${Math.min(event.clientY, window.innerHeight - 130)}px`; menu.classList.remove("hidden");
+      document.getElementById("context-rename").style.display = type ? "block" : "none"; document.getElementById("context-delete").style.display = type ? "block" : "none";
+    }
+
+    document.addEventListener("click", () => document.getElementById("file-context-menu")?.classList.add("hidden"));
+    document.getElementById("context-rename")?.addEventListener("click", event => { const menu = document.getElementById("file-context-menu"); if (menu.dataset.itemType === "folder") renameFolderPrompt(menu.dataset.itemId); else renameFilePrompt(menu.dataset.itemId); event.stopPropagation(); });
+    document.getElementById("context-delete")?.addEventListener("click", event => { const menu = document.getElementById("file-context-menu"); if (menu.dataset.itemType === "folder") deleteFolder(menu.dataset.itemId); else deleteFile(menu.dataset.itemId); event.stopPropagation(); });
+    document.getElementById("context-new-folder")?.addEventListener("click", event => { const menu = document.getElementById("file-context-menu"); createNewFolder(menu.dataset.itemType === "folder" ? menu.dataset.itemId : null); event.stopPropagation(); });
+
+    function moveDraggedItem(event, targetType, targetId) {
+      let source; try { source = JSON.parse(event.dataTransfer.getData("text/plain")); } catch { return; }
+      if (!source || source.id === targetId) return;
+      const files = getAllFiles(); const folders = getAllFolders();
+      if (source.type === "folder") {
+        const folder = folders.find(item => item.id === source.id); if (!folder || (targetType === "folder" && isFolderDescendant(source.id, targetId, folders))) return;
+        folder.parentId = targetType === "folder" ? targetId : null; folder.sortOrder = Date.now(); saveAllFolders(folders);
+      } else {
+        const file = files.find(item => item.id === source.id); if (!file) return;
+        if (targetType === "folder") {
+          file.folderId = targetId;
+          file.sortOrder = Date.now();
+        } else {
+          const target = files.find(item => item.id === targetId);
+          file.folderId = target?.folderId || null;
+          const bounds = event.currentTarget.getBoundingClientRect();
+          file.sortOrder = (target?.sortOrder || 0) + (event.clientY > bounds.top + bounds.height / 2 ? 0.5 : -0.5);
+        }
+        saveAllFiles(files);
+      }
+      renderFilesList();
+    }
+
+    function sortFilesAndFolders() {
+      saveAllFiles(getAllFiles().sort((a, b) => a.name.localeCompare(b.name)).map((file, index) => ({ ...file, sortOrder: index })));
+      saveAllFolders(getAllFolders().sort((a, b) => a.name.localeCompare(b.name)).map((folder, index) => ({ ...folder, sortOrder: index })));
+      renderFilesList();
+    }
+
     function createNewFile() {
       const input = document.getElementById("new-file-name");
       const name = input.value.trim() || "New File";
@@ -3118,6 +3216,8 @@
       files.push({
         id,
         name,
+        folderId: null,
+        sortOrder: files.length,
         allMembers: [],
         pool: [],
         teams: [],
@@ -3359,6 +3459,12 @@
       return JSON.parse(new TextDecoder().decode(plaintext));
     }
 
+    function getExportTimestamp() {
+      const now = new Date();
+      const pad = value => String(value).padStart(2, "0");
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    }
+
     async function exportAllFilesJSON() {
       // Save current state first
       saveData();
@@ -3369,6 +3475,7 @@
         exportedAt: new Date().toISOString(),
         activeFileId: getActiveFileId(),
         files,
+        folders: getAllFolders(),
         seatingPlans, // ← seating arrangements now included in backup
         // Legacy single-file fields for backward compat
         allMembers,
@@ -3378,8 +3485,7 @@
         constraints,
       };
       const jsonStr = await encryptExport(backup);
-      const jsonFilename =
-        "teammaker_backup_" + new Date().toISOString().slice(0, 10) + ".json";
+      const jsonFilename = "teammaker_backup_" + getExportTimestamp() + ".json";
       // Mobile share sheet
       if (navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
         try {
@@ -3574,6 +3680,138 @@
         }
       };
       reader.readAsText(file);
+    }
+
+    let teamSelectionContext = null;
+
+    function getFilesInFolder(folderId, files, folders) {
+      const folderIds = new Set([folderId]);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        folders.forEach(folder => {
+          if (folderIds.has(folder.parentId) && !folderIds.has(folder.id)) { folderIds.add(folder.id); changed = true; }
+        });
+      }
+      return files.filter(file => folderIds.has(file.folderId)).map(file => file.id);
+    }
+
+    function openTeamSelectionModal(title, data, mode) {
+      teamSelectionContext = { data, mode, selected: new Set((data.files || []).map(file => file.id)) };
+      document.getElementById("team-selection-title").textContent = title;
+      const list = document.getElementById("team-selection-list");
+      const folders = data.folders || [];
+      const files = data.files || [];
+      list.innerHTML = "";
+      const renderFolder = (parentId, depth) => {
+        folders.filter(folder => (folder.parentId || null) === parentId).sort((a, b) => a.name.localeCompare(b.name)).forEach(folder => {
+          const childIds = getFilesInFolder(folder.id, files, folders);
+          const row = document.createElement("label");
+          row.className = "flex items-center gap-2 py-1 text-sm text-[#E6DB74]";
+          row.style.paddingLeft = `${depth * 18}px`;
+          row.innerHTML = `<input type="checkbox" data-folder-select="${folder.id}" checked><span>▰ ${escapeHtml(folder.name)}</span>`;
+          row.querySelector("input").onchange = event => {
+            files.filter(file => childIds.includes(file.id)).forEach(file => event.target.checked ? teamSelectionContext.selected.add(file.id) : teamSelectionContext.selected.delete(file.id));
+            list.querySelectorAll("input[data-file-select]").forEach(input => { input.checked = teamSelectionContext.selected.has(input.dataset.fileSelect); });
+          };
+          list.appendChild(row);
+          renderFolder(folder.id, depth + 1);
+        });
+        files.filter(file => (file.folderId || null) === parentId).sort((a, b) => a.name.localeCompare(b.name)).forEach(file => {
+          const row = document.createElement("label");
+          row.className = "flex items-center gap-2 py-1 text-sm text-zinc-200";
+          row.style.paddingLeft = `${12 + depth * 18}px`;
+          row.innerHTML = `<input type="checkbox" data-file-select="${file.id}" checked><span>▱ ${escapeHtml(file.name)}</span>`;
+          row.querySelector("input").onchange = event => event.target.checked ? teamSelectionContext.selected.add(file.id) : teamSelectionContext.selected.delete(file.id);
+          list.appendChild(row);
+        });
+      };
+      renderFolder(null, 0);
+      const modal = document.getElementById("team-selection-modal");
+      modal.classList.remove("hidden"); modal.classList.add("flex");
+      document.getElementById("team-selection-confirm").onclick = finishTeamSelection;
+    }
+
+    function setAllTeamSelections(checked) {
+      if (!teamSelectionContext) return;
+      teamSelectionContext.selected = new Set(checked ? (teamSelectionContext.data.files || []).map(file => file.id) : []);
+      document.querySelectorAll("#team-selection-list input").forEach(input => input.checked = checked);
+    }
+
+    function closeTeamSelectionModal() {
+      document.getElementById("team-selection-modal").classList.add("hidden");
+      document.getElementById("team-selection-modal").classList.remove("flex");
+      teamSelectionContext = null;
+    }
+
+    async function finishTeamSelection() {
+      const context = teamSelectionContext;
+      if (!context) return;
+      const selectedFiles = (context.data.files || []).filter(file => context.selected.has(file.id));
+      if (!selectedFiles.length) { showModal("Select at least one team."); return; }
+      closeTeamSelectionModal();
+      if (context.mode === "export") {
+        const selectedFolderIds = new Set(selectedFiles.map(file => file.folderId).filter(Boolean));
+        let parentAdded = true;
+        while (parentAdded) {
+          parentAdded = false;
+          (context.data.folders || []).forEach(folder => { if (selectedFolderIds.has(folder.id) && folder.parentId && !selectedFolderIds.has(folder.parentId)) { selectedFolderIds.add(folder.parentId); parentAdded = true; } });
+        }
+        const payload = { version: 2, type: "teamsExport", exportedAt: new Date().toISOString(), files: selectedFiles, folders: (context.data.folders || []).filter(folder => selectedFolderIds.has(folder.id)) };
+        const filename = "teammaker_teams_" + getExportTimestamp() + ".json";
+        saveFileAs(await encryptExport(payload), filename, "application/json");
+      } else {
+        mergeImportedTeams(selectedFiles, context.data.folders || []);
+      }
+    }
+
+    function openExportTeamsModal() {
+      saveData();
+      openTeamSelectionModal("Export Teams", { files: getAllFiles(), folders: getAllFolders() }, "export");
+    }
+
+    function mergeImportedTeams(incomingFiles, incomingFolders) {
+      const existingFiles = getAllFiles();
+      const existingFolders = getAllFolders();
+      const folderMap = {};
+      incomingFolders.forEach(folder => { folderMap[folder.id] = "folder_" + generateId(); });
+      const newFolders = incomingFolders.map(folder => ({ ...folder, id: folderMap[folder.id], parentId: folder.parentId ? (folderMap[folder.parentId] || null) : null }));
+      newFolders.forEach(folder => { if (!existingFolders.some(item => item.id === folder.id)) existingFolders.push(folder); });
+      incomingFiles.forEach(file => {
+        const existing = existingFiles.find(item => item.id === file.id);
+        const copy = { ...file, folderId: file.folderId ? (folderMap[file.folderId] || null) : null, updatedAt: Date.now() };
+        if (existing) Object.assign(existing, { ...copy, id: existing.id, folderId: existing.folderId || copy.folderId });
+        else existingFiles.push({ ...copy, id: generateId() });
+      });
+      saveAllFolders(existingFolders); saveAllFiles(existingFiles); renderFilesList();
+      showModal(`Imported ${incomingFiles.length} team(s), including any detected changes.`);
+    }
+
+    async function importSingleFileJSON(event) {
+      const file = event.target.files[0]; event.target.value = "";
+      if (!file) return;
+      try {
+        const data = await parseExport(await file.text());
+        if (data.version === 2 && Array.isArray(data.files) && data.files.length) openTeamSelectionModal("Import Teams", data, "import");
+        else showModal("Invalid team export file.");
+      } catch { showModal("Error reading team export file."); }
+    }
+
+    async function restoreFromBackup(event) {
+      const file = event.target.files[0]; event.target.value = "";
+      if (!file) return;
+      try {
+        const data = await parseExport(await file.text());
+        if (data.version !== 2 || !Array.isArray(data.files)) throw new Error("Invalid backup");
+        const current = getAllFiles();
+        const changed = data.files.filter(incoming => { const existing = current.find(file => file.id === incoming.id); return !existing || JSON.stringify(existing) !== JSON.stringify(incoming); }).length;
+        const overwrite = confirm(`Restore will replace all current teams, folders, and saved seating plans with ${data.files.length} team(s). This cannot be undone.\n\nChoose Cancel to import ${changed} new or changed team(s) instead.`);
+        if (overwrite) {
+          saveAllFiles(data.files); saveAllFolders(data.folders || []); if (Array.isArray(data.seatingPlans)) saveAllSeatingPlans(data.seatingPlans); setActiveFileId(data.activeFileId || data.files[0]?.id || ""); loadData(); renderFilesList(); showModal("Backup restored successfully.");
+        } else if (confirm(`Import ${changed} new or changed team(s) alongside your current data? Existing matching IDs will be updated.`)) {
+          mergeImportedTeams(data.files, data.folders || []);
+        }
+      } catch { showModal("Error reading backup file."); }
     }
 
     // ================= UI & UTILS =================
