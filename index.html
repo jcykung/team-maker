@@ -2259,6 +2259,26 @@
     </div>
   </div>
 
+  <div id="restore-choice-modal" class="fixed inset-0 z-[9994] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg">
+      <div class="p-5 border-b border-zinc-700">
+        <h3 class="text-lg font-bold text-[#E6DB74]">Restore Backup File</h3>
+        <p id="restore-choice-summary" class="text-sm text-zinc-400 mt-2"></p>
+      </div>
+      <div class="p-5 flex flex-col gap-3">
+        <button id="restore-replace-btn" class="w-full text-left px-4 py-3 rounded border border-[#F92672]/50 bg-[#F92672]/10 hover:bg-[#F92672]/20">
+          <span class="block font-bold text-[#F92672]">Replace All Data</span>
+          <span class="block text-xs text-zinc-400 mt-1">Replaces every team, folder, and saved seating plan currently in this app.</span>
+        </button>
+        <button id="restore-import-btn" class="w-full text-left px-4 py-3 rounded border border-[#66D9EF]/50 bg-[#66D9EF]/10 hover:bg-[#66D9EF]/20">
+          <span class="block font-bold text-[#66D9EF]">Import New Teams</span>
+          <span class="block text-xs text-zinc-400 mt-1">Adds only teams whose IDs do not already exist in this app. Existing teams are not changed.</span>
+        </button>
+      </div>
+      <div class="p-4 border-t border-zinc-700 flex justify-end"><button onclick="closeRestoreChoiceModal()" class="px-4 py-2 text-sm text-zinc-400">Cancel</button></div>
+    </div>
+  </div>
+
   <!-- Custom Modal for Alerts & Confirms -->
   <div id="custom-modal"
     class="fixed inset-0 z-[9990] flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4">
@@ -3817,20 +3837,87 @@
       } catch { showModal("Error reading team export file."); }
     }
 
+    let pendingRestoreBackup = null;
+
+    function closeRestoreChoiceModal() {
+      document.getElementById("restore-choice-modal").classList.add("hidden");
+      document.getElementById("restore-choice-modal").classList.remove("flex");
+      pendingRestoreBackup = null;
+    }
+
+    function openRestoreChoiceModal(data) {
+      pendingRestoreBackup = data;
+      const summary = document.getElementById("restore-choice-summary");
+      const folderCount = Array.isArray(data.folders) ? data.folders.length : 0;
+      const planCount = Array.isArray(data.seatingPlans) ? data.seatingPlans.length : 0;
+      summary.textContent = `This backup contains ${data.files.length} team(s), ${folderCount} folder(s), and ${planCount} saved seating plan(s). Choose how to restore it.`;
+      const modal = document.getElementById("restore-choice-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function replaceAllDataFromBackup() {
+      const data = pendingRestoreBackup;
+      closeRestoreChoiceModal();
+      if (!data) return;
+      showModal(
+        `Replace all current data with ${data.files.length} team(s), ${Array.isArray(data.folders) ? data.folders.length : 0} folder(s), and ${Array.isArray(data.seatingPlans) ? data.seatingPlans.length : 0} seating plan(s)? Current data will be permanently replaced.`,
+        true,
+        () => {
+          saveAllFiles(data.files);
+          saveAllFolders(data.folders || []);
+          saveAllSeatingPlans(Array.isArray(data.seatingPlans) ? data.seatingPlans : []);
+          setActiveFileId(data.activeFileId || data.files[0]?.id || "");
+          loadData();
+          renderFilesList();
+          showModal("Backup restored. All current data was replaced.");
+        },
+      );
+    }
+
+    function importNewTeamsFromBackup() {
+      const data = pendingRestoreBackup;
+      closeRestoreChoiceModal();
+      if (!data) return;
+      const existingIds = new Set(getAllFiles().map(file => file.id));
+      const newFiles = data.files.filter(file => !existingIds.has(file.id));
+      if (!newFiles.length) {
+        showModal("No new teams were found. Existing teams were not changed.");
+        return;
+      }
+      showModal(
+        `Import ${newFiles.length} new team(s)? Existing teams will not be changed.`,
+        true,
+        () => {
+          const newFileIds = new Set(newFiles.map(file => file.id));
+          const folderIds = new Set(newFiles.map(file => file.folderId).filter(Boolean));
+          const sourceFolders = data.folders || [];
+          let addedParent = true;
+          while (addedParent) {
+            addedParent = false;
+            sourceFolders.forEach(folder => {
+              if (folderIds.has(folder.id) && folder.parentId && !folderIds.has(folder.parentId)) {
+                folderIds.add(folder.parentId);
+                addedParent = true;
+              }
+            });
+          }
+          const foldersToImport = sourceFolders.filter(folder => folderIds.has(folder.id));
+          mergeImportedTeams(newFiles, foldersToImport);
+        },
+      );
+    }
+
+    document.getElementById("restore-replace-btn")?.addEventListener("click", replaceAllDataFromBackup);
+    document.getElementById("restore-import-btn")?.addEventListener("click", importNewTeamsFromBackup);
+
     async function restoreFromBackup(event) {
       const file = event.target.files[0]; event.target.value = "";
       if (!file) return;
       try {
         const data = await parseExport(await file.text());
         if (data.version !== 2 || !Array.isArray(data.files)) throw new Error("Invalid backup");
-        const current = getAllFiles();
-        const changed = data.files.filter(incoming => { const existing = current.find(file => file.id === incoming.id); return !existing || JSON.stringify(existing) !== JSON.stringify(incoming); }).length;
-        const overwrite = confirm(`Restore will replace all current teams, folders, and saved seating plans with ${data.files.length} team(s). This cannot be undone.\n\nChoose Cancel to import ${changed} new or changed team(s) instead.`);
-        if (overwrite) {
-          saveAllFiles(data.files); saveAllFolders(data.folders || []); if (Array.isArray(data.seatingPlans)) saveAllSeatingPlans(data.seatingPlans); setActiveFileId(data.activeFileId || data.files[0]?.id || ""); loadData(); renderFilesList(); showModal("Backup restored successfully.");
-        } else if (confirm(`Import ${changed} new or changed team(s) alongside your current data? Existing matching IDs will be updated.`)) {
-          mergeImportedTeams(data.files, data.folders || []);
-        }
+        openRestoreChoiceModal(data);
       } catch { showModal("Error reading backup file."); }
     }
 
