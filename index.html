@@ -1225,17 +1225,15 @@
         <div class="flex flex-col overflow-y-auto border-b border-zinc-700 flex-shrink-0">
           <div class="p-4">
             <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-2">
-                <h2 class="text-xs font-bold text-[#FD971F] uppercase tracking-wider">
+              <div class="flex items-center gap-2 min-w-0">
+                <h2 class="text-xs font-bold text-[#FD971F] uppercase tracking-wider flex-shrink-0">
                   Seating Plan
                 </h2>
-                <button onclick="openSeatingPlansModal()" title="Save / load seating plans"
-                  class="w-5 h-5 flex items-center justify-center rounded bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-[#FD971F] hover:border-[#FD971F] transition">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                    <polyline points="17 21 17 13 7 13 7 21" />
-                    <polyline points="7 3 7 8 15 8" />
+                <button id="active-seating-plan-btn" onclick="openSeatingPlansModal()" title="Open Seating Plan File Manager"
+                  class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#FD971F] hover:border-[#FD971F] transition text-xs font-medium truncate max-w-[140px] shadow-sm">
+                  <span id="active-seating-plan-label" class="truncate">No Plan</span>
+                  <svg class="w-3 h-3 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
               </div>
@@ -1884,8 +1882,7 @@
                   seats to adjust manually. Click <strong>×</strong> on a chip to return that person to the sidebar.
                 </p>
                 <p>
-                  <strong>Save plans:</strong> Click the save icon next to "Seating Plan" to save and load named
-                  plans — handy if you have multiple classes or event rooms. Plans only store seat positions and labels,
+                  <strong>Manage plans:</strong> Click the seating plan name button next to "Seating Plan" to open the seating plan file manager to save, load, rename, or export named plans — handy if you have multiple classes or event rooms. Plans only store seat positions and labels,
                   not who is sitting where. You can also export a plan as a <code
                     class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file to share a blank room layout with
                   colleagues, or import one they've shared with you.
@@ -2404,6 +2401,113 @@
     </div>
   </div>
 
+  <!-- Set Up Seating Plan Modal -->
+  <div id="seating-setup-modal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4"
+    onclick="if(event.target===this)cancelSeatingSetup()">
+    <div class="bg-zinc-900 rounded-xl max-w-lg w-full border border-zinc-700 shadow-2xl flex flex-col overflow-hidden"
+      style="max-height:85vh;">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-5 border-b border-zinc-700 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#FD971F]"></div>
+          <h3 class="text-base font-bold text-[#FD971F]">Set Up Seating Plan</h3>
+        </div>
+        <button onclick="cancelSeatingSetup()" title="Close and return to previous tab"
+          class="text-zinc-500 hover:text-[#F8F8F2] transition text-xl leading-none">&times;</button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-5 overflow-y-auto flex-1 space-y-5">
+        <p class="text-xs text-zinc-400">
+          This team doesn't have a seating plan attached yet. Name your new seating plan to start building, or import an existing layout.
+        </p>
+
+        <!-- Option 1: Create New Plan -->
+        <div class="bg-zinc-950/60 border border-zinc-800 rounded-xl p-4">
+          <p class="text-xs font-bold text-[#FD971F] uppercase tracking-wider mb-1">Option 1: Create New Seating Plan</p>
+          <p class="text-xs text-zinc-500 mb-3">Give your seating arrangement a name to get started.</p>
+          <div class="flex gap-2">
+            <input id="seating-setup-name-input" type="text" placeholder="e.g. Room 204, Period 3, Science Lab…"
+              class="flex-1 bg-zinc-900 border border-zinc-700 text-[#F8F8F2] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#FD971F] placeholder-zinc-600 transition" />
+            <button onclick="confirmCreateSeatingPlan()"
+              class="bg-[#FD971F] text-zinc-900 px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#e8861a] transition flex-shrink-0 flex items-center gap-1.5 shadow">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>Save</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Divider with OR -->
+        <div class="relative flex items-center justify-center">
+          <div class="border-t border-zinc-800 w-full"></div>
+          <span class="bg-zinc-900 px-3 text-[11px] font-bold text-zinc-500 uppercase tracking-widest absolute">OR</span>
+        </div>
+
+        <!-- Option 2: Import Seating Plan -->
+        <div class="bg-zinc-950/60 border border-zinc-800 rounded-xl p-4 space-y-4">
+          <div>
+            <p class="text-xs font-bold text-[#66D9EF] uppercase tracking-wider mb-1">Option 2: Import Seating Plan</p>
+            <p class="text-xs text-zinc-500">Import a room layout from existing teams, backup files, team exports, or seating plan files.</p>
+          </div>
+
+          <!-- Existing Teams & Saved Plans -->
+          <div id="seating-setup-existing-section" class="space-y-2">
+            <p class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide">From Existing Teams & Saved Plans</p>
+            <div id="seating-setup-existing-container" class="flex gap-2">
+              <select id="seating-setup-existing-select"
+                class="flex-1 bg-zinc-900 border border-zinc-700 text-[#F8F8F2] text-xs rounded-lg px-3 py-2 outline-none focus:border-[#66D9EF]">
+              </select>
+              <button onclick="confirmImportFromExisting()"
+                class="bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-[#66D9EF] hover:border-[#66D9EF] px-3 py-2 rounded-lg text-xs font-bold transition flex-shrink-0">
+                Import
+              </button>
+            </div>
+            <div id="seating-setup-no-existing" class="text-xs text-zinc-600 italic py-1 hide">No other teams or saved plans available yet.</div>
+          </div>
+
+          <!-- From File Upload -->
+          <div class="pt-2 border-t border-zinc-850">
+            <p class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">From File (.json)</p>
+            <p class="text-[11px] text-zinc-500 mb-2.5">Upload a backup file, team export, or seating plan export file.</p>
+            <label
+              class="cursor-pointer inline-flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#66D9EF] hover:border-[#66D9EF] text-xs font-medium px-3.5 py-2 rounded-lg transition">
+              <svg class="w-4 h-4 text-[#66D9EF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+              </svg>
+              <span>Choose File (Backup, Team Export, or Seating Plan)</span>
+              <input type="file" id="seating-setup-file-input" accept=".json" onchange="handleSeatingSetupFileUpload(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-4 border-t border-zinc-700 bg-zinc-950/40 flex items-center justify-between flex-shrink-0">
+        <span class="text-[11px] text-zinc-500">Cancelling will return to your previous tab</span>
+        <button onclick="cancelSeatingSetup()"
+          class="bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 px-4 py-1.5 rounded-lg text-xs font-semibold transition">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-plan selection modal (used when a backup file has multiple plans to pick from) -->
+  <div id="seating-pick-plan-modal"
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4"
+    onclick="if(event.target===this)closePickPlanModal()">
+    <div class="bg-zinc-900 rounded-xl max-w-md w-full border border-zinc-700 shadow-2xl flex flex-col overflow-hidden"
+      style="max-height:75vh;">
+      <div class="flex items-center justify-between p-4 border-b border-zinc-700 flex-shrink-0">
+        <h3 class="text-sm font-bold text-[#66D9EF]">Select a Seating Plan to Import</h3>
+        <button onclick="closePickPlanModal()" class="text-zinc-500 hover:text-[#F8F8F2] transition text-lg">&times;</button>
+      </div>
+      <div id="seating-pick-plan-list" class="p-3 overflow-y-auto space-y-2 flex-1"></div>
+    </div>
+  </div>
+
   <!-- Seating Plans Modal -->
   <div id="seating-plans-modal"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4"
@@ -2422,8 +2526,7 @@
       <!-- Import -->
       <div class="px-4 py-3 border-b border-zinc-700 flex-shrink-0">
         <p class="text-xs text-zinc-400 mb-1 font-semibold uppercase tracking-wider">Import a Seating Plan</p>
-        <p class="text-xs text-zinc-600 mb-2">Import a seating plan shared by someone else (.json). <span
-            class="text-[#F92672]">This is not for full backups</span> — use the Files menu to restore backups.</p>
+        <p class="text-xs text-zinc-500 mb-2">Import from a seating plan, team export, or backup file (.json).</p>
         <label
           class="cursor-pointer inline-flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#66D9EF] hover:border-[#66D9EF] text-sm px-3 py-1.5 rounded transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2997,6 +3100,7 @@
       const ind = document.getElementById("autosave-indicator");
       if (ind) { ind.textContent = "Saved"; ind.style.color = "#6272a4"; }
       updateActiveFileLabel();
+      updateActiveSeatingPlanLabel();
     }
 
     function loadData() {
@@ -3048,6 +3152,7 @@
       renderSeats();
       refreshExportIfVisible();
       updateActiveFileLabel();
+      updateActiveSeatingPlanLabel();
     }
 
     window.addEventListener("DOMContentLoaded", loadData);
@@ -3249,6 +3354,12 @@
             teams,
             staging,
             constraints,
+            seats,
+            textboxes,
+            seatRosterLoaded: seatSeatsLoaded,
+            activeSeatingPlanId: currentSeatingPlanId,
+            activeSeatingPlanName: currentSeatingPlanName,
+            seatingPlanCleanSnapshot,
             updatedAt: Date.now(),
           };
       }
@@ -3263,12 +3374,18 @@
         teams: [],
         staging: [],
         constraints: { together: [], apart: [] },
+        seats: [],
+        textboxes: [],
+        seatRosterLoaded: false,
+        activeSeatingPlanId: "",
+        activeSeatingPlanName: "",
+        seatingPlanCleanSnapshot: "",
         updatedAt: Date.now(),
       });
       saveAllFiles(files);
       setActiveFileId(id);
 
-      // Load empty state
+      // Load empty state - new Teams have NO seating plan attached
       allMembers = [];
       pool = [];
       teams = [];
@@ -3276,6 +3393,10 @@
       constraints = { together: [], apart: [] };
       textboxes = [];
       seats = [];
+      currentSeatingPlanId = "";
+      currentSeatingPlanName = "";
+      seatingPlanCleanSnapshot = "";
+      seatSeatsLoaded = false;
       selectedSeatId = null;
       selectedSeatIds.clear();
       seatUndoStack = [];
@@ -3287,6 +3408,7 @@
       renderTeams();
       renderSeats();
       updateActiveFileLabel();
+      updateActiveSeatingPlanLabel();
 
       input.value = "";
       hasUnsavedChanges = false;
@@ -3320,6 +3442,7 @@
       renderSeats();
       refreshExportIfVisible();
       updateActiveFileLabel();
+      updateActiveSeatingPlanLabel();
       renderSeatingPlansList();
       renderSaveSection();
       hasUnsavedChanges = false;
@@ -4324,8 +4447,44 @@
     }
 
     // ================= TABS & EXPORT RENDERER =================
+    let currentActiveTabId = "tab1";
+    let previousTabId = "tab1";
+
     async function switchTab(tabId) {
       if (hasUnsavedChanges) saveData();
+
+      const fromTab = currentActiveTabId;
+
+      // If navigating to Seating tab and team has NO seating plan attached
+      if (tabId === "tab5" && !currentSeatingPlanName && !currentSeatingPlanId) {
+        previousTabId = fromTab && fromTab !== "tab5" ? fromTab : "tab1";
+        currentActiveTabId = tabId;
+
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((el) => el.classList.add("hide"));
+        document.getElementById(tabId).classList.remove("hide");
+
+        initSeatCanvas();
+        renderSeats();
+        syncSeatConstraintSelects();
+        syncSeatConstraintList();
+        updateActiveSeatingPlanLabel();
+
+        document.querySelectorAll(".editor-tab").forEach((btn) => {
+          btn.className =
+            "editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap";
+          if (btn.id === "nav-" + tabId) {
+            btn.className =
+              "editor-tab active px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium transition whitespace-nowrap";
+          }
+        });
+
+        openSeatingSetupModal();
+        return;
+      }
+
+      currentActiveTabId = tabId;
 
       let bounds;
       if (tabId === "tab3") {
@@ -4348,6 +4507,7 @@
         renderSeats();
         syncSeatConstraintSelects();
         syncSeatConstraintList();
+        updateActiveSeatingPlanLabel();
       }
 
       document.querySelectorAll(".editor-tab").forEach((btn) => {
