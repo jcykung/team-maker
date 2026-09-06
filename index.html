@@ -596,7 +596,7 @@
             </button>
             <button onclick="switchTab('tab4')" id="nav-tab4"
               class="editor-tab px-3 sm:px-4 py-2 sm:py-2.5 mt-1 sm:mt-0 rounded-t-lg text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 transition whitespace-nowrap">
-              About
+              Help
             </button>
           </nav>
           <div class="ml-auto pb-1.5 pl-2 pr-2 flex items-center gap-2 flex-shrink-0">
@@ -1656,7 +1656,7 @@
       </div>
     </div>
 
-    <!-- ================= TAB 4: ABOUT ================= -->
+    <!-- ================= TAB 4: HELP ================= -->
     <div id="tab4"
       class="tab-content hide absolute inset-0 overflow-y-auto p-4 sm:p-10 flex justify-center items-start">
       <style>
@@ -2064,7 +2064,7 @@
                 <ul class="text-sm text-zinc-300 space-y-1 list-disc pl-4">
                   <li><strong class="text-[#A6E22E]">Save JPG</strong> — exports a high-resolution image.</li>
                   <li><strong class="text-[#FD971F]">Save PDF</strong> — great for printing.</li>
-                  <li><strong class="text-[#F92672]">Save Backup</strong> — saves your teams <em>and</em> all seating
+                  <li><strong class="text-[#F92672]">Save Backup</strong> — saves your teams and their attached seating
                     plans as a <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file you can restore
                     later. You'll be asked where to save it.</li>
                 </ul>
@@ -2089,7 +2089,13 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
                     </svg> Teams</span> in the header to manage multiple teams — useful if you have multiple classes,
-                  periods, or events. Each team has its own roster and seating layout.
+                  periods, or events. Each team has its own roster and seating layout. Seating plans are not shared
+                  between teams.
+                </p>
+                <p>
+                  In the Seating tab, click the plan name to open its manager. Plans autosave with the current team.
+                  Use <strong>Import</strong> to clone a layout from another team, a backup, a team export, or a seating
+                  plan file. Use <strong>Share Seating Plan</strong> to download the current layout as a JSON file.
                 </p>
                 <p>
                   From the Teams manager you can also <strong>export an individual team</strong> as a
@@ -2100,7 +2106,7 @@
                 <p class="text-zinc-300 text-sm border-l-2 border-[#F92672] pl-4 py-1 bg-zinc-800/50 rounded-r">
                   ⚠️ <strong>Important:</strong> Data is stored in your browser only — it is <strong>not backed up to
                     the cloud</strong> and will be lost if you clear your browser or switch devices.
-                  Use <strong>Save Backup</strong> on the Export tab regularly — it includes your teams and all saved
+                  Use <strong>Save Backup</strong> on the Export tab regularly — it includes your teams and their attached
                   seating plans. Keep the <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file
                   somewhere safe.
                 </p>

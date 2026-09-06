@@ -145,7 +145,9 @@ Go to the **Export** tab for a clean, light-mode preview ready for printing or s
 
 Everything **saves automatically** as you work — no save button needed.
 
-Click **Files** in the header to manage multiple files — useful if you have multiple classes, teams, or events. Each file has its own roster, teams, and seating layout.
+Click **Files** in the header to manage multiple files — useful if you have multiple classes, teams, or events. Each file has its own roster, teams, and seating layout. Seating plans belong to one team and are not linked across teams.
+
+In the **Seating** tab, click the seating plan name to open its manager. Plans autosave with the current team. Use **Import** to clone a layout from another team, a backup, a team export, or a seating plan file. Use **Share Seating Plan** to download the current layout as a JSON file.
 
 > ⚠️ **Important:** Data is stored in your **browser only** — it is not backed up to the cloud and will be lost if you clear your browser data or switch devices. Use **Save Backup** on the Export tab regularly and keep the `.json` file somewhere safe.
 
