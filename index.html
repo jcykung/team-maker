@@ -3318,7 +3318,48 @@
       a.click();
     }
 
-    function exportAllFilesJSON() {
+    // Obscures exported data from casual inspection; this is not password-based security.
+    const EXPORT_KEY = "TeamMaker export key v1 - casual privacy only";
+    const EXPORT_MARKER = "team-maker-encrypted-v1";
+
+    function encodeExportBytes(bytes) {
+      let binary = "";
+      bytes.forEach(byte => binary += String.fromCharCode(byte));
+      return btoa(binary);
+    }
+
+    function decodeExportBytes(value) {
+      const binary = atob(value);
+      return Uint8Array.from(binary, character => character.charCodeAt(0));
+    }
+
+    async function encryptExport(data) {
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(EXPORT_KEY));
+      const key = await crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt"]);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const plaintext = new TextEncoder().encode(JSON.stringify(data));
+      const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+      return JSON.stringify({
+        format: EXPORT_MARKER,
+        iv: encodeExportBytes(iv),
+        data: encodeExportBytes(new Uint8Array(ciphertext)),
+      }, null, 2);
+    }
+
+    async function parseExport(text) {
+      const envelope = JSON.parse(text);
+      if (envelope.format !== EXPORT_MARKER) return envelope;
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(EXPORT_KEY));
+      const key = await crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["decrypt"]);
+      const plaintext = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: decodeExportBytes(envelope.iv) },
+        key,
+        decodeExportBytes(envelope.data),
+      );
+      return JSON.parse(new TextDecoder().decode(plaintext));
+    }
+
+    async function exportAllFilesJSON() {
       // Save current state first
       saveData();
       const files = getAllFiles();
@@ -3336,7 +3377,7 @@
         staging,
         constraints,
       };
-      const jsonStr = JSON.stringify(backup, null, 2);
+      const jsonStr = await encryptExport(backup);
       const jsonFilename =
         "teammaker_backup_" + new Date().toISOString().slice(0, 10) + ".json";
       // Mobile share sheet
@@ -3353,7 +3394,7 @@
       saveFileAs(jsonStr, jsonFilename, "application/json");
     }
 
-    function exportSingleFileJSON(id) {
+    async function exportSingleFileJSON(id) {
       saveData();
       const files = getAllFiles();
       const f = files.find((fl) => fl.id === id);
@@ -3372,7 +3413,7 @@
         staging: f.staging,
         constraints: f.constraints,
       };
-      const jsonStr = JSON.stringify(payload, null, 2);
+      const jsonStr = await encryptExport(payload);
       const safeName = f.name.replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
       const filename = `teammaker_${safeName}_${new Date().toISOString().slice(0, 10)}.json`;
       saveFileAs(jsonStr, filename, "application/json");
@@ -3387,9 +3428,9 @@
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
-          const data = JSON.parse(e.target.result);
+          const data = await parseExport(e.target.result);
 
           if (
             data.version === 2 &&
@@ -3454,9 +3495,9 @@
       if (!file) return;
       event.target.value = "";
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
-          const data = JSON.parse(e.target.result);
+          const data = await parseExport(e.target.result);
 
           if (data.version === 2 && Array.isArray(data.files) && data.files.length > 0) {
             // Multi-file backup — import each file, adding alongside existing ones
@@ -9119,14 +9160,14 @@
       });
     }
 
-    function exportSeatingPlanJSON(id) {
+    async function exportSeatingPlanJSON(id) {
       const plans = getAllSeatingPlans();
       const plan = plans.find(p => p.id === id);
       if (!plan) return;
       const payload = { version: 1, type: "seatingPlan", plan };
       const safeName = plan.name.replace(/[^a-z0-9_-]/gi, "_").toLowerCase();
       const filename = `seating_${safeName}.json`;
-      saveFileAs(JSON.stringify(payload, null, 2), filename, "application/json");
+      saveFileAs(await encryptExport(payload), filename, "application/json");
     }
 
     function importSeatingPlanJSON(event) {
@@ -9134,9 +9175,9 @@
       if (!file) return;
       event.target.value = "";
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
-          const data = JSON.parse(e.target.result);
+          const data = await parseExport(e.target.result);
           let plan = null;
           if (data.type === "seatingPlan" && data.plan) {
             plan = { ...data.plan, id: "sp_" + generateId(), createdAt: Date.now() };
