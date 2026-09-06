@@ -2918,6 +2918,26 @@
       localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
     }
 
+    function getActiveFileId() {
+      return localStorage.getItem(ACTIVE_KEY);
+    }
+
+    function setActiveFileId(id) {
+      localStorage.setItem(ACTIVE_KEY, id);
+    }
+
+    function getActiveFile() {
+      const files = getAllFiles();
+      const id = getActiveFileId();
+      return files.find(file => file.id === id) || files[0] || null;
+    }
+
+    function updateActiveFileLabel() {
+      const file = getActiveFile();
+      const label = document.getElementById("active-file-label");
+      if (label) label.textContent = file ? file.name : "Teams";
+    }
+
     function getFolder(id) {
       return getAllFolders().find(folder => folder.id === id) || null;
     }
