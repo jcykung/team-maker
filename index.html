@@ -2429,6 +2429,7 @@
           <p class="text-xs text-zinc-500 mb-3">Give your seating arrangement a name to get started.</p>
           <div class="flex gap-2">
             <input id="seating-setup-name-input" type="text" placeholder="e.g. Room 204, Period 3, Science Lab…"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();confirmCreateSeatingPlan();}"
               class="flex-1 bg-zinc-900 border border-zinc-700 text-[#F8F8F2] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#FD971F] placeholder-zinc-600 transition" />
             <button onclick="confirmCreateSeatingPlan()"
               class="bg-[#FD971F] text-zinc-900 px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#e8861a] transition flex-shrink-0 flex items-center gap-1.5 shadow">
@@ -9534,6 +9535,332 @@
       localStorage.setItem(SP_KEY, JSON.stringify(plans));
     }
 
+    function updateActiveSeatingPlanLabel() {
+      const label = document.getElementById("active-seating-plan-label");
+      if (label) {
+        label.textContent = currentSeatingPlanName || "No Plan";
+      }
+    }
+
+    // ---- Setup Modal for Teams without an attached Seating Plan ----
+    function openSeatingSetupModal() {
+      const modal = document.getElementById("seating-setup-modal");
+      if (!modal) return;
+      const nameInput = document.getElementById("seating-setup-name-input");
+      if (nameInput) {
+        nameInput.value = "";
+        setTimeout(() => nameInput.focus(), 60);
+      }
+      populateSeatingSetupExistingOptions();
+      modal.classList.remove("hide");
+    }
+
+    function cancelSeatingSetup() {
+      const modal = document.getElementById("seating-setup-modal");
+      if (modal) modal.classList.add("hide");
+      closePickPlanModal();
+      // If user clicked Seating tab by accident and cancelled, return to previous tab
+      const targetTab = (previousTabId && previousTabId !== "tab5") ? previousTabId : "tab1";
+      switchTab(targetTab);
+    }
+
+    function confirmCreateSeatingPlan() {
+      const nameInput = document.getElementById("seating-setup-name-input");
+      const name = nameInput ? nameInput.value.trim() : "";
+      if (!name) {
+        showModal("Please enter a name for the seating plan.");
+        nameInput?.focus();
+        return;
+      }
+      const newId = "sp_" + generateId();
+      currentSeatingPlanId = newId;
+      currentSeatingPlanName = name;
+      seats = [];
+      textboxes = textboxes.filter(t => t.canvas !== "seating");
+
+      // Register in saved seating plans library
+      const plans = getAllSeatingPlans();
+      plans.unshift({ id: newId, name, seats: [], textboxes: [], createdAt: Date.now() });
+      saveAllSeatingPlans(plans);
+
+      markSeatingPlanClean();
+      saveData();
+      renderSeats();
+      updateActiveSeatingPlanLabel();
+      renderSeatingPlansList();
+      renderSaveSection();
+
+      document.getElementById("seating-setup-modal")?.classList.add("hide");
+    }
+
+    function populateSeatingSetupExistingOptions() {
+      const select = document.getElementById("seating-setup-existing-select");
+      const container = document.getElementById("seating-setup-existing-container");
+      const noExistingEl = document.getElementById("seating-setup-no-existing");
+      if (!select) return;
+
+      select.innerHTML = "";
+      const activeFileId = getActiveFileId();
+      const allFiles = getAllFiles();
+      const savedPlans = getAllSeatingPlans();
+
+      const otherTeams = allFiles.filter(f => f.id !== activeFileId && ((f.seats && f.seats.length > 0) || f.activeSeatingPlanName));
+
+      let count = 0;
+
+      if (savedPlans.length > 0) {
+        const optGroup = document.createElement("optgroup");
+        optGroup.label = "Saved Seating Plans";
+        savedPlans.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = "sp:" + p.id;
+          opt.textContent = `${p.name} (${p.seats?.length || 0} seats)`;
+          optGroup.appendChild(opt);
+          count++;
+        });
+        select.appendChild(optGroup);
+      }
+
+      if (otherTeams.length > 0) {
+        const optGroup = document.createElement("optgroup");
+        optGroup.label = "From Other Teams";
+        otherTeams.forEach(f => {
+          const opt = document.createElement("option");
+          opt.value = "team:" + f.id;
+          const planName = f.activeSeatingPlanName ? ` — ${f.activeSeatingPlanName}` : "";
+          opt.textContent = `${f.name}${planName} (${f.seats?.length || 0} seats)`;
+          optGroup.appendChild(opt);
+          count++;
+        });
+        select.appendChild(optGroup);
+      }
+
+      if (count === 0) {
+        if (container) container.classList.add("hide");
+        if (noExistingEl) noExistingEl.classList.remove("hide");
+      } else {
+        if (container) container.classList.remove("hide");
+        if (noExistingEl) noExistingEl.classList.add("hide");
+      }
+    }
+
+    function confirmImportFromExisting() {
+      const select = document.getElementById("seating-setup-existing-select");
+      if (!select || !select.value) return;
+      const val = select.value;
+      if (val.startsWith("sp:")) {
+        const planId = val.slice(3);
+        const plans = getAllSeatingPlans();
+        const plan = plans.find(p => p.id === planId);
+        if (!plan) return;
+        attachSeatingPlanLayout(plan.name, plan.seats, plan.textboxes, plan.id);
+      } else if (val.startsWith("team:")) {
+        const teamId = val.slice(5);
+        const files = getAllFiles();
+        const team = files.find(f => f.id === teamId);
+        if (!team) return;
+        const name = team.activeSeatingPlanName || `${team.name} Layout`;
+        attachSeatingPlanLayout(name, team.seats || [], team.textboxes || []);
+      }
+    }
+
+    function attachSeatingPlanLayout(name, rawSeats, rawTextboxes, existingPlanId) {
+      pushSeatUndoNow();
+      // Strip student occupants and chip positions so the layout is applied cleanly to this team's members
+      const cleanSeats = JSON.parse(JSON.stringify(rawSeats || [])).map(s => {
+        const ls = { ...s, occupantId: null };
+        if (ls.sectionOccupants) ls.sectionOccupants = new Array(ls.sectionOccupants.length).fill(null);
+        if (ls.chipOffsets) ls.chipOffsets = [];
+        return ls;
+      });
+
+      const seatTbs = JSON.parse(JSON.stringify(rawTextboxes || [])).filter(t => t.canvas === "seating");
+      const otherTbs = textboxes.filter(t => t.canvas !== "seating");
+      textboxes = [...otherTbs, ...seatTbs];
+      seats = cleanSeats;
+
+      const planId = existingPlanId || ("sp_" + generateId());
+      currentSeatingPlanId = planId;
+      currentSeatingPlanName = name;
+
+      // If this layout is not in saved seating plans, save it to library
+      const plans = getAllSeatingPlans();
+      if (!plans.some(p => p.id === planId)) {
+        plans.unshift({ id: planId, name, seats: cleanSeats, textboxes: seatTbs, createdAt: Date.now() });
+        saveAllSeatingPlans(plans);
+      }
+
+      markSeatingPlanClean();
+      saveData();
+      renderSeats();
+      updateActiveSeatingPlanLabel();
+      renderSeatingPlansList();
+      renderSaveSection();
+
+      document.getElementById("seating-setup-modal")?.classList.add("hide");
+      document.getElementById("seating-pick-plan-modal")?.classList.add("hide");
+      document.getElementById("seating-plans-modal")?.classList.add("hide");
+    }
+
+    // Helper: extracts any seating layouts from a parsed JSON file (supports seatingPlan, team export, or backup)
+    function extractSeatingPlansFromFileData(data, filename) {
+      const extracted = [];
+      const baseName = (filename || "Imported").replace(/\.json$/i, "");
+
+      if (!data) return extracted;
+
+      // 1. Standalone seating plan export ({ type: "seatingPlan", plan: {...} })
+      if (data.type === "seatingPlan" && data.plan) {
+        extracted.push({
+          id: data.plan.id || ("sp_" + generateId()),
+          name: data.plan.name || baseName,
+          seats: data.plan.seats || [],
+          textboxes: data.plan.textboxes || [],
+          source: "Seating Plan File"
+        });
+        return extracted;
+      }
+
+      // 2. Raw seating plan JSON with seats array
+      if (Array.isArray(data.seats)) {
+        extracted.push({
+          id: data.id || ("sp_" + generateId()),
+          name: data.name || baseName,
+          seats: data.seats,
+          textboxes: data.textboxes || [],
+          source: "Seating Plan File"
+        });
+        return extracted;
+      }
+
+      // 3. Multi-file or single-file backup / team export (version === 2)
+      if (data.version === 2) {
+        if (Array.isArray(data.seatingPlans)) {
+          data.seatingPlans.forEach(p => {
+            if (p.seats && p.seats.length > 0) {
+              extracted.push({
+                id: p.id || ("sp_" + generateId()),
+                name: p.name || "Seating Plan",
+                seats: p.seats,
+                textboxes: p.textboxes || [],
+                source: "Saved Seating Plan"
+              });
+            }
+          });
+        }
+
+        if (Array.isArray(data.files)) {
+          data.files.forEach(f => {
+            if (f.seats && f.seats.length > 0) {
+              const planName = f.activeSeatingPlanName || `${f.name} Layout`;
+              const isDup = extracted.some(e => e.name === planName && e.seats.length === f.seats.length);
+              if (!isDup) {
+                extracted.push({
+                  id: f.activeSeatingPlanId || ("sp_" + generateId()),
+                  name: planName,
+                  seats: f.seats,
+                  textboxes: f.textboxes || [],
+                  source: `Team: ${f.name}`
+                });
+              }
+            }
+          });
+        }
+
+        return extracted;
+      }
+
+      // 4. Legacy single-file backup
+      if ((data.allMembers || data.allStudents) && Array.isArray(data.seats) && data.seats.length > 0) {
+        extracted.push({
+          id: "sp_" + generateId(),
+          name: `${baseName} Layout`,
+          seats: data.seats,
+          textboxes: data.textboxes || [],
+          source: "Legacy Backup"
+        });
+        return extracted;
+      }
+
+      return extracted;
+    }
+
+    async function handleSeatingSetupFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      event.target.value = "";
+      try {
+        const text = await file.text();
+        const data = await parseExport(text);
+        const plans = extractSeatingPlansFromFileData(data, file.name);
+
+        if (plans.length === 0) {
+          showModal("No seating plans or room layouts found in this file.");
+          return;
+        }
+
+        if (plans.length === 1) {
+          const p = plans[0];
+          attachSeatingPlanLayout(p.name, p.seats, p.textboxes, p.id);
+          showModal(`Imported seating plan "${p.name}" successfully!`);
+        } else {
+          openPickPlanModal(plans);
+        }
+      } catch (err) {
+        showModal("Error reading file: " + (err.message || "Invalid JSON format"));
+      }
+    }
+
+    function openPickPlanModal(plans) {
+      const modal = document.getElementById("seating-pick-plan-modal");
+      const list = document.getElementById("seating-pick-plan-list");
+      if (!modal || !list) return;
+
+      list.innerHTML = "";
+      plans.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "flex items-center justify-between p-3 bg-zinc-950/70 border border-zinc-800 rounded-lg hover:border-[#66D9EF]/50 transition";
+        card.innerHTML = `
+          <div class="min-w-0 flex-1 pr-3">
+            <div class="text-sm font-semibold text-[#F8F8F2] truncate">${escapeHtml(p.name)}</div>
+            <div class="text-xs text-zinc-500 mt-0.5">${p.seats?.length || 0} seats · <span class="text-zinc-400">${escapeHtml(p.source)}</span></div>
+          </div>
+          <button class="bg-[#66D9EF] text-zinc-950 px-3 py-1 rounded text-xs font-bold hover:bg-[#52c5db] transition flex-shrink-0">
+            Use Plan
+          </button>
+        `;
+        card.querySelector("button").onclick = () => {
+          attachSeatingPlanLayout(p.name, p.seats, p.textboxes, p.id);
+          modal.classList.add("hide");
+          showModal(`Imported "${p.name}" successfully!`);
+        };
+        list.appendChild(card);
+      });
+
+      modal.classList.remove("hide");
+    }
+
+    function closePickPlanModal() {
+      document.getElementById("seating-pick-plan-modal")?.classList.add("hide");
+    }
+
+    // Global listener for Escape key to close setup modal & return to previous tab
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const pickModal = document.getElementById("seating-pick-plan-modal");
+        if (pickModal && !pickModal.classList.contains("hide")) {
+          closePickPlanModal();
+          return;
+        }
+        const setupModal = document.getElementById("seating-setup-modal");
+        if (setupModal && !setupModal.classList.contains("hide")) {
+          cancelSeatingSetup();
+          return;
+        }
+      }
+    });
+
+    // ====== SEATING PLANS FILE MANAGER ======
     function openSeatingPlansModal() {
       renderSeatingPlansList();
       renderSaveSection();
@@ -9609,6 +9936,8 @@
           currentSeatingPlanName = keepName;
           currentSeatingPlanId = overwriteId;
           markSeatingPlanClean();
+          updateActiveSeatingPlanLabel();
+          saveData();
           if (nameInput) nameInput.value = "";
           renderSeatingPlansList();
           renderSaveSection(); // refresh the save UI
@@ -9624,6 +9953,8 @@
       currentSeatingPlanName = name;
       currentSeatingPlanId = newId;
       markSeatingPlanClean();
+      updateActiveSeatingPlanLabel();
+      saveData();
       if (nameInput) nameInput.value = "";
       renderSeatingPlansList();
       renderSaveSection(); // refresh the save UI
@@ -9641,9 +9972,10 @@
         currentSeatingPlanName = plan.name; // track which plan is loaded
         currentSeatingPlanId = plan.id;
         markSeatingPlanClean();
-        // Clear occupants so they go back to staging unless seatSeatsLoaded
         renderSeats();
         markUnsaved();
+        updateActiveSeatingPlanLabel();
+        saveData();
         closeSeatingPlansModal();
       });
     }
@@ -9659,6 +9991,8 @@
           currentSeatingPlanId = "";
           currentSeatingPlanName = "";
           seatingPlanCleanSnapshot = "";
+          updateActiveSeatingPlanLabel();
+          saveData();
         }
         renderSeatingPlansList();
         renderSaveSection();
@@ -9675,34 +10009,43 @@
       saveFileAs(await encryptExport(payload), filename, "application/json");
     }
 
-    function importSeatingPlanJSON(event) {
+    async function importSeatingPlanJSON(event) {
       const file = event.target.files[0];
       if (!file) return;
       event.target.value = "";
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const data = await parseExport(e.target.result);
-          let plan = null;
-          if (data.type === "seatingPlan" && data.plan) {
-            plan = { ...data.plan, id: "sp_" + generateId(), createdAt: Date.now() };
-          } else if (Array.isArray(data.seats)) {
-            // Raw plan object
-            plan = { id: "sp_" + generateId(), name: file.name.replace(/\.json$/i, "") || "Imported", seats: data.seats, textboxes: data.textboxes || [], constraints: data.constraints || null, createdAt: Date.now() };
-          } else {
-            showModal("Invalid seating plan file.");
-            return;
-          }
-          const plans = getAllSeatingPlans();
-          plans.unshift(plan);
-          saveAllSeatingPlans(plans);
-          renderSeatingPlansList();
-          showModal(`Imported "${plan.name}" successfully!`);
-        } catch {
-          showModal("Error reading seating plan file.");
+      try {
+        const text = await file.text();
+        const data = await parseExport(text);
+        const plans = extractSeatingPlansFromFileData(data, file.name);
+        if (plans.length === 0) {
+          showModal("Invalid seating plan file format.");
+          return;
         }
-      };
-      reader.readAsText(file);
+        const existingPlans = getAllSeatingPlans();
+        let addedCount = 0;
+        plans.forEach(p => {
+          const newPlanId = "sp_" + generateId();
+          const cleanSeats = (p.seats || []).map(s => {
+            const ls = { ...s, occupantId: null };
+            if (ls.sectionOccupants) ls.sectionOccupants = new Array(ls.sectionOccupants.length).fill(null);
+            if (ls.chipOffsets) ls.chipOffsets = [];
+            return ls;
+          });
+          existingPlans.unshift({
+            id: newPlanId,
+            name: p.name,
+            seats: cleanSeats,
+            textboxes: p.textboxes || [],
+            createdAt: Date.now()
+          });
+          addedCount++;
+        });
+        saveAllSeatingPlans(existingPlans);
+        renderSeatingPlansList();
+        showModal(addedCount === 1 ? `Imported "${plans[0].name}" successfully!` : `Imported ${addedCount} seating plan(s) successfully!`);
+      } catch {
+        showModal("Error reading seating plan file.");
+      }
     }
 
     function renameSeatingPlanInline(id) {
@@ -9728,7 +10071,11 @@
           updated[i].name = newName;
           saveAllSeatingPlans(updated);
           // Keep currentSeatingPlanName in sync if this is the active plan
-          if (id === currentSeatingPlanId) currentSeatingPlanName = newName;
+          if (id === currentSeatingPlanId) {
+            currentSeatingPlanName = newName;
+            updateActiveSeatingPlanLabel();
+            saveData();
+          }
         }
         renderSeatingPlansList();
         renderSaveSection();
