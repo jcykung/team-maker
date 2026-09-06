@@ -113,7 +113,7 @@ Go to the **Seating** tab. Draw a room layout and place people in seats.
 - **Rotate individual seats** — use the Select tool (`V`) to reveal corner resize handles and a top rotation handle (saved with your layout)
 - **Rotate the entire plan** — rotate button beside the zoom controls; rotates and saves everything on the canvas
 - **Snap to grid** — toggle **Snap On** to keep seats aligned
-- **Save layouts** — click the 💾 save icon next to "Seating Plan" to save and load named layouts (great for multiple classes or rooms)
+- **Autosave** — seating plans are saved with the current team as you work. Click the seating plan name to import a layout from another team or a JSON file, or to share the current layout.
 
 #### 📽️ Projector Mode (Seating)
 

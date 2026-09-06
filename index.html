@@ -609,11 +609,6 @@
               </svg>
               <span id="active-file-label" class="max-w-[80px] sm:max-w-[120px] truncate">Teams</span>
             </button>
-            <div id="autosave-indicator"
-              class="h-7 sm:h-8 px-2 flex items-center text-[10px] text-zinc-600 font-mono select-none whitespace-nowrap"
-              style="min-width: 48px; width: 48px; overflow: hidden">
-              Saved
-            </div>
           </div>
         </div>
       </div>
@@ -1882,7 +1877,7 @@
                   seats to adjust manually. Click <strong>×</strong> on a chip to return that person to the sidebar.
                 </p>
                 <p>
-                  <strong>Manage plans:</strong> Click the seating plan name button next to "Seating Plan" to open the seating plan file manager to save, load, rename, or export named plans — handy if you have multiple classes or event rooms. Plans only store seat positions and labels,
+                  <strong>Manage plans:</strong> Click the seating plan name button next to "Seating Plan" to open the seating plan file manager. Plans autosave with their team and only store seat positions and labels,
                   not who is sitting where. You can also export a plan as a <code
                     class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file to share a blank room layout with
                   colleagues, or import one they've shared with you.
@@ -2599,8 +2594,7 @@
     let seatUndoStack = [];
     let seatRedoStack = [];
 
-    // Fingerprint of seat layout + constraints (position/shape/label — ignores occupants)
-    // Used to detect whether the arrangement has changed since it was last saved/loaded.
+    // Fingerprint retained for compatibility with existing team data.
     function seatLayoutFingerprint() {
       // Only seat geometry, labels, and textboxes — not occupants or constraints.
       // Constraints belong to the team, not the room layout.
@@ -2609,11 +2603,6 @@
         rotation: s.rotation, manual: s.manual, label: s.label, sections: s.sections
       })));
     }
-    function isSeatingPlanDirty() {
-      if (!currentSeatingPlanId) return false;
-      return seatLayoutFingerprint() !== seatingPlanCleanSnapshot;
-    }
-
     function markSeatingPlanClean() {
       seatingPlanCleanSnapshot = seatLayoutFingerprint();
     }
@@ -2637,8 +2626,6 @@
 
     function markDirtyOnly() {
       hasUnsavedChanges = true;
-      const ind = document.getElementById("autosave-indicator");
-      if (ind) { ind.textContent = "···"; ind.style.color = "#6272a4"; }
       clearTimeout(_autoSaveTimer);
       _autoSaveTimer = setTimeout(() => saveData(), 800);
     }
@@ -3112,8 +3099,6 @@
     let _autoSaveTimer = null;
     function markUnsaved() {
       hasUnsavedChanges = true;
-      const ind = document.getElementById("autosave-indicator");
-      if (ind) ind.textContent = "···";
       clearTimeout(_autoSaveTimer);
       _autoSaveTimer = setTimeout(() => saveData(), 800);
     }
@@ -3131,8 +3116,6 @@
       files[idx] = { ...files[idx], allMembers, pool, teams, staging, constraints, seats, textboxes, seatRosterLoaded: seatSeatsLoaded, activeSeatingPlanId: currentSeatingPlanId, activeSeatingPlanName: currentSeatingPlanName, seatingPlanCleanSnapshot, updatedAt: Date.now() };
       saveAllFiles(files);
       hasUnsavedChanges = false;
-      const ind = document.getElementById("autosave-indicator");
-      if (ind) { ind.textContent = "Saved"; ind.style.color = "#6272a4"; }
       updateActiveFileLabel();
       updateActiveSeatingPlanLabel();
     }
@@ -3437,14 +3420,7 @@
       refreshExportIfVisible();
       updateActiveFileLabel();
       updateActiveSeatingPlanLabel();
-      renderSeatingPlansList();
-      renderSaveSection();
       hasUnsavedChanges = false;
-      const ind2 = document.getElementById("autosave-indicator");
-      if (ind2) {
-        ind2.textContent = "Saved";
-        ind2.style.color = "#6272a4";
-      }
 
       renderFilesList();
       closeFilesModal();
@@ -3632,7 +3608,6 @@
         activeFileId: getActiveFileId(),
         files,
         folders: getAllFolders(),
-        seatingPlans: [], // Seating plans are now per-team (stored in each file's seats/activeSeatingPlan fields)
         // Legacy single-file fields for backward compat
         allMembers,
         pool,
@@ -3661,13 +3636,11 @@
       const files = getAllFiles();
       const f = files.find((fl) => fl.id === id);
       if (!f) return;
-      const seatingPlans = getAllSeatingPlans(); // include all seating plans (with constraints)
       const payload = {
         version: 2,
         exportedAt: new Date().toISOString(),
         activeFileId: f.id,
         files: [f],
-        seatingPlans, // seating arrangements (each carries its own constraints)
         // Legacy compat fields
         allMembers: f.allMembers,
         pool: f.pool,
@@ -3700,22 +3673,17 @@
             data.files.length > 0
           ) {
             // Multi-file backup
-            const hasSeatingPlans = Array.isArray(data.seatingPlans) && data.seatingPlans.length > 0;
-            const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating plan(s)` : "";
             showModal(
-              `Restore ${data.files.length} team(s)${planMsg} from backup? This will replace all current teams and seating plans.`,
+              `Restore ${data.files.length} team(s) from backup? This will replace all current teams and their attached seating plans.`,
               true,
               () => {
                 saveAllFiles(data.files);
                 const activeId = data.activeFileId || data.files[0].id;
                 setActiveFileId(activeId);
-                if (hasSeatingPlans) {
-                  saveAllSeatingPlans(data.seatingPlans);
-                }
                 loadData();
                 renderFilesList();
                 showModal(
-                  `Restored ${data.files.length} team(s)${planMsg} successfully!`,
+                  `Restored ${data.files.length} team(s) successfully!`,
                 );
               },
             );
@@ -3750,93 +3718,6 @@
       event.target.value = "";
     }
 
-
-    // Import a single file (or multi-file backup) — ADDS to existing files, never replaces
-    function importSingleFileJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      event.target.value = "";
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const data = await parseExport(e.target.result);
-
-          if (data.version === 2 && Array.isArray(data.files) && data.files.length > 0) {
-            // Multi-file backup — import each file, adding alongside existing ones
-            const hasSeatingPlans = Array.isArray(data.seatingPlans) && data.seatingPlans.length > 0;
-            const planMsg = hasSeatingPlans ? ` and ${data.seatingPlans.length} seating plan(s)` : "";
-            showModal(
-              `Import ${data.files.length} team(s)${planMsg} from "${file.name}"? They will be added alongside your existing teams.`,
-              true,
-              () => {
-                saveData(); // flush current state first
-                const incoming = getAllFiles();
-                const newIds = [];
-                data.files.forEach(f => {
-                  const newId = generateId();
-                  newIds.push(newId);
-                  incoming.push({ ...f, id: newId, updatedAt: Date.now() });
-                });
-                saveAllFiles(incoming);
-                // Merge seating plans (add, don't replace) — remap IDs to avoid clashes
-                if (hasSeatingPlans) {
-                  const existingPlans = getAllSeatingPlans();
-                  // Build old→new ID map so file.activeSeatingPlanId can be updated
-                  const planIdMap = {};
-                  const remappedPlans = data.seatingPlans.map(p => {
-                    const newPlanId = "sp_" + generateId();
-                    planIdMap[p.id] = newPlanId;
-                    return { ...p, id: newPlanId };
-                  });
-                  saveAllSeatingPlans([...remappedPlans, ...existingPlans]);
-                  // Fix up activeSeatingPlanId in the files we just pushed
-                  const fixedFiles = getAllFiles();
-                  newIds.forEach(nid => {
-                    const idx = fixedFiles.findIndex(f => f.id === nid);
-                    if (idx >= 0 && fixedFiles[idx].activeSeatingPlanId) {
-                      const mapped = planIdMap[fixedFiles[idx].activeSeatingPlanId];
-                      if (mapped) fixedFiles[idx].activeSeatingPlanId = mapped;
-                    }
-                  });
-                  saveAllFiles(fixedFiles);
-                }
-                // Open the first imported file
-                loadFile(newIds[0]);
-                renderFilesList();
-                showModal(`Imported ${data.files.length} team(s)${planMsg} successfully!`);
-              }
-            );
-          } else if (data.allMembers || data.allStudents) {
-            // Legacy single-file backup
-            const importedName = file.name.replace(/\.json$/i, "") || "Imported";
-            showModal(`Import as a new team? It will be added alongside your existing teams.`, true, () => {
-              saveData();
-              const incoming = getAllFiles();
-              const newId = generateId();
-              incoming.push({
-                id: newId,
-                name: importedName,
-                allMembers: data.allMembers || data.allStudents || [],
-                pool: data.pool || [],
-                teams: data.teams || data.groups || [],
-                staging: data.staging || [],
-                constraints: data.constraints || { together: [], apart: [] },
-                updatedAt: Date.now(),
-              });
-              saveAllFiles(incoming);
-              loadFile(newId);
-              renderFilesList();
-              showModal("Imported successfully as a new team!");
-            });
-          } else {
-            showModal("Invalid file format. Only Team Maker .json files can be imported.");
-          }
-        } catch {
-          showModal("Error reading file. Make sure it is a valid Team Maker .json backup.");
-        }
-      };
-      reader.readAsText(file);
-    }
 
     let teamSelectionContext = null;
 
@@ -3965,8 +3846,7 @@
       pendingRestoreBackup = data;
       const summary = document.getElementById("restore-choice-summary");
       const folderCount = Array.isArray(data.folders) ? data.folders.length : 0;
-      const planCount = Array.isArray(data.seatingPlans) ? data.seatingPlans.length : 0;
-      summary.textContent = `This backup contains ${data.files.length} team(s), ${folderCount} folder(s), and ${planCount} saved seating plan(s). Choose how to restore it.`;
+      summary.textContent = `This backup contains ${data.files.length} team(s) and ${folderCount} folder(s). Each team's attached seating plan will be restored with it.`;
       const modal = document.getElementById("restore-choice-modal");
       modal.classList.remove("hidden");
       modal.classList.add("flex");
@@ -3977,12 +3857,11 @@
       closeRestoreChoiceModal();
       if (!data) return;
       showModal(
-        `Replace all current data with ${data.files.length} team(s), ${Array.isArray(data.folders) ? data.folders.length : 0} folder(s), and ${Array.isArray(data.seatingPlans) ? data.seatingPlans.length : 0} seating plan(s)? Current data will be permanently replaced.`,
+        `Replace all current data with ${data.files.length} team(s) and ${Array.isArray(data.folders) ? data.folders.length : 0} folder(s)? Current data will be permanently replaced.`,
         true,
         () => {
           saveAllFiles(data.files);
           saveAllFolders(data.folders || []);
-          saveAllSeatingPlans(Array.isArray(data.seatingPlans) ? data.seatingPlans : []);
           setActiveFileId(data.activeFileId || data.files[0]?.id || "");
           loadData();
           renderFilesList();
@@ -9515,16 +9394,6 @@
     function closeSeatContextMenu() {
       const m = document.getElementById("seat-context-menu");
       if (m) m.remove();
-    }
-
-    // ====== SEATING PLANS (save/load named arrangements) ======
-    const SP_KEY = "seatingPlans";
-
-    function getAllSeatingPlans() {
-      try { return JSON.parse(localStorage.getItem(SP_KEY)) || []; } catch { return []; }
-    }
-    function saveAllSeatingPlans(plans) {
-      localStorage.setItem(SP_KEY, JSON.stringify(plans));
     }
 
     function updateActiveSeatingPlanLabel() {
