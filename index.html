@@ -787,8 +787,8 @@
   <!-- Main Content Area -->
   <main class="flex-1 relative overflow-hidden bg-zinc-800">
     <!-- ================= TAB 1: ROSTER ================= -->
-    <div id="tab1" class="tab-content absolute inset-0 overflow-y-auto p-4 sm:p-6 max-w-5xl mx-auto">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+    <div id="tab1" class="tab-content absolute inset-0 p-4 sm:p-6 max-w-5xl mx-auto flex flex-col overflow-y-auto md:overflow-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 flex-shrink-0">
         <!-- Input Area -->
         <div class="bg-zinc-900 p-5 sm:p-6 rounded-xl border border-zinc-700 shadow-xl">
           <div class="flex justify-between items-start mb-4">
@@ -867,15 +867,15 @@
       </div>
 
       <!-- Member Roster Area -->
-      <div class="mt-4 sm:mt-6 bg-zinc-900 p-5 sm:p-6 rounded-xl border border-zinc-700 shadow-xl">
-        <div class="flex justify-between items-center mb-4">
+      <div class="mt-4 sm:mt-6 bg-zinc-900 p-4 sm:p-6 rounded-xl border border-zinc-700 shadow-xl flex flex-col flex-1 min-h-[160px] md:min-h-0 overflow-hidden">
+        <div class="flex justify-between items-center mb-3 flex-shrink-0">
           <h2 class="text-lg font-semibold text-[#66D9EF]">Member Roster</h2>
           <button onclick="clearAllMembers()"
             class="text-xs text-[#F92672] hover:text-[#E91662] transition bg-zinc-800 px-3 py-1.5 rounded border border-zinc-700">
             Clear All
           </button>
         </div>
-        <div id="member-roster" class="flex flex-wrap gap-2">
+        <div id="member-roster" class="flex-1 min-h-0 overflow-y-auto flex flex-wrap content-start gap-2 pr-1.5 max-h-[350px] md:max-h-none">
           <div class="text-zinc-500 text-sm">Empty</div>
         </div>
       </div>
@@ -3174,57 +3174,6 @@
 
     function renderFilesList() {
       const files = getAllFiles();
-      const activeId = getActiveFileId();
-      const container = document.getElementById("files-list");
-      if (!container) return;
-
-      if (files.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-zinc-500 text-sm">No teams yet. Create one below.</div>`;
-        return;
-      }
-
-      container.innerHTML = "";
-      files.forEach((f) => {
-        const isActive = f.id === activeId;
-        const date = f.updatedAt
-          ? new Date(f.updatedAt).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })
-          : "";
-        const row = document.createElement("div");
-        row.className = `file-item flex items-center gap-3 px-4 py-3 ${isActive ? "bg-zinc-800" : "hover:bg-zinc-800/50"} transition cursor-pointer group`;
-
-        row.innerHTML = `
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                            ${isActive ? '<span class="w-2 h-2 rounded-full bg-[#A6E22E] flex-shrink-0"></span>' : '<span class="w-2 h-2 rounded-full bg-zinc-700 flex-shrink-0"></span>'}
-                            <span class="file-name-display text-sm font-medium text-[#F8F8F2] truncate">${escapeHtml(f.name)}</span>
-                        </div>
-                        <div class="text-xs text-zinc-500 mt-0.5 ml-4">${f.allMembers ? f.allMembers.length : 0} members · ${f.teams ? f.teams.length : 0} teams${date ? " · " + date : ""}</div>
-                    </div>
-                    <div class="file-actions flex items-center gap-1 flex-shrink-0">
-                        <button onclick="exportSingleFileJSON('${f.id}')" title="Export this team as JSON"
-                            class="p-1.5 rounded text-zinc-500 hover:text-[#66D9EF] hover:bg-zinc-700 transition">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        </button>
-                        <button onclick="renameFilePrompt('${f.id}')" title="Rename"
-                            class="p-1.5 rounded text-zinc-500 hover:text-[#E6DB74] hover:bg-zinc-700 transition">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        </button>
-                        <button onclick="deleteFile('${f.id}')" title="Delete"
-                            class="p-1.5 rounded text-zinc-500 hover:text-[#F92672] hover:bg-zinc-700 transition">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                        ${!isActive ? `<button onclick="loadFile('${f.id}')" class="ml-1 bg-zinc-700 hover:bg-[#66D9EF] hover:text-zinc-900 text-zinc-300 text-xs px-3 py-1.5 rounded font-medium transition">Open</button>` : `<span class="ml-1 bg-[#A6E22E]/20 text-[#A6E22E] border border-[#A6E22E]/30 text-xs px-3 py-1.5 rounded font-medium">Active</span>`}
-                    </div>`;
-        container.appendChild(row);
-      });
-    }
-
-    function renderFilesList() {
-      const files = getAllFiles();
       const folders = getAllFolders();
       const container = document.getElementById("files-list");
       if (!container) return;
@@ -3237,9 +3186,9 @@
       const renderBranch = (parentId, depth) => {
         folders.filter(folder => (folder.parentId || null) === parentId).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)).forEach(folder => {
           const row = document.createElement("div");
-          row.className = "folder-item flex items-center gap-2 px-3 py-2 hover:bg-zinc-800/60 transition cursor-pointer";
+          row.className = "folder-item flex items-center gap-2 px-3 py-2 hover:bg-zinc-800/60 transition cursor-pointer rounded-lg";
           row.draggable = true; row.dataset.itemType = "folder"; row.dataset.itemId = folder.id; row.style.paddingLeft = `${12 + depth * 18}px`;
-          row.innerHTML = `<button class="folder-toggle text-zinc-400 w-5">${folder.collapsed ? "▸" : "▾"}</button><span class="text-[#E6DB74]">▰</span><span class="folder-name-display flex-1 truncate font-medium">${escapeHtml(folder.name)}</span>`;
+          row.innerHTML = `<button class="folder-toggle text-zinc-400 hover:text-zinc-200 w-5">${folder.collapsed ? "▸" : "▾"}</button><span class="text-[#E6DB74]">▰</span><span class="folder-name-display flex-1 truncate font-medium text-zinc-200 hover:text-[#E6DB74]">${escapeHtml(folder.name)}</span>`;
           row.querySelector(".folder-toggle").onclick = event => { event.stopPropagation(); folder.collapsed = !folder.collapsed; saveAllFolders(folders); renderFilesList(); };
           row.querySelector(".folder-name-display").onclick = event => { event.stopPropagation(); renameFolderPrompt(folder.id); };
           row.oncontextmenu = event => showFileContextMenu(event, "folder", folder.id);
@@ -3249,11 +3198,22 @@
           if (!folder.collapsed) renderBranch(folder.id, depth + 1);
         });
         files.filter(file => (file.folderId || null) === parentId).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)).forEach(file => {
+          const isActive = file.id === activeId;
           const row = document.createElement("div");
-          row.className = `file-item flex items-center gap-2 px-3 py-2 ${file.id === activeId ? "bg-zinc-800" : "hover:bg-zinc-800/50"} transition cursor-pointer`;
+          row.className = `file-item group flex items-center gap-2 px-3 py-2 rounded-lg ${isActive ? "bg-[#A6E22E]/10 border border-[#A6E22E]/40" : "hover:bg-zinc-800/50 border border-transparent"} transition cursor-pointer`;
           row.style.paddingLeft = `${38 + depth * 18}px`; row.draggable = true; row.dataset.itemType = "file"; row.dataset.itemId = file.id;
-          row.innerHTML = `<span class="text-zinc-500">▱</span><span class="file-name-display flex-1 min-w-0 truncate text-sm font-medium text-[#F8F8F2]">${escapeHtml(file.name)}</span><span class="text-xs text-zinc-600">${file.allMembers ? file.allMembers.length : 0}</span>`;
-          row.onclick = () => loadFile(file.id); row.querySelector(".file-name-display").onclick = event => { event.stopPropagation(); renameFilePrompt(file.id); };
+          row.innerHTML = `
+            ${isActive ? '<span class="w-2 h-2 rounded-full bg-[#A6E22E] flex-shrink-0 shadow-[0_0_8px_rgba(166,226,46,0.6)]"></span>' : '<span class="w-2 h-2 rounded-full bg-zinc-600 flex-shrink-0"></span>'}
+            <span class="file-name-display flex-1 min-w-0 truncate text-sm font-medium ${isActive ? 'text-[#A6E22E] font-semibold' : 'text-[#F8F8F2]'}">${escapeHtml(file.name)}</span>
+            ${isActive ? '<span class="text-[10px] font-bold bg-[#A6E22E]/20 text-[#A6E22E] px-1.5 py-0.5 rounded border border-[#A6E22E]/40 uppercase tracking-wide flex-shrink-0">Active</span>' : ''}
+            <span class="text-xs text-zinc-500 flex-shrink-0 mr-1">${file.allMembers ? file.allMembers.length : 0} members</span>
+            <div class="file-hover-actions opacity-0 group-hover:opacity-100 flex items-center gap-0.5 flex-shrink-0 transition">
+              <button onclick="event.stopPropagation(); renameFilePrompt('${file.id}')" title="Rename team"
+                class="p-1 rounded text-zinc-400 hover:text-[#E6DB74] hover:bg-zinc-700 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              </button>
+            </div>`;
+          row.onclick = () => loadFile(file.id);
           row.oncontextmenu = event => showFileContextMenu(event, "file", file.id);
           row.ondragstart = event => event.dataTransfer.setData("text/plain", JSON.stringify({ type: "file", id: file.id }));
           row.ondragover = event => event.preventDefault(); row.ondrop = event => { event.preventDefault(); moveDraggedItem(event, "file", file.id); };
