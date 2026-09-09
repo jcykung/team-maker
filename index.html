@@ -2558,7 +2558,9 @@
       <div class="flex items-center justify-between p-5 border-b border-zinc-700 flex-shrink-0">
         <div>
           <h3 class="text-base font-bold text-[#FD971F]">Seating Plan Manager</h3>
-          <p id="sp-modal-plan-name" class="text-xs text-zinc-500 mt-0.5"></p>
+          <input id="sp-modal-plan-name" type="text" value="" placeholder="Name this seating plan"
+            aria-label="Seating plan name"
+            class="mt-1 w-full max-w-xs bg-zinc-950 border border-zinc-700 text-[#F8F8F2] text-xs rounded px-2 py-1 outline-none focus:border-[#FD971F] placeholder-zinc-600" />
         </div>
         <button onclick="closeSeatingPlansModal()"
           class="p-1 text-zinc-500 hover:text-[#F8F8F2] transition" title="Close seating plan manager" aria-label="Close seating plan manager"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -9628,6 +9630,20 @@
       }
     }
 
+    function renameSeatingPlanFromManager() {
+      const input = document.getElementById("sp-modal-plan-name");
+      if (!input || !currentSeatingPlanId) return;
+      const name = input.value.trim();
+      if (!name) {
+        input.value = currentSeatingPlanName;
+        return;
+      }
+      if (name === currentSeatingPlanName) return;
+      currentSeatingPlanName = name;
+      saveData();
+      updateActiveSeatingPlanLabel();
+    }
+
     // ---- Setup Modal for Teams without an attached Seating Plan ----
     function openSeatingSetupModal() {
       const modal = document.getElementById("seating-setup-modal");
@@ -9802,6 +9818,7 @@
                 extracted.push({
                   id: f.activeSeatingPlanId || ("sp_" + generateId()),
                   name: planName,
+                  teamName: f.name,
                   seats: f.seats,
                   textboxes: f.textboxes || [],
                   source: `Team: ${f.name}`
@@ -9845,8 +9862,9 @@
 
         if (plans.length === 1) {
           const p = plans[0];
+          const displayName = p.teamName ? `${p.teamName} — ${p.name}` : p.name;
           attachSeatingPlanLayout(p.name, p.seats, p.textboxes, p.id);
-          showModal(`Imported seating plan "${p.name}" successfully!`);
+          showModal(`Imported seating plan "${displayName}" successfully!`);
         } else {
           openPickPlanModal(plans);
         }
@@ -9864,9 +9882,10 @@
       plans.forEach(p => {
         const card = document.createElement("div");
         card.className = "flex items-center justify-between p-3 bg-zinc-950/70 border border-zinc-800 rounded-lg hover:border-[#66D9EF]/50 transition";
+        const displayName = p.teamName ? `${p.teamName} — ${p.name}` : p.name;
         card.innerHTML = `
           <div class="min-w-0 flex-1 pr-3">
-            <div class="text-sm font-semibold text-[#F8F8F2] truncate">${escapeHtml(p.name)}</div>
+            <div class="text-sm font-semibold text-[#F8F8F2] truncate">${escapeHtml(displayName)}</div>
             <div class="text-xs text-zinc-500 mt-0.5">${p.seats?.length || 0} seats · <span class="text-zinc-400">${escapeHtml(p.source)}</span></div>
           </div>
           <button class="bg-[#66D9EF] text-zinc-950 px-3 py-1 rounded text-xs font-bold hover:bg-[#52c5db] transition flex-shrink-0">
@@ -9876,7 +9895,7 @@
         card.querySelector("button").onclick = () => {
           attachSeatingPlanLayout(p.name, p.seats, p.textboxes, p.id);
           modal.classList.add("hide");
-          showModal(`Imported "${p.name}" successfully!`);
+          showModal(`Imported "${displayName}" successfully!`);
         };
         list.appendChild(card);
       });
@@ -9909,7 +9928,17 @@
       // Update modal subtitle with current plan name
       const planNameEl = document.getElementById("sp-modal-plan-name");
       if (planNameEl) {
-        planNameEl.textContent = currentSeatingPlanName ? `Current plan: ${currentSeatingPlanName}` : "No plan attached yet";
+        planNameEl.value = currentSeatingPlanName || "";
+        planNameEl.disabled = !currentSeatingPlanId;
+        planNameEl.title = currentSeatingPlanId ? "Rename seating plan" : "Create a seating plan first";
+        planNameEl.onblur = renameSeatingPlanFromManager;
+        planNameEl.onkeydown = event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            renameSeatingPlanFromManager();
+            planNameEl.blur();
+          }
+        };
       }
       populateImportTeamsList();
       document.getElementById("seating-plans-modal").classList.remove("hide");
@@ -9953,10 +9982,11 @@
       const team = files.find(f => f.id === select.value);
       if (!team) return;
       const name = team.activeSeatingPlanName || `${team.name} Layout`;
-      showModal(`Import the seating layout from "${team.name}"? This will replace the current seating plan.`, true, () => {
+      const displayName = `${team.name} — ${name}`;
+      showModal(`Import the seating layout "${displayName}"? This will replace the current seating plan.`, true, () => {
         attachSeatingPlanLayout(name, team.seats || [], team.textboxes || []);
         closeSeatingPlansModal();
-        showModal(`Imported "${name}" successfully!`);
+        showModal(`Imported "${displayName}" successfully!`);
       });
     }
 
@@ -9975,10 +10005,11 @@
         }
         if (plans.length === 1) {
           const p = plans[0];
-          showModal(`Import the seating layout "${p.name}"? This will replace the current seating plan.`, true, () => {
+          const displayName = p.teamName ? `${p.teamName} — ${p.name}` : p.name;
+          showModal(`Import the seating layout "${displayName}"? This will replace the current seating plan.`, true, () => {
             attachSeatingPlanLayout(p.name, p.seats, p.textboxes);
             closeSeatingPlansModal();
-            showModal(`Imported "${p.name}" successfully!`);
+            showModal(`Imported "${displayName}" successfully!`);
           });
         } else {
           // Multiple plans found — show picker
