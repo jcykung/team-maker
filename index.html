@@ -27,6 +27,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Polyfill to enable HTML5 drag and drop on Mobile Touchscreens -->
   <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
   <link
@@ -492,6 +493,25 @@
       display: flex;
     }
 
+    .files-modal-panel {
+      width: min(100%, 44rem);
+    }
+
+    @media (max-width: 767px) {
+      .files-modal-panel {
+        max-height: calc(100dvh - 2rem);
+      }
+
+      .files-modal-actions {
+        flex-wrap: wrap;
+      }
+
+      .files-modal-actions > * {
+        flex: 1 1 100%;
+        min-width: 0;
+      }
+    }
+
     .file-item:hover .file-actions {
       opacity: 1;
     }
@@ -499,6 +519,19 @@
     .file-actions {
       opacity: 0;
       transition: opacity 0.15s;
+    }
+
+    #files-list .file-drop-before {
+      box-shadow: inset 0 2px 0 #66d9ef;
+    }
+
+    #files-list .file-drop-after {
+      box-shadow: inset 0 -2px 0 #66d9ef;
+    }
+
+    #files-list .folder-drop-target {
+      background-color: rgba(102, 217, 239, 0.2);
+      box-shadow: inset 0 0 0 2px rgba(102, 217, 239, 0.85);
     }
 
     @media (max-width: 767px) {
@@ -2172,7 +2205,7 @@
   <!-- ================= FILES MANAGER MODAL ================= -->
   <div id="files-modal" onclick="if(event.target===this)closeFilesModal()"
     class="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm items-start justify-center p-4 pt-[10vh] overflow-y-auto">
-    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg">
+    <div class="files-modal-panel bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl">
       <!-- Header -->
       <div class="flex items-center justify-between p-5 border-b border-zinc-700">
         <div>
@@ -2181,7 +2214,7 @@
             Each team holds a roster, teams, and seating
           </p>
         </div>
-        <div class="flex items-center gap-3"><button onclick="sortFilesAndFolders()" class="text-xs text-zinc-400 hover:text-[#E6DB74]">A to Z</button><button onclick="closeFilesModal()" class="text-zinc-500 hover:text-[#F8F8F2] transition text-2xl leading-none font-bold">&times;</button></div>
+        <div class="flex items-center gap-3"><button id="delete-selected-files-btn" onclick="deleteSelectedFileManagerItems()" title="Delete selected items" aria-label="Delete selected items" disabled class="p-2 text-zinc-600 transition disabled:cursor-not-allowed"><i data-lucide="trash-2" class="w-4 h-4"></i></button><button onclick="closeFilesModal()" title="Close file manager" aria-label="Close file manager" class="p-2 text-zinc-500 hover:text-[#F8F8F2] transition"><i data-lucide="x" class="w-5 h-5"></i></button></div>
       </div>
 
       <!-- File list -->
@@ -2191,15 +2224,15 @@
 
       <!-- New file input -->
       <div class="p-4 border-t border-zinc-700">
-        <div class="flex gap-2">
+        <div class="files-modal-actions flex gap-2">
           <input type="text" id="new-file-name" placeholder="New team name"
             class="flex-1 bg-zinc-950 border border-zinc-700 text-[#F8F8F2] rounded text-sm px-3 py-2 outline-none focus:border-[#A6E22E] placeholder-zinc-600" />
-          <button onclick="createNewFile()"
-            class="bg-[#A6E22E] text-zinc-900 px-4 py-2 rounded font-bold text-sm hover:bg-[#8cc026] transition flex-shrink-0">
-            + New Team
+          <button onclick="createNewFile()" title="Create new team"
+            class="bg-[#A6E22E] text-zinc-900 px-4 py-2 rounded font-bold text-sm hover:bg-[#8cc026] transition flex-shrink-0 flex items-center justify-center gap-1.5">
+            <i data-lucide="file-plus-2" class="w-4 h-4"></i> New Team
           </button>
           <button onclick="createNewFolder()" title="Create folder"
-            class="bg-zinc-800 border border-zinc-700 text-[#66D9EF] px-3 py-2 rounded font-bold text-sm hover:bg-zinc-700 transition">+ Folder</button>
+            class="bg-zinc-800 border border-zinc-700 text-[#66D9EF] px-3 py-2 rounded font-bold text-sm hover:bg-zinc-700 transition flex items-center justify-center gap-1.5"><i data-lucide="folder-plus" class="w-4 h-4"></i> Add Folder</button>
         </div>
       </div>
 
@@ -2208,33 +2241,26 @@
         <div class="flex flex-col sm:flex-row gap-2">
           <button onclick="exportAllFilesJSON()"
             class="flex-1 bg-zinc-800 border border-zinc-700 text-[#FD971F] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
+            <i data-lucide="archive-restore" class="w-3.5 h-3.5"></i>
             Create Backup File
           </button>
           <button onclick="document.getElementById('restore-all-json').click()"
             class="flex-1 bg-zinc-800 border border-zinc-700 text-[#E6DB74] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"></path>
-            </svg>
+            <i data-lucide="archive-restore" class="w-3.5 h-3.5 rotate-180"></i>
             Restore Backup File
           </button>
         </div>
-        <button onclick="document.getElementById('import-single-json').click()"
-          class="w-full bg-zinc-800 border border-zinc-700 text-[#66D9EF] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16">
-            </path>
-          </svg>
-          Import Teams
-        </button>
-        <button onclick="openExportTeamsModal()"
-          class="w-full bg-zinc-800 border border-zinc-700 text-[#A6E22E] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
-          Export Teams
-        </button>
+        <div class="flex gap-2">
+          <button onclick="openExportTeamsModal()"
+            class="flex-1 bg-zinc-800 border border-zinc-700 text-[#A6E22E] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
+            <i data-lucide="file-down" class="w-3.5 h-3.5"></i> Export Teams
+          </button>
+          <button onclick="document.getElementById('import-single-json').click()"
+            class="flex-1 bg-zinc-800 border border-zinc-700 text-[#66D9EF] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
+            <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
+            Import Teams
+          </button>
+        </div>
         <input type="file" id="restore-all-json" accept=".json" class="hidden" onchange="restoreFromBackup(event)" />
         <input type="file" id="import-single-json" accept=".json" class="hidden"
           onchange="importSingleFileJSON(event)" />
@@ -2294,6 +2320,19 @@
           class="px-4 py-2 bg-[#F92672] text-[#F8F8F2] rounded hover:bg-[#E91662] border border-transparent transition font-bold">
           OK
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="folder-name-modal" class="fixed inset-0 z-[9991] flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4">
+    <div class="bg-zinc-900 rounded-xl p-6 max-w-sm w-full border border-zinc-700 shadow-2xl">
+      <h3 class="text-lg font-bold text-[#66D9EF] mb-2">Create Folder</h3>
+      <label for="folder-name-input" class="block text-sm text-zinc-400 mb-2">Folder name</label>
+      <input id="folder-name-input" type="text" value="New Folder"
+        class="w-full bg-zinc-950 border border-zinc-700 text-[#F8F8F2] rounded px-3 py-2 text-sm outline-none focus:border-[#66D9EF]" />
+      <div class="flex justify-end gap-3 mt-5 text-sm">
+        <button id="folder-name-cancel" class="px-4 py-2 text-zinc-400 hover:text-zinc-200">Cancel</button>
+        <button id="folder-name-confirm" class="px-4 py-2 bg-[#66D9EF] text-zinc-900 rounded font-bold hover:opacity-90">Create Folder</button>
       </div>
     </div>
   </div>
@@ -2522,7 +2561,7 @@
           <p id="sp-modal-plan-name" class="text-xs text-zinc-500 mt-0.5"></p>
         </div>
         <button onclick="closeSeatingPlansModal()"
-          class="text-zinc-500 hover:text-[#F8F8F2] transition text-xl leading-none">&times;</button>
+          class="p-1 text-zinc-500 hover:text-[#F8F8F2] transition" title="Close seating plan manager" aria-label="Close seating plan manager"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-4 space-y-5">
@@ -2533,10 +2572,7 @@
           <p class="text-xs text-zinc-500 mb-3">Export this seating plan as a JSON file that can be imported into any team.</p>
           <button onclick="shareSeatingPlan()"
             class="inline-flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#A6E22E] hover:border-[#A6E22E] text-sm px-3 py-2 rounded-lg transition font-medium">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-            </svg>
+            <i data-lucide="share-2" class="w-4 h-4"></i>
             Share Seating Plan
           </button>
         </div>
@@ -2558,7 +2594,8 @@
               class="flex-1 bg-zinc-900 border border-zinc-700 text-[#F8F8F2] text-xs rounded-lg px-3 py-2 outline-none focus:border-[#66D9EF]">
             </select>
             <button onclick="confirmImportFromTeamInManager()"
-              class="bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-[#66D9EF] hover:border-[#66D9EF] px-3 py-2 rounded-lg text-xs font-bold transition flex-shrink-0">
+              class="bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-[#66D9EF] hover:border-[#66D9EF] px-3 py-2 rounded-lg text-xs font-bold transition flex-shrink-0 inline-flex items-center gap-1.5">
+              <i data-lucide="file-up" class="w-3.5 h-3.5"></i>
               Import
             </button>
           </div>
@@ -2571,10 +2608,7 @@
           <p class="text-xs text-zinc-500 mb-3">Upload a backup file, team export, or seating plan file.</p>
           <label
             class="cursor-pointer inline-flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-[#66D9EF] hover:border-[#66D9EF] text-xs font-medium px-3.5 py-2 rounded-lg transition">
-            <svg class="w-4 h-4 text-[#66D9EF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-            </svg>
+            <i data-lucide="file-up" class="w-4 h-4 text-[#66D9EF]"></i>
             <span>Choose File (Backup, Team Export, or Seating Plan)</span>
             <input type="file" id="sp-import-file-input" accept=".json" onchange="importSeatingPlanInManager(event)" class="hidden" />
           </label>
@@ -3183,15 +3217,78 @@
     const generateId = () => Math.random().toString(36).substring(2, 9);
 
     // ================= FILES MANAGER =================
+    const fileManagerSelection = new Set();
+    let fileManagerSelectionAnchor = null;
+    let fileManagerDragTarget = null;
+
+    function fileManagerItemKey(type, id) {
+      return `${type}:${id}`;
+    }
+
+    function updateFileManagerSelectionUI() {
+      const deleteButton = document.getElementById("delete-selected-files-btn");
+      if (!deleteButton) return;
+      const count = fileManagerSelection.size;
+      deleteButton.disabled = count === 0;
+      deleteButton.classList.toggle("text-[#F92672]", count > 0);
+      deleteButton.classList.toggle("hover:bg-zinc-800", count > 0);
+      deleteButton.title = count ? `Delete ${count} selected item${count === 1 ? "" : "s"}` : "Delete selected items";
+    }
+
+    function clearFileManagerDragTarget() {
+      if (!fileManagerDragTarget) return;
+      fileManagerDragTarget = null;
+      document.querySelectorAll("#files-list .file-drop-before, #files-list .file-drop-after, #files-list .folder-drop-target").forEach(row => {
+        row.classList.remove("file-drop-before", "file-drop-after", "folder-drop-target");
+      });
+    }
+
+    function updateFileManagerDragTarget(row, event) {
+      if (!row || !event.dataTransfer.types.length) return;
+      const type = row.dataset.itemType;
+      const id = row.dataset.itemId;
+      const position = type === "folder" ? "inside" : (event.clientY < row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2 ? "before" : "after");
+      const nextTarget = { type, id, position };
+      if (fileManagerDragTarget && fileManagerDragTarget.type === type && fileManagerDragTarget.id === id && fileManagerDragTarget.position === position) return;
+      clearFileManagerDragTarget();
+      fileManagerDragTarget = nextTarget;
+      row.classList.add(type === "folder" ? "folder-drop-target" : `file-drop-${position}`);
+    }
+
+    function selectFileManagerItem(type, id, event = {}) {
+      const key = fileManagerItemKey(type, id);
+      const keys = [...document.querySelectorAll("#files-list [data-item-type]")].map(row => fileManagerItemKey(row.dataset.itemType, row.dataset.itemId));
+      if (event.shiftKey && fileManagerSelectionAnchor && keys.includes(fileManagerSelectionAnchor)) {
+        const start = keys.indexOf(fileManagerSelectionAnchor);
+        const end = keys.indexOf(key);
+        const range = keys.slice(Math.min(start, end), Math.max(start, end) + 1);
+        if (!event.ctrlKey && !event.metaKey) fileManagerSelection.clear();
+        range.forEach(itemKey => fileManagerSelection.add(itemKey));
+      } else if (event.ctrlKey || event.metaKey) {
+        if (fileManagerSelection.has(key)) fileManagerSelection.delete(key);
+        else fileManagerSelection.add(key);
+      } else {
+        fileManagerSelection.clear();
+        fileManagerSelection.add(key);
+      }
+      fileManagerSelectionAnchor = key;
+      renderFilesList();
+    }
 
     function openFilesModal() {
       saveData(); // ensure latest saved before opening
+      fileManagerSelection.clear();
+      fileManagerSelectionAnchor = null;
       renderFilesList();
       document.getElementById("files-modal").classList.add("open");
     }
 
     function closeFilesModal() {
       document.getElementById("files-modal").classList.remove("open");
+    }
+
+    function refreshLucideIcons() {
+      if (window.lucide) lucide.createIcons();
     }
 
     function renderFilesList() {
@@ -3208,49 +3305,103 @@
       const renderBranch = (parentId, depth) => {
         folders.filter(folder => (folder.parentId || null) === parentId).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)).forEach(folder => {
           const row = document.createElement("div");
-          row.className = "folder-item flex items-center gap-2 px-3 py-2 hover:bg-zinc-800/60 transition cursor-pointer rounded-lg";
+          const isSelected = fileManagerSelection.has(fileManagerItemKey("folder", folder.id));
+          row.className = `folder-item flex items-center gap-2 px-3 py-2 transition cursor-pointer ${isSelected ? "bg-[#66D9EF]/15 border border-[#66D9EF]/50" : "hover:bg-zinc-800/60 border border-transparent"}`;
           row.draggable = true; row.dataset.itemType = "folder"; row.dataset.itemId = folder.id; row.style.paddingLeft = `${12 + depth * 18}px`;
-          row.innerHTML = `<button class="folder-toggle text-zinc-400 hover:text-zinc-200 w-5">${folder.collapsed ? "▸" : "▾"}</button><span class="text-[#E6DB74]">▰</span><span class="folder-name-display flex-1 truncate font-medium text-zinc-200 hover:text-[#E6DB74]">${escapeHtml(folder.name)}</span>`;
+          row.innerHTML = `<button class="folder-toggle text-zinc-400 hover:text-zinc-200 w-5" title="${folder.collapsed ? "Expand" : "Collapse"} folder" aria-label="${folder.collapsed ? "Expand" : "Collapse"} folder"><i data-lucide="${folder.collapsed ? "chevron-right" : "chevron-down"}" class="w-4 h-4"></i></button><span class="folder-icon text-[#E6DB74]"><i data-lucide="${folder.collapsed ? "folder-closed" : "folder-open"}" class="w-4 h-4"></i></span><span class="folder-name-display flex-1 truncate font-medium text-zinc-200">${escapeHtml(folder.name)}</span>`;
           row.querySelector(".folder-toggle").onclick = event => { event.stopPropagation(); folder.collapsed = !folder.collapsed; saveAllFolders(folders); renderFilesList(); };
-          row.querySelector(".folder-name-display").onclick = event => { event.stopPropagation(); renameFolderPrompt(folder.id); };
+          row.onclick = event => { if (event.target.closest("button")) return; selectFileManagerItem("folder", folder.id, event); };
+          row.ondblclick = event => { if (event.target.closest("button")) return; folder.collapsed = !folder.collapsed; saveAllFolders(folders); renderFilesList(); };
           row.oncontextmenu = event => showFileContextMenu(event, "folder", folder.id);
-          row.ondragstart = event => event.dataTransfer.setData("text/plain", JSON.stringify({ type: "folder", id: folder.id }));
-          row.ondragover = event => event.preventDefault(); row.ondrop = event => { event.preventDefault(); moveDraggedItem(event, "folder", folder.id); };
+          row.ondragstart = event => {
+            const key = fileManagerItemKey("folder", folder.id);
+            if (!fileManagerSelection.has(key)) { fileManagerSelection.clear(); fileManagerSelection.add(key); fileManagerSelectionAnchor = key; updateFileManagerSelectionUI(); }
+            event.dataTransfer.setData("text/plain", JSON.stringify([...fileManagerSelection].map(key => { const separator = key.indexOf(":"); return { type: key.slice(0, separator), id: key.slice(separator + 1) }; })));
+          };
+          row.ondragend = clearFileManagerDragTarget;
+          row.ondragover = event => { event.preventDefault(); updateFileManagerDragTarget(row, event); };
+          row.ondragleave = event => { if (!row.contains(event.relatedTarget)) clearFileManagerDragTarget(); };
+          row.ondrop = event => { event.preventDefault(); clearFileManagerDragTarget(); moveDraggedItem(event, "folder", folder.id); };
           container.appendChild(row);
           if (!folder.collapsed) renderBranch(folder.id, depth + 1);
         });
         files.filter(file => (file.folderId || null) === parentId).sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)).forEach(file => {
           const isActive = file.id === activeId;
           const row = document.createElement("div");
-          row.className = `file-item group flex items-center gap-2 px-3 py-2 rounded-lg ${isActive ? "bg-[#A6E22E]/10 border border-[#A6E22E]/40" : "hover:bg-zinc-800/50 border border-transparent"} transition cursor-pointer`;
+          const isSelected = fileManagerSelection.has(fileManagerItemKey("file", file.id));
+          row.className = `file-item group flex items-center gap-2 px-3 py-2 ${isSelected ? "bg-[#66D9EF]/15 border border-[#66D9EF]/50" : isActive ? "bg-[#A6E22E]/10 border border-[#A6E22E]/40" : "hover:bg-zinc-800/50 border border-transparent"} transition cursor-pointer`;
           row.style.paddingLeft = `${38 + depth * 18}px`; row.draggable = true; row.dataset.itemType = "file"; row.dataset.itemId = file.id;
           row.innerHTML = `
             ${isActive ? '<span class="w-2 h-2 rounded-full bg-[#A6E22E] flex-shrink-0 shadow-[0_0_8px_rgba(166,226,46,0.6)]"></span>' : '<span class="w-2 h-2 rounded-full bg-zinc-600 flex-shrink-0"></span>'}
             <span class="file-name-display flex-1 min-w-0 truncate text-sm font-medium ${isActive ? 'text-[#A6E22E] font-semibold' : 'text-[#F8F8F2]'}">${escapeHtml(file.name)}</span>
-            ${isActive ? '<span class="text-[10px] font-bold bg-[#A6E22E]/20 text-[#A6E22E] px-1.5 py-0.5 rounded border border-[#A6E22E]/40 uppercase tracking-wide flex-shrink-0">Active</span>' : ''}
             <span class="text-xs text-zinc-500 flex-shrink-0 mr-1">${file.allMembers ? file.allMembers.length : 0} members</span>
+            <button class="file-open-button text-[10px] font-bold ${isActive ? 'text-[#A6E22E] border-[#A6E22E]/60 hover:border-[#A6E22E]' : 'text-zinc-400 border-zinc-600 hover:text-[#A6E22E] hover:border-[#A6E22E]'} px-1.5 py-0.5 border rounded uppercase tracking-wide transition flex-shrink-0" title="${isActive ? 'Active team' : 'Activate team'}" aria-label="${isActive ? 'Active' : 'Activate'} ${escapeHtml(file.name)}">${isActive ? 'Active' : 'Activate'}</button>
             <div class="file-hover-actions opacity-0 group-hover:opacity-100 flex items-center gap-0.5 flex-shrink-0 transition">
               <button onclick="event.stopPropagation(); renameFilePrompt('${file.id}')" title="Rename team"
                 class="p-1 rounded text-zinc-400 hover:text-[#E6DB74] hover:bg-zinc-700 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
               </button>
             </div>`;
-          row.onclick = () => loadFile(file.id);
+          row.querySelector(".file-open-button").onclick = event => { event.stopPropagation(); loadFile(file.id); };
+          row.onclick = event => { if (event.target.closest("button")) return; selectFileManagerItem("file", file.id, event); };
+          row.ondblclick = event => { if (event.target.closest("button")) return; loadFile(file.id); };
           row.oncontextmenu = event => showFileContextMenu(event, "file", file.id);
-          row.ondragstart = event => event.dataTransfer.setData("text/plain", JSON.stringify({ type: "file", id: file.id }));
-          row.ondragover = event => event.preventDefault(); row.ondrop = event => { event.preventDefault(); moveDraggedItem(event, "file", file.id); };
+          row.ondragstart = event => {
+            const key = fileManagerItemKey("file", file.id);
+            if (!fileManagerSelection.has(key)) { fileManagerSelection.clear(); fileManagerSelection.add(key); fileManagerSelectionAnchor = key; updateFileManagerSelectionUI(); }
+            event.dataTransfer.setData("text/plain", JSON.stringify([...fileManagerSelection].map(key => { const separator = key.indexOf(":"); return { type: key.slice(0, separator), id: key.slice(separator + 1) }; })));
+          };
+          row.ondragend = clearFileManagerDragTarget;
+          row.ondragover = event => { event.preventDefault(); updateFileManagerDragTarget(row, event); };
+          row.ondragleave = event => { if (!row.contains(event.relatedTarget)) clearFileManagerDragTarget(); };
+          row.ondrop = event => { event.preventDefault(); clearFileManagerDragTarget(); moveDraggedItem(event, "file", file.id); };
           container.appendChild(row);
         });
       };
       renderBranch(null, 0);
+      updateFileManagerSelectionUI();
+      refreshLucideIcons();
     }
 
+    let pendingFolderParentId = null;
+
     function createNewFolder(parentId = null) {
-      const name = prompt("Folder name:", "New Folder");
-      if (!name || !name.trim()) return;
-      const folders = getAllFolders();
-      folders.push({ id: "folder_" + generateId(), name: name.trim(), parentId, collapsed: false, sortOrder: folders.length });
-      saveAllFolders(folders); renderFilesList();
+      if (!parentId) {
+        const selectedFolder = [...fileManagerSelection].map(key => key.split(":")).find(([type]) => type === "folder");
+        parentId = selectedFolder ? selectedFolder[1] : null;
+      }
+      pendingFolderParentId = parentId;
+      const modal = document.getElementById("folder-name-modal");
+      const input = document.getElementById("folder-name-input");
+      const cancel = document.getElementById("folder-name-cancel");
+      const confirm = document.getElementById("folder-name-confirm");
+      if (!modal || !input || !cancel || !confirm) return;
+
+      input.value = "New Folder";
+      modal.classList.remove("hide");
+      const close = () => {
+        modal.classList.add("hide");
+        input.removeEventListener("keydown", onKeyDown);
+      };
+      const onKeyDown = event => {
+        if (event.key === "Enter") confirm.click();
+        if (event.key === "Escape") close();
+      };
+      cancel.onclick = close;
+      confirm.onclick = () => {
+        const name = input.value.trim();
+        if (!name) {
+          input.focus();
+          return;
+        }
+        const folders = getAllFolders();
+        folders.push({ id: "folder_" + generateId(), name, parentId: pendingFolderParentId, collapsed: false, sortOrder: folders.length });
+        saveAllFolders(folders);
+        close();
+        renderFilesList();
+      };
+      input.addEventListener("keydown", onKeyDown);
+      requestAnimationFrame(() => { input.focus(); input.select(); });
     }
 
     function renameFolderPrompt(id) {
@@ -3267,55 +3418,111 @@
       if (name && name.trim()) { file.name = name.trim(); file.updatedAt = Date.now(); saveAllFiles(files); updateActiveFileLabel(); renderFilesList(); }
     }
 
-    function deleteFolder(id) {
-      const folders = getAllFolders(); const folder = folders.find(item => item.id === id);
-      if (!folder) return;
-      const ids = folders.filter(item => item.id === id || isFolderDescendant(id, item.id, folders)).map(item => item.id);
-      const files = getAllFiles(); const removed = files.filter(file => ids.includes(file.folderId));
-      showModal(`Delete "${folder.name}" and its ${removed.length} team(s)? This cannot be undone.`, true, () => {
-        saveAllFolders(folders.filter(item => !ids.includes(item.id))); const remaining = files.filter(file => !ids.includes(file.folderId)); saveAllFiles(remaining);
-        if (removed.some(file => file.id === getActiveFileId())) { setActiveFileId(remaining[0]?.id || ""); loadData(); }
+    function deleteSelectedFileManagerItems() {
+      const selected = [...fileManagerSelection].map(key => {
+        const separator = key.indexOf(":");
+        return { type: key.slice(0, separator), id: key.slice(separator + 1) };
+      });
+      if (!selected.length) return;
+      const folders = getAllFolders();
+      const folderIds = new Set(selected.filter(item => item.type === "folder").map(item => item.id));
+      let changed = true;
+      while (changed) {
+        changed = false;
+        folders.forEach(folder => {
+          if (folderIds.has(folder.parentId) && !folderIds.has(folder.id)) {
+            folderIds.add(folder.id);
+            changed = true;
+          }
+        });
+      }
+      const files = getAllFiles();
+      const fileIds = new Set(selected.filter(item => item.type === "file").map(item => item.id));
+      files.forEach(file => { if (folderIds.has(file.folderId)) fileIds.add(file.id); });
+      const selectedNames = selected.map(item => (item.type === "folder" ? folders : files).find(entry => entry.id === item.id)?.name).filter(Boolean);
+      const summary = selectedNames.length === 1 ? `Delete "${selectedNames[0]}"?` : `Delete ${selectedNames.length} selected items?`;
+      showModal(`${summary} This cannot be undone.`, true, () => {
+        const remainingFolders = folders.filter(folder => !folderIds.has(folder.id));
+        const remainingFiles = files.filter(file => !fileIds.has(file.id));
+        saveAllFolders(remainingFolders);
+        saveAllFiles(remainingFiles);
+        fileManagerSelection.clear();
+        fileManagerSelectionAnchor = null;
+        if (fileIds.has(getActiveFileId())) {
+          if (remainingFiles.length) {
+            loadFile(remainingFiles[0].id);
+            return;
+          }
+          setActiveFileId("");
+          allMembers = []; pool = []; teams = []; staging = [];
+          constraints = { together: [], apart: [] };
+          textboxes = []; seats = []; selectedSeatId = null; selectedSeatIds.clear();
+          seatUndoStack = []; seatRedoStack = [];
+          resetSeatPrimaryBtn(); updateUndoRedoBtns(); updateTab1UI(); updateConstraintSelects(); renderTeams(); renderSeats(); updateActiveFileLabel();
+        }
         renderFilesList();
       });
     }
 
+    function deleteFile(id) {
+      fileManagerSelection.clear();
+      fileManagerSelection.add(fileManagerItemKey("file", id));
+      deleteSelectedFileManagerItems();
+    }
+
+    function deleteFolder(id) {
+      fileManagerSelection.clear();
+      fileManagerSelection.add(fileManagerItemKey("folder", id));
+      deleteSelectedFileManagerItems();
+    }
+
     function showFileContextMenu(event, type = null, id = null) {
       event.preventDefault(); event.stopPropagation(); const menu = document.getElementById("file-context-menu");
+      if (type) {
+        const key = fileManagerItemKey(type, id);
+        if (!fileManagerSelection.has(key)) {
+          fileManagerSelection.clear();
+          fileManagerSelection.add(key);
+          fileManagerSelectionAnchor = key;
+          renderFilesList();
+        }
+      }
       menu.dataset.itemType = type || "root"; menu.dataset.itemId = id || ""; menu.style.left = `${Math.min(event.clientX, window.innerWidth - 170)}px`; menu.style.top = `${Math.min(event.clientY, window.innerHeight - 130)}px`; menu.classList.remove("hidden");
       document.getElementById("context-rename").style.display = type ? "block" : "none"; document.getElementById("context-delete").style.display = type ? "block" : "none";
     }
 
     document.addEventListener("click", () => document.getElementById("file-context-menu")?.classList.add("hidden"));
     document.getElementById("context-rename")?.addEventListener("click", event => { const menu = document.getElementById("file-context-menu"); if (menu.dataset.itemType === "folder") renameFolderPrompt(menu.dataset.itemId); else renameFilePrompt(menu.dataset.itemId); event.stopPropagation(); });
-    document.getElementById("context-delete")?.addEventListener("click", event => { const menu = document.getElementById("file-context-menu"); if (menu.dataset.itemType === "folder") deleteFolder(menu.dataset.itemId); else deleteFile(menu.dataset.itemId); event.stopPropagation(); });
+    document.getElementById("context-delete")?.addEventListener("click", event => { deleteSelectedFileManagerItems(); event.stopPropagation(); });
     document.getElementById("context-new-folder")?.addEventListener("click", event => { const menu = document.getElementById("file-context-menu"); createNewFolder(menu.dataset.itemType === "folder" ? menu.dataset.itemId : null); event.stopPropagation(); });
 
     function moveDraggedItem(event, targetType, targetId) {
-      let source; try { source = JSON.parse(event.dataTransfer.getData("text/plain")); } catch { return; }
-      if (!source || source.id === targetId) return;
+      let sources; try { sources = JSON.parse(event.dataTransfer.getData("text/plain")); } catch { return; }
+      if (!Array.isArray(sources)) sources = [sources];
+      sources = sources.filter(source => source && source.id !== targetId);
+      if (!sources.length) return;
       const files = getAllFiles(); const folders = getAllFolders();
-      if (source.type === "folder") {
-        const folder = folders.find(item => item.id === source.id); if (!folder || (targetType === "folder" && isFolderDescendant(source.id, targetId, folders))) return;
-        folder.parentId = targetType === "folder" ? targetId : null; folder.sortOrder = Date.now(); saveAllFolders(folders);
-      } else {
-        const file = files.find(item => item.id === source.id); if (!file) return;
-        if (targetType === "folder") {
-          file.folderId = targetId;
-          file.sortOrder = Date.now();
+      const target = targetType === "folder" ? folders.find(item => item.id === targetId) : files.find(item => item.id === targetId);
+      if (!target) return;
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const direction = event.clientY > bounds.top + bounds.height / 2 ? 1 : -1;
+      let fileOrder = 0;
+      let folderOrder = 0;
+      sources.forEach(source => {
+        if (source.type === "folder") {
+          const folder = folders.find(item => item.id === source.id);
+          if (!folder || (targetType === "folder" && (folder.id === targetId || isFolderDescendant(folder.id, targetId, folders)))) return;
+          folder.parentId = targetType === "folder" ? targetId : null;
+          folder.sortOrder = Date.now() + folderOrder++;
         } else {
-          const target = files.find(item => item.id === targetId);
-          file.folderId = target?.folderId || null;
-          const bounds = event.currentTarget.getBoundingClientRect();
-          file.sortOrder = (target?.sortOrder || 0) + (event.clientY > bounds.top + bounds.height / 2 ? 0.5 : -0.5);
+          const file = files.find(item => item.id === source.id);
+          if (!file) return;
+          file.folderId = targetType === "folder" ? targetId : target.folderId || null;
+          file.sortOrder = targetType === "folder" ? Date.now() + fileOrder++ : (target.sortOrder || 0) + direction * (fileOrder++ + 1) * 0.1;
         }
-        saveAllFiles(files);
-      }
-      renderFilesList();
-    }
-
-    function sortFilesAndFolders() {
-      saveAllFiles(getAllFiles().sort((a, b) => a.name.localeCompare(b.name)).map((file, index) => ({ ...file, sortOrder: index })));
-      saveAllFolders(getAllFolders().sort((a, b) => a.name.localeCompare(b.name)).map((folder, index) => ({ ...folder, sortOrder: index })));
+      });
+      saveAllFolders(folders);
+      saveAllFiles(files);
       renderFilesList();
     }
 
@@ -3752,7 +3959,7 @@
           const row = document.createElement("label");
           row.className = "flex items-center gap-2 py-1 text-sm text-[#E6DB74]";
           row.style.paddingLeft = `${depth * 18}px`;
-          row.innerHTML = `<input type="checkbox" data-folder-select="${folder.id}" checked><span>▰ ${escapeHtml(folder.name)}</span>`;
+          row.innerHTML = `<input type="checkbox" data-folder-select="${folder.id}" checked><span class="inline-flex items-center gap-1.5"><i data-lucide="${folder.collapsed ? "folder-closed" : "folder-open"}" class="w-4 h-4 text-[#E6DB74]"></i>${escapeHtml(folder.name)}</span>`;
           row.querySelector("input").onchange = event => {
             files.filter(file => childIds.includes(file.id)).forEach(file => event.target.checked ? teamSelectionContext.selected.add(file.id) : teamSelectionContext.selected.delete(file.id));
             list.querySelectorAll("input[data-file-select]").forEach(input => { input.checked = teamSelectionContext.selected.has(input.dataset.fileSelect); });
@@ -3764,12 +3971,13 @@
           const row = document.createElement("label");
           row.className = "flex items-center gap-2 py-1 text-sm text-zinc-200";
           row.style.paddingLeft = `${12 + depth * 18}px`;
-          row.innerHTML = `<input type="checkbox" data-file-select="${file.id}" checked><span>▱ ${escapeHtml(file.name)}</span>`;
+          row.innerHTML = `<input type="checkbox" data-file-select="${file.id}" checked><span class="inline-flex items-center gap-1.5"><i data-lucide="file" class="w-4 h-4 text-zinc-400"></i>${escapeHtml(file.name)}</span>`;
           row.querySelector("input").onchange = event => event.target.checked ? teamSelectionContext.selected.add(file.id) : teamSelectionContext.selected.delete(file.id);
           list.appendChild(row);
         });
       };
       renderFolder(null, 0);
+      refreshLucideIcons();
       const modal = document.getElementById("team-selection-modal");
       modal.classList.remove("hidden"); modal.classList.add("flex");
       document.getElementById("team-selection-confirm").onclick = finishTeamSelection;
@@ -8924,6 +9132,12 @@
         tag === "textarea" ||
         document.activeElement?.contentEditable === "true";
 
+      if (!isEditing && document.getElementById("files-modal")?.classList.contains("open") && (ev.key === "Delete" || ev.key === "Backspace")) {
+        ev.preventDefault();
+        deleteSelectedFileManagerItems();
+        return;
+      }
+
       // Ctrl+Z undo, Ctrl+Y redo (seating)
       if (ev.ctrlKey || ev.metaKey) {
         if (ev.key === "z" || ev.key === "Z") {
@@ -9694,6 +9908,7 @@
       }
       populateImportTeamsList();
       document.getElementById("seating-plans-modal").classList.remove("hide");
+      refreshLucideIcons();
     }
 
     function closeSeatingPlansModal() {
