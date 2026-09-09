@@ -2554,13 +2554,18 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4"
     onclick="if(event.target===this)closeSeatingPlansModal()">
     <div class="bg-zinc-900 rounded-xl max-w-lg w-full border border-zinc-700 shadow-2xl flex flex-col overflow-hidden"
+      onclick="event.stopPropagation()"
       style="max-height:80vh;">
       <div class="flex items-center justify-between p-5 border-b border-zinc-700 flex-shrink-0">
         <div>
           <h3 class="text-base font-bold text-[#FD971F]">Seating Plan Manager</h3>
-          <input id="sp-modal-plan-name" type="text" value="" placeholder="Name this seating plan"
-            aria-label="Seating plan name"
-            class="mt-1 w-full max-w-xs bg-zinc-950 border border-zinc-700 text-[#F8F8F2] text-xs rounded px-2 py-1 outline-none focus:border-[#FD971F] placeholder-zinc-600" />
+          <div class="flex items-center gap-2 mt-1">
+            <input id="sp-modal-plan-name" type="text" value="" placeholder="Name this seating plan"
+              aria-label="Seating plan name" readonly
+              class="w-full max-w-xs bg-zinc-950 border border-zinc-700 text-[#F8F8F2] text-xs rounded px-2 py-1 outline-none focus:border-[#FD971F] placeholder-zinc-600 read-only:cursor-default" />
+            <button id="sp-modal-plan-name-action" type="button" title="Edit seating plan name" aria-label="Edit seating plan name"
+              class="p-1 text-zinc-400 hover:text-[#FD971F] transition disabled:opacity-40 disabled:cursor-not-allowed"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+          </div>
         </div>
         <button onclick="closeSeatingPlansModal()"
           class="p-1 text-zinc-500 hover:text-[#F8F8F2] transition" title="Close seating plan manager" aria-label="Close seating plan manager"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -3692,14 +3697,10 @@
 
       // Inline rename using a temporary input
       const container = document.getElementById("files-list");
-      const rows = container.querySelectorAll(".file-item");
-      const allFiles = getAllFiles();
-
-      // Find which row this is
-      const idx = allFiles.findIndex((fl) => fl.id === id);
-      if (idx < 0 || idx >= rows.length) return;
-      const row = rows[idx];
+      const row = container.querySelector(`.file-item[data-item-id="${CSS.escape(id)}"]`);
+      if (!row) return;
       const nameSpan = row.querySelector(".file-name-display");
+      if (!nameSpan) return;
       const oldName = nameSpan.textContent;
 
       const inp = document.createElement("input");
@@ -9638,10 +9639,35 @@
         input.value = currentSeatingPlanName;
         return;
       }
-      if (name === currentSeatingPlanName) return;
-      currentSeatingPlanName = name;
-      saveData();
-      updateActiveSeatingPlanLabel();
+      if (name !== currentSeatingPlanName) {
+        currentSeatingPlanName = name;
+        saveData();
+        updateActiveSeatingPlanLabel();
+      }
+      setSeatingPlanNameEditMode(false);
+    }
+
+    function setSeatingPlanNameEditMode(editing) {
+      const input = document.getElementById("sp-modal-plan-name");
+      const action = document.getElementById("sp-modal-plan-name-action");
+      if (!input || !action) return;
+      input.readOnly = !editing;
+      action.disabled = !currentSeatingPlanId;
+      action.title = editing ? "Save seating plan name" : "Edit seating plan name";
+      action.setAttribute("aria-label", action.title);
+      action.innerHTML = `<i data-lucide="${editing ? "check" : "pencil"}" class="w-3.5 h-3.5"></i>`;
+      action.onclick = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (editing) renameSeatingPlanFromManager();
+        else {
+          input.readOnly = false;
+          input.focus();
+          input.select();
+          setSeatingPlanNameEditMode(true);
+        }
+      };
+      refreshLucideIcons();
     }
 
     // ---- Setup Modal for Teams without an attached Seating Plan ----
@@ -9929,14 +9955,12 @@
       const planNameEl = document.getElementById("sp-modal-plan-name");
       if (planNameEl) {
         planNameEl.value = currentSeatingPlanName || "";
-        planNameEl.disabled = !currentSeatingPlanId;
         planNameEl.title = currentSeatingPlanId ? "Rename seating plan" : "Create a seating plan first";
-        planNameEl.onblur = renameSeatingPlanFromManager;
+        setSeatingPlanNameEditMode(false);
         planNameEl.onkeydown = event => {
           if (event.key === "Enter") {
             event.preventDefault();
             renameSeatingPlanFromManager();
-            planNameEl.blur();
           }
         };
       }
