@@ -3247,12 +3247,16 @@
       if (!row || !event.dataTransfer.types.length) return;
       const type = row.dataset.itemType;
       const id = row.dataset.itemId;
-      const position = type === "folder" ? "inside" : (event.clientY < row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2 ? "before" : "after");
+      const bounds = row.getBoundingClientRect();
+      const third = bounds.height / 3;
+      const position = type === "folder"
+        ? (event.clientY < bounds.top + third ? "before" : event.clientY > bounds.bottom - third ? "after" : "inside")
+        : (event.clientY < bounds.top + bounds.height / 2 ? "before" : "after");
       const nextTarget = { type, id, position };
       if (fileManagerDragTarget && fileManagerDragTarget.type === type && fileManagerDragTarget.id === id && fileManagerDragTarget.position === position) return;
       clearFileManagerDragTarget();
       fileManagerDragTarget = nextTarget;
-      row.classList.add(type === "folder" ? "folder-drop-target" : `file-drop-${position}`);
+      row.classList.add(position === "inside" ? "folder-drop-target" : `file-drop-${position}`);
     }
 
     function selectFileManagerItem(type, id, event = {}) {
@@ -3321,7 +3325,7 @@
           row.ondragend = clearFileManagerDragTarget;
           row.ondragover = event => { event.preventDefault(); updateFileManagerDragTarget(row, event); };
           row.ondragleave = event => { if (!row.contains(event.relatedTarget)) clearFileManagerDragTarget(); };
-          row.ondrop = event => { event.preventDefault(); clearFileManagerDragTarget(); moveDraggedItem(event, "folder", folder.id); };
+          row.ondrop = event => { event.preventDefault(); const position = fileManagerDragTarget?.id === folder.id ? fileManagerDragTarget.position : "inside"; clearFileManagerDragTarget(); moveDraggedItem(event, "folder", folder.id, position); };
           container.appendChild(row);
           if (!folder.collapsed) renderBranch(folder.id, depth + 1);
         });
@@ -3354,7 +3358,7 @@
           row.ondragend = clearFileManagerDragTarget;
           row.ondragover = event => { event.preventDefault(); updateFileManagerDragTarget(row, event); };
           row.ondragleave = event => { if (!row.contains(event.relatedTarget)) clearFileManagerDragTarget(); };
-          row.ondrop = event => { event.preventDefault(); clearFileManagerDragTarget(); moveDraggedItem(event, "file", file.id); };
+          row.ondrop = event => { event.preventDefault(); const position = fileManagerDragTarget?.id === file.id ? fileManagerDragTarget.position : "after"; clearFileManagerDragTarget(); moveDraggedItem(event, "file", file.id, position); };
           container.appendChild(row);
         });
       };
@@ -3496,7 +3500,7 @@
     document.getElementById("context-delete")?.addEventListener("click", event => { deleteSelectedFileManagerItems(); event.stopPropagation(); });
     document.getElementById("context-new-folder")?.addEventListener("click", event => { const menu = document.getElementById("file-context-menu"); createNewFolder(menu.dataset.itemType === "folder" ? menu.dataset.itemId : null); event.stopPropagation(); });
 
-    function moveDraggedItem(event, targetType, targetId) {
+    function moveDraggedItem(event, targetType, targetId, dropPosition = "after") {
       let sources; try { sources = JSON.parse(event.dataTransfer.getData("text/plain")); } catch { return; }
       if (!Array.isArray(sources)) sources = [sources];
       sources = sources.filter(source => source && source.id !== targetId);
@@ -3504,21 +3508,22 @@
       const files = getAllFiles(); const folders = getAllFolders();
       const target = targetType === "folder" ? folders.find(item => item.id === targetId) : files.find(item => item.id === targetId);
       if (!target) return;
-      const bounds = event.currentTarget.getBoundingClientRect();
-      const direction = event.clientY > bounds.top + bounds.height / 2 ? 1 : -1;
+      const direction = dropPosition === "before" ? -1 : 1;
       let fileOrder = 0;
       let folderOrder = 0;
       sources.forEach(source => {
         if (source.type === "folder") {
           const folder = folders.find(item => item.id === source.id);
           if (!folder || (targetType === "folder" && (folder.id === targetId || isFolderDescendant(folder.id, targetId, folders)))) return;
-          folder.parentId = targetType === "folder" ? targetId : null;
-          folder.sortOrder = Date.now() + folderOrder++;
+          const targetParentId = targetType === "folder" && dropPosition === "inside" ? targetId : target.parentId || null;
+          folder.parentId = targetParentId;
+          folder.sortOrder = dropPosition === "inside" ? Date.now() + folderOrder++ : (target.sortOrder || 0) + direction * (folderOrder++ + 1) * 0.1;
         } else {
           const file = files.find(item => item.id === source.id);
           if (!file) return;
-          file.folderId = targetType === "folder" ? targetId : target.folderId || null;
-          file.sortOrder = targetType === "folder" ? Date.now() + fileOrder++ : (target.sortOrder || 0) + direction * (fileOrder++ + 1) * 0.1;
+          const targetFolderId = targetType === "folder" && dropPosition === "inside" ? targetId : target.folderId || null;
+          file.folderId = targetFolderId;
+          file.sortOrder = targetType === "folder" && dropPosition === "inside" ? Date.now() + fileOrder++ : (target.sortOrder || 0) + direction * (fileOrder++ + 1) * 0.1;
         }
       });
       saveAllFolders(folders);
