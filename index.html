@@ -4278,16 +4278,34 @@
     }
 
     async function syncWithHandle(handle, isFirstSetup) {
-      let perm = await handle.queryPermission({ mode: "readwrite" });
+      let perm;
+      try {
+        perm = await handle.queryPermission({ mode: "readwrite" });
+      } catch (e) {
+        showSyncToast("Can't check file permission — " + e.message, "error");
+        return;
+      }
       if (perm !== "granted") {
-        perm = await handle.requestPermission({ mode: "readwrite" });
+        try {
+          perm = await handle.requestPermission({ mode: "readwrite" });
+        } catch (e) {
+          showSyncToast("Can't request file permission — " + e.message, "error");
+          return;
+        }
         if (perm !== "granted") {
-          showSyncToast("Permission denied — can't access the sync file.", "error");
+          showSyncToast("Permission denied — click Sync and choose the file again.", "error");
           return;
         }
       }
 
-      const { file, fileLastModified, parsed, fileHasData, fileHasContent } = await readSyncFile(handle);
+      let fileResult;
+      try {
+        fileResult = await readSyncFile(handle);
+      } catch (e) {
+        showSyncToast("Can't read sync file — " + e.message, "error");
+        return;
+      }
+      const { file, fileLastModified, parsed, fileHasData, fileHasContent } = fileResult;
       const meta = getSyncMeta();
 
       if (isFirstSetup) {
@@ -4394,6 +4412,11 @@
           let isFirstSetup = false;
           if (!handle) {
             isFirstSetup = true;
+            // If metadata says a sync file was previously set, the handle was lost — tell the user.
+            const meta = getSyncMeta();
+            if (meta.fileName) {
+              showSyncToast(`Re-linking sync file (${meta.fileName}) — please choose it again.`, "info");
+            }
             handle = await pickSyncFile();
             if (!handle) return;
             await setSyncHandle(handle);
@@ -4401,13 +4424,12 @@
           try {
             await syncWithHandle(handle, isFirstSetup);
           } catch (e) {
-            console.error(e);
-            // File may have been deleted/moved — forget it and let the user re-pick.
+            console.error("Sync error:", e);
             await clearSyncHandle();
             localStorage.removeItem(SYNC_META_KEY);
             resetSyncMetaCache();
             updateSyncButtonUI();
-            showSyncToast("Sync file not found — please choose it again.", "error");
+            showSyncToast("Sync failed (" + (e.message || "unknown error") + ") — please choose the file again.", "error");
           }
         } else {
           manualSyncFallback();
