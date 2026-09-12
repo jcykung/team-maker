@@ -633,6 +633,18 @@
             </button>
           </nav>
           <div class="ml-auto pb-1.5 pl-2 pr-2 flex items-center gap-2 flex-shrink-0">
+            <!-- Auto Sync Button -->
+            <button id="auto-sync-btn" onclick="autoSync()"
+              title="Auto Sync — sync your data with a file on this device (e.g. a Google Drive folder). Click after making changes."
+              class="relative h-7 sm:h-8 px-2.5 rounded text-[10px] sm:text-xs font-medium bg-zinc-800 text-[#A6E22E] hover:text-[#F8F8F2] hover:bg-zinc-700 transition flex items-center gap-1.5 border border-zinc-700 whitespace-nowrap">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              <span>Sync</span>
+              <span id="sync-needs-dot"
+                class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#FD971F] animate-pulse shadow-[0_0_6px_#FD971F]"></span>
+            </button>
             <!-- Files Manager Button -->
             <button onclick="openFilesModal()"
               class="h-7 sm:h-8 px-2.5 rounded text-[10px] sm:text-xs font-medium bg-zinc-800 text-[#66D9EF] hover:text-[#F8F8F2] hover:bg-zinc-700 transition flex items-center gap-1.5 border border-zinc-700 whitespace-nowrap">
@@ -2146,6 +2158,41 @@
               </div>
             </div>
 
+            <!-- Step 6: Auto Sync -->
+            <div>
+              <h3 class="text-xl sm:text-2xl font-semibold mb-3 text-[#FD971F] flex items-center gap-2">
+                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                6. Auto Sync
+              </h3>
+              <div class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base">
+                <p>
+                  The <span
+                    class="inline-flex items-center gap-1 text-[#A6E22E] font-medium bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700"><svg
+                      class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg> Sync</span> button in the header syncs all your teams, folders, and seating plans with a
+                  single <code class="text-[#E6DB74] bg-zinc-800 px-1 rounded">.json</code> file on your device — for
+                  example, inside a <strong>Google Drive</strong> folder. It's the easiest way to keep the same data on
+                  multiple computers and your phone.
+                </p>
+                <ul class="text-sm text-zinc-300 space-y-1 list-disc pl-4">
+                  <li><strong>First click</strong> — choose where to store the sync file (e.g. your Google Drive folder). The app remembers it.</li>
+                  <li><strong>Every click after that</strong> — the app compares timestamps and syncs automatically: file newer → pulls the latest; local newer → pushes your changes; both changed → asks which to keep.</li>
+                  <li><strong>Reminder</strong> — after any change the Sync button turns <span class="text-[#FD971F] font-medium">orange with a pulsing dot</span> so you remember to click it before leaving. Closing the tab with unsynced changes also asks you to confirm.</li>
+                </ul>
+                <p class="text-zinc-400 text-sm">
+                  💡 <strong>Tip:</strong> Open the app → click <strong>Sync</strong> to pull the latest → work → click
+                  <strong>Sync</strong> again to push. You can change or disconnect the sync file from the
+                  <strong>Files</strong> modal. On Chrome/Edge the file is remembered for true one-click sync; other
+                  browsers ask you to pick the file each time.
+                </p>
+              </div>
+            </div>
+
           </div>
 
           <!-- Support / Ko-Fi Section -->
@@ -2250,6 +2297,21 @@
             Restore Backup File
           </button>
         </div>
+        <div id="sync-status-row" class="flex items-center justify-between gap-2 px-3 py-2 rounded border border-zinc-700 bg-zinc-800/50 text-xs">
+          <div class="flex items-center gap-2 min-w-0">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#A6E22E] flex-shrink-0"></i>
+            <div class="min-w-0">
+              <div class="text-zinc-300 font-medium">Auto Sync</div>
+              <div id="sync-status-detail" class="text-zinc-500 truncate">Not set up — click Sync in the header to choose a file.</div>
+            </div>
+          </div>
+          <div class="flex gap-1 flex-shrink-0">
+            <button id="sync-change-btn" onclick="changeSyncFile()" title="Choose a different sync file"
+              class="px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-[#66D9EF] hover:bg-zinc-700 transition">Change</button>
+            <button id="sync-disconnect-btn" onclick="disconnectSync()" title="Forget the sync file (local data stays)"
+              class="px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-[#F92672] hover:bg-zinc-700 transition">Disconnect</button>
+          </div>
+        </div>
         <div class="flex gap-2">
           <button onclick="openExportTeamsModal()"
             class="flex-1 bg-zinc-800 border border-zinc-700 text-[#A6E22E] text-xs py-2 px-3 rounded hover:bg-zinc-700 transition font-medium flex items-center justify-center gap-1.5">
@@ -2264,6 +2326,7 @@
         <input type="file" id="restore-all-json" accept=".json" class="hidden" onchange="restoreFromBackup(event)" />
         <input type="file" id="import-single-json" accept=".json" class="hidden"
           onchange="importSingleFileJSON(event)" />
+        <input type="file" id="sync-file-input" accept=".json" class="hidden" onchange="handleManualSyncFile(event)" />
       </div>
     </div>
   </div>
@@ -2300,6 +2363,26 @@
         </button>
       </div>
       <div class="p-4 border-t border-zinc-700 flex justify-end"><button onclick="closeRestoreChoiceModal()" class="px-4 py-2 text-sm text-zinc-400">Cancel</button></div>
+    </div>
+  </div>
+
+  <div id="sync-conflict-modal" class="fixed inset-0 z-[9994] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg">
+      <div class="p-5 border-b border-zinc-700">
+        <h3 class="text-lg font-bold text-[#FD971F]">Sync Conflict</h3>
+        <p class="text-sm text-zinc-400 mt-2">Both your local data and the sync file changed since the last sync. Choose which version to keep.</p>
+      </div>
+      <div class="p-5 flex flex-col gap-3">
+        <button id="sync-conflict-file-btn" class="w-full text-left px-4 py-3 rounded border border-[#A6E22E]/50 bg-[#A6E22E]/10 hover:bg-[#A6E22E]/20">
+          <span class="block font-bold text-[#A6E22E]">Keep Sync File</span>
+          <span class="block text-xs text-zinc-400 mt-1">Replaces your local data with the file's contents.</span>
+        </button>
+        <button id="sync-conflict-local-btn" class="w-full text-left px-4 py-3 rounded border border-[#66D9EF]/50 bg-[#66D9EF]/10 hover:bg-[#66D9EF]/20">
+          <span class="block font-bold text-[#66D9EF]">Keep Local Data</span>
+          <span class="block text-xs text-zinc-400 mt-1">Overwrites the sync file with your local data.</span>
+        </button>
+      </div>
+      <div class="p-4 border-t border-zinc-700 flex justify-end"><button onclick="closeSyncConflictModal()" class="px-4 py-2 text-sm text-zinc-400">Cancel</button></div>
     </div>
   </div>
 
@@ -2675,6 +2758,7 @@
       hasUnsavedChanges = true;
       clearTimeout(_autoSaveTimer);
       _autoSaveTimer = setTimeout(() => saveData(), 800);
+      noteLocalChange();
     }
 
     function seatUndo() {
@@ -3148,6 +3232,7 @@
       hasUnsavedChanges = true;
       clearTimeout(_autoSaveTimer);
       _autoSaveTimer = setTimeout(() => saveData(), 800);
+      noteLocalChange();
     }
 
     function saveData() {
@@ -3165,6 +3250,7 @@
       hasUnsavedChanges = false;
       updateActiveFileLabel();
       updateActiveSeatingPlanLabel();
+      noteLocalChange();
     }
 
     function loadData() {
@@ -3217,6 +3303,7 @@
       refreshExportIfVisible();
       updateActiveFileLabel();
       updateActiveSeatingPlanLabel();
+      updateSyncButtonUI();
     }
 
     window.addEventListener("DOMContentLoaded", loadData);
@@ -3408,6 +3495,7 @@
         const folders = getAllFolders();
         folders.push({ id: "folder_" + generateId(), name, parentId: pendingFolderParentId, collapsed: false, sortOrder: folders.length });
         saveAllFolders(folders);
+        noteLocalChange();
         close();
         renderFilesList();
       };
@@ -3419,14 +3507,14 @@
       const folders = getAllFolders(); const folder = folders.find(item => item.id === id);
       if (!folder) return;
       const name = prompt("Rename folder:", folder.name);
-      if (name && name.trim()) { folder.name = name.trim(); saveAllFolders(folders); renderFilesList(); }
+      if (name && name.trim()) { folder.name = name.trim(); saveAllFolders(folders); noteLocalChange(); renderFilesList(); }
     }
 
     function renameFilePrompt(id) {
       const files = getAllFiles(); const file = files.find(item => item.id === id);
       if (!file) return;
       const name = prompt("Rename team:", file.name);
-      if (name && name.trim()) { file.name = name.trim(); file.updatedAt = Date.now(); saveAllFiles(files); updateActiveFileLabel(); renderFilesList(); }
+      if (name && name.trim()) { file.name = name.trim(); file.updatedAt = Date.now(); saveAllFiles(files); noteLocalChange(); updateActiveFileLabel(); renderFilesList(); }
     }
 
     function deleteSelectedFileManagerItems() {
@@ -3457,6 +3545,7 @@
         const remainingFiles = files.filter(file => !fileIds.has(file.id));
         saveAllFolders(remainingFolders);
         saveAllFiles(remainingFiles);
+        noteLocalChange();
         fileManagerSelection.clear();
         fileManagerSelectionAnchor = null;
         if (fileIds.has(getActiveFileId())) {
@@ -3535,6 +3624,7 @@
       });
       saveAllFolders(folders);
       saveAllFiles(files);
+      noteLocalChange();
       renderFilesList();
     }
 
@@ -3586,6 +3676,7 @@
       });
       saveAllFiles(files);
       setActiveFileId(id);
+      noteLocalChange();
 
       // Load empty state - new Teams have NO seating plan attached
       allMembers = [];
@@ -3938,6 +4029,461 @@
       reader.readAsText(file);
       event.target.value = "";
     }
+
+    // ================= AUTO SYNC =================
+    // One-click sync between local data and a single JSON file on the device
+    // (e.g. inside a Google Drive folder). Uses the File System Access API
+    // (Chrome/Edge) to remember the file handle so re-syncing needs no file picker.
+    // Other browsers fall back to a manual pick.
+
+    const SYNC_DB_NAME = "teamMakerSyncDB";
+    const SYNC_DB_STORE = "handles";
+    const SYNC_HANDLE_KEY = "syncFileHandle";
+    const SYNC_META_KEY = "teamMakerSyncMeta";
+
+    let _syncMetaCache = null;
+    function getSyncMeta() {
+      if (!_syncMetaCache) {
+        try {
+          _syncMetaCache = JSON.parse(localStorage.getItem(SYNC_META_KEY)) || {};
+        } catch {
+          _syncMetaCache = {};
+        }
+      }
+      return _syncMetaCache;
+    }
+
+    function setSyncMeta(partial) {
+      _syncMetaCache = { ...getSyncMeta(), ...partial };
+      localStorage.setItem(SYNC_META_KEY, JSON.stringify(_syncMetaCache));
+      return _syncMetaCache;
+    }
+
+    function resetSyncMetaCache() {
+      _syncMetaCache = null;
+    }
+
+    function openSyncDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(SYNC_DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          if (!req.result.objectStoreNames.contains(SYNC_DB_STORE)) {
+            req.result.createObjectStore(SYNC_DB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function getSyncHandle() {
+      try {
+        const db = await openSyncDB();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(SYNC_DB_STORE, "readonly");
+          const req = tx.objectStore(SYNC_DB_STORE).get(SYNC_HANDLE_KEY);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+      } catch {
+        return null;
+      }
+    }
+
+    async function setSyncHandle(handle) {
+      const db = await openSyncDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(SYNC_DB_STORE, "readwrite");
+        tx.objectStore(SYNC_DB_STORE).put(handle, SYNC_HANDLE_KEY);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function clearSyncHandle() {
+      try {
+        const db = await openSyncDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(SYNC_DB_STORE, "readwrite");
+          tx.objectStore(SYNC_DB_STORE).delete(SYNC_HANDLE_KEY);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      } catch { }
+    }
+
+    // Called on every local change so the Sync button can flag "needs sync".
+    let _lastLocalChangeWrite = 0;
+    function noteLocalChange() {
+      const now = Date.now();
+      if (now - _lastLocalChangeWrite > 500) {
+        _lastLocalChangeWrite = now;
+        setSyncMeta({ lastLocalChange: now });
+      } else {
+        // Keep the in-memory value fresh; persist at most every 500ms.
+        _syncMetaCache = { ...getSyncMeta(), lastLocalChange: now };
+      }
+      updateSyncButtonUI();
+    }
+
+    function syncNeedsPush() {
+      const meta = getSyncMeta();
+      return (meta.lastLocalChange || 0) > (meta.lastSyncedAt || 0);
+    }
+
+    function updateSyncButtonUI() {
+      const btn = document.getElementById("auto-sync-btn");
+      const dot = document.getElementById("sync-needs-dot");
+      const status = document.getElementById("sync-status-detail");
+      const meta = getSyncMeta();
+      const needs = syncNeedsPush() && !!meta.fileName;
+      if (btn) {
+        btn.classList.toggle("text-[#FD971F]", needs);
+        btn.classList.toggle("border-[#FD971F]/60", needs);
+        btn.classList.toggle("text-[#A6E22E]", !needs);
+        btn.classList.toggle("border-zinc-700", !needs);
+      }
+      if (dot) dot.classList.toggle("hidden", !needs);
+      if (status) {
+        if (meta.fileName) {
+          status.textContent = needs
+            ? `Syncing with ${meta.fileName} — you have unsynced changes. Click Sync.`
+            : `Syncing with ${meta.fileName} — up to date.`;
+        } else {
+          status.textContent = "Not set up — click Sync in the header to choose a file.";
+        }
+      }
+    }
+
+    async function buildSyncJSON() {
+      saveData();
+      const files = getAllFiles();
+      const backup = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        activeFileId: getActiveFileId(),
+        files,
+        folders: getAllFolders(),
+        allMembers,
+        pool,
+        teams,
+        staging,
+        constraints,
+      };
+      return encryptExport(backup);
+    }
+
+    function applySyncData(data) {
+      clearTimeout(_autoSaveTimer);
+      saveAllFiles(data.files);
+      saveAllFolders(data.folders || []);
+      setActiveFileId(data.activeFileId || data.files[0]?.id || "");
+      loadData();
+      renderFilesList();
+      hasUnsavedChanges = false;
+    }
+
+    // ---- Toast ----
+    let _syncToastTimer = null;
+    function showSyncToast(message, type = "info") {
+      let toast = document.getElementById("sync-toast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "sync-toast";
+        document.body.appendChild(toast);
+      }
+      const colors = {
+        info: "bg-zinc-800 border-zinc-600 text-zinc-100",
+        success: "bg-[#A6E22E]/15 border-[#A6E22E]/60 text-[#A6E22E]",
+        warn: "bg-[#FD971F]/15 border-[#FD971F]/60 text-[#FD971F]",
+        error: "bg-[#F92672]/15 border-[#F92672]/60 text-[#F92672]",
+      };
+      toast.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-lg text-sm font-medium shadow-2xl border transition-all duration-300 " + (colors[type] || colors.info);
+      toast.textContent = message;
+      toast.style.opacity = "1";
+      toast.style.transform = "translate(-50%, 0)";
+      clearTimeout(_syncToastTimer);
+      _syncToastTimer = setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translate(-50%, 8px)";
+      }, 4000);
+    }
+
+    // ---- Conflict modal ----
+    let pendingSyncConflict = null;
+    function closeSyncConflictModal() {
+      const modal = document.getElementById("sync-conflict-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+      pendingSyncConflict = null;
+    }
+    function openSyncConflictModal(handler) {
+      pendingSyncConflict = handler;
+      const modal = document.getElementById("sync-conflict-modal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    }
+    document.getElementById("sync-conflict-file-btn")?.addEventListener("click", () => {
+      const h = pendingSyncConflict; closeSyncConflictModal(); if (h) h("file");
+    });
+    document.getElementById("sync-conflict-local-btn")?.addEventListener("click", () => {
+      const h = pendingSyncConflict; closeSyncConflictModal(); if (h) h("local");
+    });
+
+    async function pickSyncFile() {
+      if (!window.showSaveFilePicker) return null;
+      try {
+        return await window.showSaveFilePicker({
+          suggestedName: "teammaker_sync.json",
+          types: [{
+            description: "JSON File",
+            accept: { "application/json": [".json"] },
+          }],
+        });
+      } catch (e) {
+        if (e.name === "AbortError") return null;
+        showSyncToast("Could not open the file picker.", "error");
+        return null;
+      }
+    }
+
+    async function readSyncFile(handle) {
+      const file = await handle.getFile();
+      const text = await file.text();
+      let parsed = null;
+      let fileHasData = false;
+      const fileHasContent = !!(text && text.trim());
+      if (fileHasContent) {
+        try {
+          parsed = await parseExport(text);
+          fileHasData = parsed && parsed.version === 2 && Array.isArray(parsed.files) && parsed.files.length > 0;
+        } catch {
+          fileHasData = false;
+        }
+      }
+      return { file, fileLastModified: file.lastModified || 0, parsed, fileHasData, fileHasContent };
+    }
+
+    async function pushToHandle(handle) {
+      const jsonStr = await buildSyncJSON();
+      const writable = await handle.createWritable();
+      await writable.write(jsonStr);
+      await writable.close();
+      const after = await handle.getFile();
+      return after.lastModified || Date.now();
+    }
+
+    async function syncWithHandle(handle, isFirstSetup) {
+      let perm = await handle.queryPermission({ mode: "readwrite" });
+      if (perm !== "granted") {
+        perm = await handle.requestPermission({ mode: "readwrite" });
+        if (perm !== "granted") {
+          showSyncToast("Permission denied — can't access the sync file.", "error");
+          return;
+        }
+      }
+
+      const { file, fileLastModified, parsed, fileHasData, fileHasContent } = await readSyncFile(handle);
+      const meta = getSyncMeta();
+
+      if (isFirstSetup) {
+        const localHasData = getAllFiles().length > 0;
+        if (fileHasData && localHasData) {
+          openSyncConflictModal(async (choice) => {
+            if (choice === "file") {
+              applySyncData(parsed);
+              const syncedAt = fileLastModified || Date.now();
+              setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+              updateSyncButtonUI();
+              showSyncToast(`Synced — pulled ${parsed.files.length} team(s) from ${file.name}.`, "success");
+            } else {
+              const syncedAt = await pushToHandle(handle);
+              setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+              updateSyncButtonUI();
+              showSyncToast(`Synced — saved your data to ${file.name}.`, "success");
+            }
+          });
+        } else if (fileHasData) {
+          applySyncData(parsed);
+          const syncedAt = fileLastModified || Date.now();
+          setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+          updateSyncButtonUI();
+          showSyncToast(`Synced — pulled ${parsed.files.length} team(s) from ${file.name}.`, "success");
+        } else if (fileHasContent) {
+          // File has content but isn't a valid backup — confirm before overwriting.
+          showModal("This file doesn't look like a Team Maker backup. Overwrite it with your current data?", true, async () => {
+            const syncedAt = await pushToHandle(handle);
+            setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+            updateSyncButtonUI();
+            showSyncToast(`Synced — saved your data to ${file.name}.`, "success");
+          });
+        } else {
+          const syncedAt = await pushToHandle(handle);
+          setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+          updateSyncButtonUI();
+          showSyncToast(`Synced — saved your data to ${file.name}.`, "success");
+        }
+        return;
+      }
+
+      const lastSyncedAt = meta.lastSyncedAt || 0;
+      const lastLocalChange = meta.lastLocalChange || 0;
+      const localChanged = lastLocalChange > lastSyncedAt;
+      const fileChanged = fileLastModified > lastSyncedAt;
+
+      if (!localChanged && !fileChanged) {
+        showSyncToast("Already in sync.", "info");
+        return;
+      }
+
+      if (localChanged && fileChanged) {
+        openSyncConflictModal(async (choice) => {
+          if (choice === "file") {
+            if (fileHasData) {
+              applySyncData(parsed);
+              const syncedAt = fileLastModified || Date.now();
+              setSyncMeta({ lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+              updateSyncButtonUI();
+              showSyncToast("Synced — kept the sync file version.", "success");
+            } else {
+              showSyncToast("Sync file is empty or invalid — nothing to restore.", "warn");
+            }
+          } else {
+            const syncedAt = await pushToHandle(handle);
+            setSyncMeta({ lastSyncedAt: syncedAt });
+            updateSyncButtonUI();
+            showSyncToast("Synced — kept your local version.", "success");
+          }
+        });
+        return;
+      }
+
+      if (fileChanged) {
+        if (fileHasData) {
+          applySyncData(parsed);
+          const syncedAt = fileLastModified || Date.now();
+          setSyncMeta({ lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+          updateSyncButtonUI();
+          showSyncToast(`Synced — pulled ${parsed.files.length} team(s) from ${file.name}.`, "success");
+        } else {
+          showSyncToast("Sync file is empty or invalid — nothing to restore.", "warn");
+        }
+        return;
+      }
+
+      // Local is newer → push
+      const syncedAt = await pushToHandle(handle);
+      setSyncMeta({ lastSyncedAt: syncedAt });
+      updateSyncButtonUI();
+      showSyncToast("Synced — pushed your changes to the sync file.", "success");
+    }
+
+    let _syncing = false;
+    async function autoSync() {
+      if (_syncing) return;
+      _syncing = true;
+      const btn = document.getElementById("auto-sync-btn");
+      if (btn) btn.disabled = true;
+      try {
+        if (window.showSaveFilePicker) {
+          let handle = await getSyncHandle();
+          let isFirstSetup = false;
+          if (!handle) {
+            isFirstSetup = true;
+            handle = await pickSyncFile();
+            if (!handle) return;
+            await setSyncHandle(handle);
+          }
+          try {
+            await syncWithHandle(handle, isFirstSetup);
+          } catch (e) {
+            console.error(e);
+            // File may have been deleted/moved — forget it and let the user re-pick.
+            await clearSyncHandle();
+            localStorage.removeItem(SYNC_META_KEY);
+            resetSyncMetaCache();
+            updateSyncButtonUI();
+            showSyncToast("Sync file not found — please choose it again.", "error");
+          }
+        } else {
+          manualSyncFallback();
+        }
+      } finally {
+        _syncing = false;
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function manualSyncFallback() {
+      const input = document.getElementById("sync-file-input");
+      if (input) input.click();
+    }
+
+    async function handleManualSyncFile(event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      try {
+        const fileLastModified = file.lastModified || 0;
+        const text = await file.text();
+        const parsed = await parseExport(text);
+        const fileHasData = parsed && parsed.version === 2 && Array.isArray(parsed.files) && parsed.files.length > 0;
+        const meta = getSyncMeta();
+
+        if (fileHasData && fileLastModified > (meta.lastLocalChange || 0)) {
+          // File is more recent → pull
+          applySyncData(parsed);
+          const syncedAt = fileLastModified || Date.now();
+          setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+          updateSyncButtonUI();
+          showSyncToast(`Synced — pulled ${parsed.files.length} team(s) from ${file.name}.`, "success");
+        } else {
+          // Local is more recent (or file empty) → push via download
+          const jsonStr = await buildSyncJSON();
+          const filename = "teammaker_sync_" + getExportTimestamp() + ".json";
+          saveFileAs(jsonStr, filename, "application/json");
+          const syncedAt = Date.now();
+          setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+          updateSyncButtonUI();
+          showSyncToast("Local data is newer — a backup was downloaded. Save it to your sync location (e.g. Google Drive).", "warn");
+        }
+      } catch {
+        showSyncToast("Could not read that file as a Team Maker backup.", "error");
+      }
+    }
+
+    async function changeSyncFile() {
+      if (!window.showSaveFilePicker) {
+        showSyncToast("Changing the sync file isn't supported in this browser.", "warn");
+        return;
+      }
+      const handle = await pickSyncFile();
+      if (!handle) return;
+      await setSyncHandle(handle);
+      await syncWithHandle(handle, true);
+    }
+
+    async function disconnectSync() {
+      showModal("Disconnect Auto Sync? Your data stays in this browser, but the remembered sync file will be forgotten.", true, async () => {
+        await clearSyncHandle();
+        localStorage.removeItem(SYNC_META_KEY);
+        resetSyncMetaCache();
+        updateSyncButtonUI();
+        showSyncToast("Auto Sync disconnected.", "info");
+      });
+    }
+
+    // Remind the user to sync before leaving if they have unsynced changes.
+    window.addEventListener("beforeunload", (e) => {
+      if (syncNeedsPush() && getSyncMeta().fileName) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
 
 
     let teamSelectionContext = null;

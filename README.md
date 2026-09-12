@@ -18,7 +18,8 @@
 | 🪑 Seating plan designer | ✅ | ❌ |
 | 📽️ Projector / fullscreen mode | ✅ | ✅ |
 | 💾 Multi-file auto-save | ✅ | ✅ |
-| 📤 Export to JPG / PDF | ✅ | ✅ |
+| � Auto Sync (one-click backup) | ✅ | ⚠️ manual |
+| �📤 Export to JPG / PDF | ✅ | ✅ |
 | 🎱 Random name picker | ✅ | ✅ |
 
 ---
@@ -139,6 +140,8 @@ Go to the **Export** tab for a clean, light-mode preview ready for printing or s
 | 🟠 **Save PDF** | Print-ready PDF |
 | 🔴 **Save Backup** | Downloads your data as a `.json` file you can restore later |
 
+> 💡 Prefer the **Sync** button in the header for day-to-day backups — it remembers your file location and syncs in one click (see [Step 6](#-step-6--auto-sync-one-click-backup-across-devices)).
+
 ---
 
 ### 📁 Step 5 — Files & Auto-Save
@@ -150,6 +153,30 @@ Click **Files** in the header to manage multiple files — useful if you have mu
 In the **Seating** tab, click the seating plan name to open its manager. Plans autosave with the current team. Use **Import** to clone a layout from another team, a backup, a team export, or a seating plan file. Use **Share Seating Plan** to download the current layout as a JSON file.
 
 > ⚠️ **Important:** Data is stored in your **browser only** — it is not backed up to the cloud and will be lost if you clear your browser data or switch devices. Use **Save Backup** on the Export tab regularly and keep the `.json` file somewhere safe.
+
+---
+
+### 🔄 Step 6 — Auto Sync (one-click backup across devices)
+
+The **Sync** button in the header syncs all your teams, folders, and seating plans with a single `.json` file on your device — for example, inside a **Google Drive** folder. It's the easiest way to keep the same data on multiple computers and your phone.
+
+**How it works**
+
+1. **First click** — choose where to store the sync file (e.g. your Google Drive folder). The app remembers that file.
+2. **Every click after that** — the app compares the sync file's timestamp with your local data and syncs automatically:
+   - **File is newer** → pulls the latest data from the file (great when you open the app on another device).
+   - **Local data is newer** → pushes your changes to the file (click it before you leave).
+   - **Both changed** → asks which version to keep.
+3. **Reminders** — whenever you make a change, the Sync button turns **orange with a pulsing dot** so you remember to click it before leaving. If you close the tab with unsynced changes, the browser also asks you to confirm.
+
+**Browser support**
+
+| Browser | Auto Sync |
+|---|---|
+| Chrome / Edge (desktop) | ✅ Full one-click sync — remembers the file |
+| Firefox / Safari / mobile | ⚠️ Manual — each click asks you to pick the sync file; if your local data is newer it downloads a backup to save into your sync folder |
+
+> 💡 **Tip:** Use the same sync file on every device (e.g. `teammaker_sync.json` in your Google Drive folder). Open the app → click **Sync** to pull the latest → work → click **Sync** again to push. You can change or disconnect the sync file from the **Files** modal.
 
 ---
 
