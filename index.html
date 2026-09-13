@@ -2350,17 +2350,22 @@
     <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
       <div class="p-5 border-b border-zinc-700">
         <h3 class="text-lg font-bold text-[#E6DB74]">Restore Backup File</h3>
-        <p id="restore-choice-summary" class="text-sm text-zinc-400 mt-2 whitespace-pre-line max-h-[40vh] overflow-y-auto"></p>
+        <p id="restore-choice-summary" class="text-sm text-zinc-400 mt-2"></p>
       </div>
-      <div class="p-5 flex flex-col gap-3">
-        <button id="restore-replace-btn" class="w-full text-left px-4 py-3 rounded border border-[#F92672]/50 bg-[#F92672]/10 hover:bg-[#F92672]/20">
-          <span class="block font-bold text-[#F92672]">Replace All Data</span>
-          <span class="block text-xs text-zinc-400 mt-1">Replaces every team, folder, and saved seating plan currently in this app.</span>
-        </button>
-        <button id="restore-import-btn" class="w-full text-left px-4 py-3 rounded border border-[#66D9EF]/50 bg-[#66D9EF]/10 hover:bg-[#66D9EF]/20">
-          <span class="block font-bold text-[#66D9EF]">Import New Teams</span>
-          <span class="block text-xs text-zinc-400 mt-1">Adds only teams whose IDs do not already exist in this app. Existing teams are not changed.</span>
-        </button>
+      <div class="p-5 overflow-y-auto flex-1">
+        <!-- Visual comparison details -->
+        <div id="restore-choice-details" class="text-sm text-zinc-300 mb-4"></div>
+
+        <div id="restore-choice-buttons" class="flex flex-col gap-3">
+          <button id="restore-replace-btn" class="w-full text-left px-4 py-3 rounded border border-[#F92672]/50 bg-[#F92672]/10 hover:bg-[#F92672]/20">
+            <span class="block font-bold text-[#F92672]">Replace All Data</span>
+            <span class="block text-xs text-zinc-400 mt-1">Replaces every team, folder, and saved seating plan currently in this app.</span>
+          </button>
+          <button id="restore-import-btn" class="w-full text-left px-4 py-3 rounded border border-[#66D9EF]/50 bg-[#66D9EF]/10 hover:bg-[#66D9EF]/20">
+            <span class="block font-bold text-[#66D9EF]">Import New Teams</span>
+            <span class="block text-xs text-zinc-400 mt-1">Adds only teams whose IDs do not already exist in this app. Existing teams are not changed.</span>
+          </button>
+        </div>
       </div>
       <div class="p-4 border-t border-zinc-700 flex justify-end"><button onclick="closeRestoreChoiceModal()" class="px-4 py-2 text-sm text-zinc-400">Cancel</button></div>
     </div>
@@ -5023,8 +5028,9 @@
     function openRestoreChoiceModal(data) {
       pendingRestoreBackup = data;
       const summary = document.getElementById("restore-choice-summary");
+      const detailsEl = document.getElementById("restore-choice-details");
       const folderCount = Array.isArray(data.folders) ? data.folders.length : 0;
-      
+
       // Generate comparison data
       const localFP = generateDataFingerprint();
       const backupFP = {
@@ -5042,27 +5048,89 @@
         totalMembers: (data.files || []).reduce((sum, f) => sum + (f.allMembers || []).length, 0),
         totalTeams: (data.files || []).reduce((sum, f) => sum + (f.teams || []).length, 0)
       };
-      
+
       const comparison = compareFingerprints(localFP, backupFP);
-      
-      // Build summary text with comparison details
-      let summaryText = `This backup contains ${data.files.length} team(s) and ${folderCount} folder(s). Each team's attached seating plan will be restored with it.`;
-      
-      if (data.exportedAt) {
-        const backupDate = new Date(data.exportedAt).toLocaleString();
-        summaryText += `\n\nBackup created: ${backupDate}`;
+
+      // Summary text
+      summary.textContent = `This backup contains ${data.files.length} team(s) and ${folderCount} folder(s). Each team's attached seating plan will be restored with it.`;
+
+      // Build visual comparison details
+      if (detailsEl) {
+        let html = '';
+
+        // Timestamp comparison
+        const localDate = new Date(localFP.timestamp).toLocaleString();
+        const backupDate = data.exportedAt ? new Date(data.exportedAt).toLocaleString() : "unknown";
+        html += `<div class="mb-3 p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+          <div class="text-xs text-zinc-500 mb-1">Timestamps</div>
+          <div class="flex justify-between text-xs">
+            <span class="text-[#66D9EF]">Local: ${localDate}</span>
+            <span class="text-[#A6E22E]">Backup: ${backupDate}</span>
+          </div>`;
+
+        // Age warning
+        if (data.exportedAt) {
+          const backupTime = new Date(data.exportedAt).getTime();
+          if (backupTime < localFP.timestamp) {
+            const diffMs = localFP.timestamp - backupTime;
+            const diffMin = Math.floor(diffMs / 60000);
+            let ageText;
+            if (diffMin < 60) ageText = `${diffMin} minute(s) ago`;
+            else if (diffMin < 1440) ageText = `${Math.floor(diffMin / 60)} hour(s) ago`;
+            else ageText = `${Math.floor(diffMin / 1440)} day(s) ago`;
+            html += `<div class="mt-2 px-2 py-1 rounded bg-[#F92672]/10 border border-[#F92672]/30 text-[#F92672] text-xs font-medium">
+              ⚠️ Backup is older than your current data (by ${ageText}). Restoring may overwrite newer changes.
+            </div>`;
+          } else if (backupTime > localFP.timestamp) {
+            html += `<div class="mt-2 px-2 py-1 rounded bg-[#A6E22E]/10 border border-[#A6E22E]/30 text-[#A6E22E] text-xs font-medium">
+              ✓ Backup is newer than your current data.
+            </div>`;
+          }
+        }
+
+        html += `</div>`;
+
+        // Detailed differences
+        if (comparison && comparison.hasDifferences) {
+          comparison.differences.forEach(diff => {
+            html += `<div class="mb-2 p-2 bg-zinc-800/50 rounded border border-zinc-700/50">
+              <div class="text-xs text-zinc-300">${diff.description}</div>`;
+
+            if (diff.type === 'newTeams') {
+              html += `<div class="mt-1 text-xs text-[#A6E22E]">`;
+              diff.teams.forEach(team => {
+                html += `<div>• + ${team.name} (${team.memberCount} members, ${team.teamCount} team(s))</div>`;
+              });
+              html += `</div>`;
+            }
+
+            if (diff.type === 'removedTeams') {
+              html += `<div class="mt-1 text-xs text-[#F92672]">`;
+              diff.teams.forEach(team => {
+                html += `<div>• − ${team.name} (${team.memberCount} members)</div>`;
+              });
+              html += `</div>`;
+            }
+
+            if (diff.type === 'modifiedTeams') {
+              html += `<div class="mt-1 text-xs text-[#FD971F]">`;
+              diff.teams.forEach(team => {
+                html += `<div>• ~ ${team.name}: ${team.changes.join(', ')}</div>`;
+              });
+              html += `</div>`;
+            }
+
+            html += `</div>`;
+          });
+        } else if (comparison) {
+          html += `<div class="p-3 bg-zinc-800 rounded-lg border border-zinc-700 text-xs text-zinc-400">
+            Backup appears identical to current data.
+          </div>`;
+        }
+
+        detailsEl.innerHTML = html;
       }
-      
-      if (comparison && comparison.hasDifferences) {
-        summaryText += '\n\nDifferences from current data:';
-        comparison.differences.forEach(diff => {
-          summaryText += `\n• ${diff.description}`;
-        });
-      } else if (comparison) {
-        summaryText += '\n\nBackup appears identical to current data.';
-      }
-      
-      summary.textContent = summaryText;
+
       const modal = document.getElementById("restore-choice-modal");
       modal.classList.remove("hidden");
       modal.classList.add("flex");
@@ -5072,16 +5140,15 @@
       const data = pendingRestoreBackup;
       closeRestoreChoiceModal();
       if (!data) return;
-      
-      // Check if backup is older than current data
+
+      // Build confirmation message with comparison
       const localFP = generateDataFingerprint();
       const backupFP = {
         timestamp: data.exportedAt ? new Date(data.exportedAt).getTime() : 0,
         teamCount: data.files.length,
         folderCount: Array.isArray(data.folders) ? data.folders.length : 0,
         teams: (data.files || []).map(f => ({
-          id: f.id,
-          name: f.name,
+          id: f.id, name: f.name,
           memberCount: (f.allMembers || []).length,
           teamCount: (f.teams || []).length,
           poolCount: (f.pool || []).length,
@@ -5090,20 +5157,32 @@
         totalMembers: (data.files || []).reduce((sum, f) => sum + (f.allMembers || []).length, 0),
         totalTeams: (data.files || []).reduce((sum, f) => sum + (f.teams || []).length, 0)
       };
-      
       const comparison = compareFingerprints(localFP, backupFP);
-      
+
       let confirmMessage = `Replace all current data with ${data.files.length} team(s) and ${Array.isArray(data.folders) ? data.folders.length : 0} folder(s)? Current data will be permanently replaced.`;
-      
-      // Add warning if backup is older
+
+      // Add age warning
       if (data.exportedAt) {
         const backupTime = new Date(data.exportedAt).getTime();
-        const localTime = localFP.timestamp;
-        if (backupTime < localTime) {
-          confirmMessage += `\n\n⚠️ Warning: This backup is older than your current data. You may be overwriting newer changes.`;
+        if (backupTime < localFP.timestamp) {
+          const diffMs = localFP.timestamp - backupTime;
+          const diffMin = Math.floor(diffMs / 60000);
+          let ageText;
+          if (diffMin < 60) ageText = `${diffMin} minute(s)`;
+          else if (diffMin < 1440) ageText = `${Math.floor(diffMin / 60)} hour(s)`;
+          else ageText = `${Math.floor(diffMin / 1440)} day(s)`;
+          confirmMessage += `\n\n⚠️ This backup is OLDER than your current data (by ${ageText}). You may be overwriting newer changes.`;
         }
       }
-      
+
+      // Add difference summary
+      if (comparison && comparison.hasDifferences) {
+        confirmMessage += '\n\nDifferences:';
+        comparison.differences.forEach(diff => {
+          confirmMessage += `\n• ${diff.description}`;
+        });
+      }
+
       showModal(
         confirmMessage,
         true,
@@ -5128,8 +5207,27 @@
         showModal("No new teams were found. Existing teams were not changed.");
         return;
       }
+
+      // Build a detailed list of what will be imported
+      let message = `Import ${newFiles.length} new team(s)? Existing teams will not be changed.`;
+      message += `\n\nNew teams:`;
+      newFiles.forEach(f => {
+        const memberCount = (f.allMembers || []).length;
+        const teamCount = (f.teams || []).length;
+        message += `\n• ${f.name} (${memberCount} member(s), ${teamCount} team(s))`;
+      });
+
+      // Show which existing teams will be kept unchanged
+      const keptFiles = data.files.filter(file => existingIds.has(file.id));
+      if (keptFiles.length > 0) {
+        message += `\n\nExisting teams (unchanged):`;
+        keptFiles.forEach(f => {
+          message += `\n• ${f.name}`;
+        });
+      }
+
       showModal(
-        `Import ${newFiles.length} new team(s)? Existing teams will not be changed.`,
+        message,
         true,
         () => {
           const newFileIds = new Set(newFiles.map(file => file.id));
