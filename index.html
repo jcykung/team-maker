@@ -640,32 +640,6 @@
       border-color: transparent !important;
     }
 
-    /* Landscape fullscreen mode */
-    #mobile-tab5-ui.landscape-fullscreen {
-      position: fixed !important;
-      inset: 0 !important;
-      z-index: 9500 !important;
-      background: #272822 !important;
-    }
-
-    #mobile-tab5-ui.landscape-fullscreen #mobile-seat-top-bar {
-      display: none !important;
-    }
-
-    #mobile-seat-zoom-bar {
-      background: rgba(30, 31, 28, 0.92);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
-    /* Staging area list inside mobile seating */
-    #mobile-seat-staging {
-      background: #1E1F1C;
-      border-top: 1px solid #3E3D32;
-      flex-shrink: 0;
-      max-height: 35vh;
-      overflow-y: auto;
-    }
   </style>
 </head>
 
@@ -1719,60 +1693,17 @@
 
     <!-- ===== MOBILE-ONLY SEATING UI ===== -->
     <div id="mobile-tab5-ui">
-      <!-- Top bar (hidden in landscape fullscreen via CSS) -->
+      <!-- Top bar: plan name only -->
       <div id="mobile-seat-top-bar" class="flex-shrink-0">
         <div class="flex items-center gap-2 p-3">
           <h2 class="text-xs font-bold text-[#FD971F] uppercase tracking-wider flex-shrink-0">Seating</h2>
-          <button id="mobile-seat-plan-btn" onclick="openSeatingPlansModal()"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-medium truncate max-w-[140px] flex-shrink-0">
-            <span id="mobile-seat-plan-label" class="truncate">No Plan</span>
-            <svg class="w-3 h-3 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="ml-auto flex items-center gap-1.5 flex-shrink-0">
-            <!-- Fit to screen -->
-            <button onclick="mobileFitSeats()" title="Fit to screen"
-              class="bg-zinc-800 border border-zinc-700 text-[#A6E22E] h-9 w-9 rounded flex items-center justify-center active:bg-zinc-700">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 7V5a2 2 0 012-2h2" /><path d="M17 3h2a2 2 0 012 2v2" />
-                <path d="M21 17v2a2 2 0 01-2 2h-2" /><path d="M7 21H5a2 2 0 01-2-2v-2" />
-                <rect x="7" y="7" width="10" height="10" rx="1" />
-              </svg>
-            </button>
-            <!-- Rotate -->
-            <button onclick="mobileRotateSeats()" title="Rotate 90°"
-              class="bg-zinc-800 border border-zinc-700 text-[#66D9EF] h-9 w-9 rounded flex items-center justify-center active:bg-zinc-700">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 8A9 9 0 1 0 20.5 13" /><polyline points="20 2 20 8 14 8" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <!-- Zoom bar -->
-        <div id="mobile-seat-zoom-bar" class="flex items-center justify-center gap-2 px-3 pb-2">
-          <button onclick="mobileSeatZoom(-0.15)"
-            class="bg-zinc-800 border border-zinc-700 text-zinc-300 w-9 h-9 rounded flex items-center justify-center text-lg font-bold active:bg-zinc-700">&minus;</button>
-          <span id="mobile-seat-zoom-label" class="text-xs font-mono text-zinc-400 w-12 text-center">100%</span>
-          <button onclick="mobileSeatZoom(0.15)"
-            class="bg-zinc-800 border border-zinc-700 text-zinc-300 w-9 h-9 rounded flex items-center justify-center text-lg font-bold active:bg-zinc-700">&plus;</button>
+          <span id="mobile-seat-plan-label" class="truncate text-xs text-zinc-400 font-medium">No Plan</span>
         </div>
       </div>
 
       <!-- Canvas (pannable, pinchable) -->
       <div id="mobile-seat-canvas-wrap">
         <div id="mobile-seat-canvas-area" class="relative bg-grid" style="width:2400px;height:2400px;"></div>
-      </div>
-
-      <!-- Staging area (unassigned members, compact) -->
-      <div id="mobile-seat-staging">
-        <div class="px-3 py-2 flex items-center gap-2 border-b border-zinc-700/50">
-          <span class="text-[10px] font-bold text-[#FD971F] uppercase tracking-wider">Unassigned</span>
-          <span id="mobile-seat-staging-count" class="text-[10px] text-zinc-500 bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-700 font-mono">0</span>
-        </div>
-        <div id="mobile-seat-staging-list" class="p-2 flex flex-wrap gap-1.5">
-          <span class="text-zinc-500 text-xs">None</span>
-        </div>
       </div>
     </div>
 
@@ -5419,9 +5350,6 @@
     let _mobileSeatScale = 1;
     let _mobileSeatPanX = 0;
     let _mobileSeatPanY = 0;
-    let _mobileSeatLandscapeFS = false;
-    let _mobileSeatTouchState = null; // { type: 'pan'|'pinch', ... }
-    let _orientationListenerActive = false;
 
     function isMobileDevice() {
       return window.matchMedia("(max-width: 767px)").matches ||
@@ -5431,9 +5359,7 @@
     function initMobileSeatingView() {
       if (!isMobileDevice()) return;
       setupMobileSeatTouchHandlers();
-      setupOrientationListener();
       renderMobileSeats();
-      renderMobileSeatStaging();
       mobileFitSeats();
     }
 
@@ -5553,26 +5479,6 @@
       return el;
     }
 
-    // ---- Staging area ----
-    function renderMobileSeatStaging() {
-      const list = document.getElementById("mobile-seat-staging-list");
-      const count = document.getElementById("mobile-seat-staging-count");
-      if (!list || !count) return;
-      count.textContent = staging.length;
-      if (staging.length === 0) {
-        list.innerHTML = '<span class="text-zinc-500 text-xs">All assigned</span>';
-        return;
-      }
-      list.innerHTML = "";
-      staging.forEach(id => {
-        const name = getMemberName(id);
-        const chip = document.createElement("div");
-        chip.className = "px-2.5 py-1.5 rounded text-xs font-medium bg-zinc-800 border border-zinc-700 text-zinc-300";
-        chip.textContent = name;
-        list.appendChild(chip);
-      });
-    }
-
     // ---- Touch handlers (pan + pinch-zoom) ----
     function setupMobileSeatTouchHandlers() {
       const wrap = document.getElementById("mobile-seat-canvas-wrap");
@@ -5659,20 +5565,6 @@
       const area = document.getElementById("mobile-seat-canvas-area");
       if (!area) return;
       area.style.transform = `translate(${_mobileSeatPanX}px, ${_mobileSeatPanY}px) scale(${_mobileSeatScale})`;
-      const lbl = document.getElementById("mobile-seat-zoom-label");
-      if (lbl) lbl.textContent = Math.round(_mobileSeatScale * 100) + "%";
-    }
-
-    function mobileSeatZoom(delta) {
-      const wrap = document.getElementById("mobile-seat-canvas-wrap");
-      if (!wrap) return;
-      const cx = wrap.clientWidth / 2;
-      const cy = wrap.clientHeight / 2;
-      const newScale = Math.min(3, Math.max(0.15, _mobileSeatScale + delta));
-      _mobileSeatPanX = cx - (cx - _mobileSeatPanX) * (newScale / _mobileSeatScale);
-      _mobileSeatPanY = cy - (cy - _mobileSeatPanY) * (newScale / _mobileSeatScale);
-      _mobileSeatScale = newScale;
-      applyMobileSeatTransform();
     }
 
     function mobileFitSeats() {
@@ -5698,64 +5590,6 @@
       _mobileSeatPanX = (cw - boundsW * newScale) / 2 - minX * newScale;
       _mobileSeatPanY = (ch - boundsH * newScale) / 2 - minY * newScale;
       applyMobileSeatTransform();
-    }
-
-    function mobileRotateSeats() {
-      rotateSeatMapCW(true);
-      renderMobileSeats();
-      setTimeout(mobileFitSeats, 50);
-    }
-
-    // ---- Orientation listener (portrait ↔ landscape) ----
-    function setupOrientationListener() {
-      if (_orientationListenerActive) return;
-      _orientationListenerActive = true;
-      const mql = window.matchMedia("(orientation: landscape) and (max-height: 550px)");
-
-      function checkLandscape() {
-        const ui = document.getElementById("mobile-tab5-ui");
-        if (!ui || currentActiveTabId !== "tab5") return;
-
-        if (mql.matches && !_mobileSeatLandscapeFS) {
-          // Entered landscape → go fullscreen
-          _mobileSeatLandscapeFS = true;
-          ui.classList.add("landscape-fullscreen");
-          if (ui.requestFullscreen) {
-            ui.requestFullscreen().catch(() => {});
-          }
-          setTimeout(mobileFitSeats, 200);
-        } else if (!mql.matches && _mobileSeatLandscapeFS) {
-          // Back to portrait → exit fullscreen
-          _mobileSeatLandscapeFS = false;
-          ui.classList.remove("landscape-fullscreen");
-          if (document.fullscreenElement === ui) {
-            document.exitFullscreen().catch(() => {});
-          }
-          setTimeout(mobileFitSeats, 200);
-        }
-      }
-
-      mql.addEventListener("change", checkLandscape);
-
-      // Also handle fullscreen exit (e.g. user swipes down on iOS)
-      document.addEventListener("fullscreenchange", () => {
-        const ui = document.getElementById("mobile-tab5-ui");
-        if (!ui) return;
-        if (!document.fullscreenElement && _mobileSeatLandscapeFS) {
-          _mobileSeatLandscapeFS = false;
-          ui.classList.remove("landscape-fullscreen");
-          setTimeout(mobileFitSeats, 200);
-        }
-      });
-    }
-
-    function exitMobileSeatLandscapeFS() {
-      _mobileSeatLandscapeFS = false;
-      const ui = document.getElementById("mobile-tab5-ui");
-      if (ui) ui.classList.remove("landscape-fullscreen");
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
     }
 
     function updateMobileSeatPlanLabel() {
@@ -9100,7 +8934,6 @@
       // Also update mobile view if on mobile
       if (isMobileDevice() && currentActiveTabId === "tab5") {
         renderMobileSeats();
-        renderMobileSeatStaging();
         updateMobileSeatPlanLabel();
       }
     }
