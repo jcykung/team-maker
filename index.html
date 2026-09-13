@@ -640,6 +640,19 @@
       border-color: transparent !important;
     }
 
+    /* Landscape fullscreen: hide top bar, fill entire screen */
+    #mobile-tab5-ui.landscape-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 9500 !important;
+      background: #272822 !important;
+    }
+
+    #mobile-tab5-ui.landscape-fullscreen #mobile-seat-top-bar {
+      display: none !important;
+    }
+  </style>    }
+
   </style>
 </head>
 
@@ -5359,6 +5372,7 @@
     function initMobileSeatingView() {
       if (!isMobileDevice()) return;
       setupMobileSeatTouchHandlers();
+      setupOrientationListener();
       renderMobileSeats();
       mobileFitSeats();
     }
@@ -5595,6 +5609,44 @@
     function updateMobileSeatPlanLabel() {
       const lbl = document.getElementById("mobile-seat-plan-label");
       if (lbl) lbl.textContent = currentSeatingPlanName || "No Plan";
+    }
+
+    // ---- Landscape orientation listener (fullscreen seating view) ----
+    let _orientationListenerAttached = false;
+    let _mobileSeatLandscapeFS = false;
+
+    function setupOrientationListener() {
+      if (_orientationListenerAttached) return;
+      _orientationListenerAttached = true;
+      const mql = window.matchMedia("(orientation: landscape) and (max-height: 550px)");
+
+      function checkLandscape() {
+        const ui = document.getElementById("mobile-tab5-ui");
+        if (!ui || currentActiveTabId !== "tab5") return;
+
+        if (mql.matches && !_mobileSeatLandscapeFS) {
+          _mobileSeatLandscapeFS = true;
+          ui.classList.add("landscape-fullscreen");
+          if (ui.requestFullscreen) ui.requestFullscreen().catch(() => {});
+          setTimeout(mobileFitSeats, 200);
+        } else if (!mql.matches && _mobileSeatLandscapeFS) {
+          _mobileSeatLandscapeFS = false;
+          ui.classList.remove("landscape-fullscreen");
+          if (document.fullscreenElement === ui) document.exitFullscreen().catch(() => {});
+          setTimeout(mobileFitSeats, 200);
+        }
+      }
+
+      mql.addEventListener("change", checkLandscape);
+      document.addEventListener("fullscreenchange", () => {
+        const ui = document.getElementById("mobile-tab5-ui");
+        if (!ui) return;
+        if (!document.fullscreenElement && _mobileSeatLandscapeFS) {
+          _mobileSeatLandscapeFS = false;
+          ui.classList.remove("landscape-fullscreen");
+          setTimeout(mobileFitSeats, 200);
+        }
+      });
     }
 
     // ================= UI & UTILS =================
