@@ -2391,6 +2391,34 @@
     </div>
   </div>
 
+  <!-- Mobile Sync Modal — shown on browsers without File System Access API -->
+  <div id="mobile-sync-modal" class="fixed inset-0 z-[9994] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+      <div class="p-5 border-b border-zinc-700">
+        <h3 class="text-lg font-bold text-[#A6E22E]">Sync</h3>
+        <p class="text-sm text-zinc-400 mt-2">Transfer data between this device and a sync file (e.g. stored in Google Drive).</p>
+      </div>
+      <div class="p-5 overflow-y-auto flex-1">
+        <div id="mobile-sync-status" class="text-xs text-zinc-500 mb-4 p-3 bg-zinc-800 rounded-lg border border-zinc-700"></div>
+        <div class="flex flex-col gap-3">
+          <button id="mobile-sync-pull-btn" class="w-full text-left px-4 py-3 rounded border border-[#A6E22E]/50 bg-[#A6E22E]/10 hover:bg-[#A6E22E]/20">
+            <span class="block font-bold text-[#A6E22E]">⬇ Pull from File</span>
+            <span class="block text-xs text-zinc-400 mt-1">Import the latest data from a sync file on this device. Use this to pull changes made on another device.</span>
+          </button>
+          <button id="mobile-sync-push-btn" class="w-full text-left px-4 py-3 rounded border border-[#66D9EF]/50 bg-[#66D9EF]/10 hover:bg-[#66D9EF]/20">
+            <span class="block font-bold text-[#66D9EF]">⬆ Download Backup</span>
+            <span class="block text-xs text-zinc-400 mt-1">Download your current data as a file. Save it to your sync location (e.g. Google Drive) to sync with other devices.</span>
+          </button>
+        </div>
+      </div>
+      <div class="p-4 border-t border-zinc-700 flex justify-between items-center">
+        <button id="mobile-sync-change-btn" class="text-xs text-zinc-500 hover:text-zinc-300">Change sync file…</button>
+        <button onclick="closeMobileSyncModal()" class="px-4 py-2 text-sm text-zinc-400">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="mobile-sync-pull-input" accept=".json" class="hidden" onchange="handleMobileSyncPull(event)" />
+
   <!-- Custom Modal for Alerts & Confirms -->
   <div id="custom-modal"
     class="fixed inset-0 z-[9990] flex items-center justify-center bg-black/80 backdrop-blur-sm hide p-4">
@@ -4401,6 +4429,11 @@
       const h = pendingSyncConflict; closeSyncConflictModal(); if (h) h("local");
     });
 
+    // Mobile sync modal event listeners
+    document.getElementById("mobile-sync-pull-btn")?.addEventListener("click", handleMobileSyncPullBtn);
+    document.getElementById("mobile-sync-push-btn")?.addEventListener("click", handleMobileSyncPushBtn);
+    document.getElementById("mobile-sync-change-btn")?.addEventListener("click", handleMobileSyncChange);
+
     async function pickSyncFile() {
       if (!window.showSaveFilePicker) return null;
       try {
@@ -4648,10 +4681,160 @@
     }
 
     function manualSyncFallback() {
-      const input = document.getElementById("sync-file-input");
-      if (input) input.click();
+      openMobileSyncModal();
     }
 
+    // ================= MOBILE SYNC MODAL =================
+    function openMobileSyncModal() {
+      const meta = getSyncMeta();
+      const statusEl = document.getElementById("mobile-sync-status");
+
+      if (meta.fileName) {
+        const syncedAt = meta.lastSyncedAt ? new Date(meta.lastSyncedAt).toLocaleString() : "never";
+        const needs = syncNeedsPush();
+        statusEl.innerHTML = `
+          <div class="font-medium text-zinc-300 mb-1">Syncing with: ${escapeHtml(meta.fileName)}</div>
+          <div>Last synced: ${syncedAt}</div>
+          ${needs ? '<div class="text-[#FD971F] mt-1">You have unsynced local changes.</div>' : '<div class="text-[#A6E22E] mt-1">Up to date.</div>'}
+        `;
+        document.getElementById("mobile-sync-change-btn").classList.remove("hidden");
+      } else {
+        statusEl.innerHTML = `<div class="text-zinc-400">No sync file configured yet. Use "Pull from File" to choose one, or "Download Backup" to export your data.</div>`;
+        document.getElementById("mobile-sync-change-btn").classList.add("hidden");
+      }
+
+      const modal = document.getElementById("mobile-sync-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeMobileSyncModal() {
+      const modal = document.getElementById("mobile-sync-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function handleMobileSyncPullBtn() {
+      closeMobileSyncModal();
+      document.getElementById("mobile-sync-pull-input").click();
+    }
+
+    async function handleMobileSyncPushBtn() {
+      closeMobileSyncModal();
+      saveData();
+      const jsonStr = await buildSyncJSON();
+      const meta = getSyncMeta();
+      const safeName = meta.fileName
+        ? meta.fileName.replace(/\.json$/i, "")
+        : "teammaker_sync";
+      const filename = safeName + "_" + getExportTimestamp() + ".json";
+      saveFileAs(jsonStr, filename, "application/json");
+      const syncedAt = Date.now();
+      setSyncMeta({ lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+      updateSyncButtonUI();
+      showSyncToast("Backup downloaded. Save it to your sync location (e.g. Google Drive).", "success");
+    }
+
+    async function handleMobileSyncPull(event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      try {
+        const fileLastModified = file.lastModified || 0;
+        const text = await file.text();
+        const parsed = await parseExport(text);
+        const fileHasData = parsed && parsed.version === 2 && Array.isArray(parsed.files) && parsed.files.length > 0;
+
+        if (!fileHasData) {
+          showSyncToast("That file doesn't contain valid Team Maker data.", "error");
+          return;
+        }
+
+        const meta = getSyncMeta();
+        const localHasData = getAllFiles().length > 0;
+
+        if (localHasData && meta.fileName && meta.fileName !== file.name) {
+          // User picked a different file than expected
+          showModal(
+            `You chose "${file.name}" but your sync file is "${meta.fileName}". Switch to this new file?`,
+            true,
+            () => {
+              applySyncData(parsed);
+              const syncedAt = fileLastModified || Date.now();
+              setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+              updateSyncButtonUI();
+              showSyncToast(`Synced — pulled ${parsed.files.length} team(s) from ${file.name}.`, "success");
+            }
+          );
+          return;
+        }
+
+        if (localHasData) {
+          // Local has data — show comparison before overwriting
+          const localFP = generateDataFingerprint();
+          const fileFP = {
+            timestamp: parsed.exportedAt ? new Date(parsed.exportedAt).getTime() : fileLastModified,
+            teamCount: parsed.files.length,
+            folderCount: Array.isArray(parsed.folders) ? parsed.folders.length : 0,
+            teams: (parsed.files || []).map(f => ({
+              id: f.id, name: f.name,
+              memberCount: (f.allMembers || []).length,
+              teamCount: (f.teams || []).length,
+              poolCount: (f.pool || []).length,
+              updatedAt: f.updatedAt || 0
+            })),
+            totalMembers: (parsed.files || []).reduce((s, f) => s + (f.allMembers || []).length, 0),
+            totalTeams: (parsed.files || []).reduce((s, f) => s + (f.teams || []).length, 0)
+          };
+          const comparison = compareFingerprints(localFP, fileFP);
+
+          if (comparison && comparison.hasDifferences) {
+            openSyncConflictModal(async (choice) => {
+              if (choice === "file") {
+                applySyncData(parsed);
+                const syncedAt = fileLastModified || Date.now();
+                setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+                updateSyncButtonUI();
+                showSyncToast(`Synced — pulled ${parsed.files.length} team(s) from ${file.name}.`, "success");
+              } else {
+                // Keep local — just record the filename for future reference
+                setSyncMeta({ fileName: file.name });
+                updateSyncButtonUI();
+                showSyncToast("Kept local data. Use Download Backup to push your changes.", "info");
+              }
+            }, comparison);
+          } else {
+            // Data is the same
+            setSyncMeta({ fileName: file.name, lastSyncedAt: fileLastModified || Date.now(), lastLocalChange: fileLastModified || Date.now() });
+            updateSyncButtonUI();
+            showSyncToast("Data is already in sync.", "info");
+          }
+        } else {
+          // Local is empty — just pull
+          applySyncData(parsed);
+          const syncedAt = fileLastModified || Date.now();
+          setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
+          updateSyncButtonUI();
+          showSyncToast(`Synced — pulled ${parsed.files.length} team(s) from ${file.name}.`, "success");
+        }
+      } catch {
+        showSyncToast("Could not read that file as a Team Maker backup.", "error");
+      }
+    }
+
+    function handleMobileSyncChange() {
+      closeMobileSyncModal();
+      showModal("Clear the current sync file reference? You can then choose a different file.", true, () => {
+        localStorage.removeItem(SYNC_META_KEY);
+        resetSyncMetaCache();
+        updateSyncButtonUI();
+        showSyncToast("Sync file reference cleared. Click Sync to choose a new file.", "info");
+      });
+    }
+
+    // Legacy fallback handler (kept for safety, but mobile now uses the modal)
     async function handleManualSyncFile(event) {
       const file = event.target.files[0];
       event.target.value = "";
@@ -4664,14 +4847,12 @@
         const meta = getSyncMeta();
 
         if (fileHasData && fileLastModified > (meta.lastLocalChange || 0)) {
-          // File is more recent → pull
           applySyncData(parsed);
           const syncedAt = fileLastModified || Date.now();
           setSyncMeta({ fileName: file.name, lastSyncedAt: syncedAt, lastLocalChange: syncedAt });
           updateSyncButtonUI();
           showSyncToast(`Synced — pulled ${parsed.files.length} team(s) from ${file.name}.`, "success");
         } else {
-          // Local is more recent (or file empty) → push via download
           const jsonStr = await buildSyncJSON();
           const filename = "teammaker_sync_" + getExportTimestamp() + ".json";
           saveFileAs(jsonStr, filename, "application/json");
