@@ -5651,7 +5651,7 @@
 
     // ================= CHANGELOG =================
     const CHANGELOG = [
-      { v: "2.0", date: "Sep 2025", changes: [
+      { v: "2.0", changes: [
         "View-only seating plan on mobile with touch pan & pinch-zoom",
         "Landscape fullscreen seating view on mobile — just the plan, no UI",
         "Sync conflict detection with data fingerprinting and visual diff",
@@ -5660,25 +5660,25 @@
         "Data fingerprinting to compare local vs. backup before sync",
         "Memory leak fix — reused AudioContext for celebration sounds",
       ]},
-      { v: "1.5", date: "Aug 2025", changes: [
+      { v: "1.5", changes: [
         "Sync feature — one-click sync to a file on Google Drive",
         "Auto Sync header button with orange pulsing indicator for unsaved changes",
         "Sync conflict modal when both sides have changed",
         "Mobile sync fallback for browsers without File System Access API",
       ]},
-      { v: "1.4", date: "Jul 2025", changes: [
+      { v: "1.4", changes: [
         "Text boxes on the seating canvas — free-floating labels and notes",
         "Text box formatting toolbar (font size, bold, italic, underline)",
         "Seat count badge popover on seats with sections",
         "Seating plan auto-save when switching tabs",
       ]},
-      { v: "1.3", date: "Jun 2025", changes: [
+      { v: "1.3", changes: [
         "Seating plan manager redesign — team-scoped plans with rename",
         "Import seating plans from other teams, backups, or .json files",
         "File manager with drag-and-drop reordering and folder creation",
         "Export individual teams as .json for sharing with colleagues",
       ]},
-      { v: "1.2", date: "May 2025", changes: [
+      { v: "1.2", changes: [
         "Constraints — Together & Apart rules for team generation",
         "Constraint algorithm tries up to 500 arrangements to satisfy all rules",
         "Projector Mode for seating plans with rotate, pan, zoom, and fit",
@@ -5686,14 +5686,14 @@
         "Snap toggle and Alt/Shift modifier keys for precision placement",
         "Keyboard shortcuts for all seating tools (V, S, C, U, O, T, D)",
       ]},
-      { v: "1.1", date: "Apr 2025", changes: [
+      { v: "1.1", changes: [
         "Seating plan canvas — draw square, circle, and label seats",
         "Seat assignment with auto-assign and manual drag-and-drop",
         "Undo/Redo for seating changes (Ctrl+Z / Ctrl+Y)",
         "Export preview with Teams and Seating view toggle",
         "Touch panning and pinch-zoom on export preview",
       ]},
-      { v: "1.0", date: "Mar 2025", changes: [
+      { v: "1.0", changes: [
         "Initial release — build rosters, generate random teams",
         "Multiple team files with folder organisation",
         "CSV import and smart name parsing",
@@ -5711,9 +5711,8 @@
       if (!modal || !list) return;
       list.innerHTML = CHANGELOG.map(entry => `
         <div>
-          <div class="flex items-baseline gap-2 mb-2">
+          <div class="mb-2">
             <span class="text-[#A6E22E] font-bold font-mono text-base">v${entry.v}</span>
-            <span class="text-zinc-500 text-xs">${entry.date}</span>
           </div>
           <ul class="space-y-1 pl-0">
             ${entry.changes.map(c => `<li class="text-zinc-300 text-sm leading-relaxed flex gap-2"><span class="text-zinc-600 flex-shrink-0">•</span><span>${c}</span></li>`).join("")}
