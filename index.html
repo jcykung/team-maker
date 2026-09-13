@@ -5918,9 +5918,14 @@
       });
     }
 
+    let _celebrationCtx = null;
     function playCelebrationSound() {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (!_celebrationCtx) {
+          _celebrationCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const ctx = _celebrationCtx;
+        if (ctx.state === "suspended") ctx.resume();
         const playNote = (freq, startTime, dur) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
