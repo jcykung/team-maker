@@ -2347,10 +2347,10 @@
   </div>
 
   <div id="restore-choice-modal" class="fixed inset-0 z-[9994] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg">
+    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
       <div class="p-5 border-b border-zinc-700">
         <h3 class="text-lg font-bold text-[#E6DB74]">Restore Backup File</h3>
-        <p id="restore-choice-summary" class="text-sm text-zinc-400 mt-2"></p>
+        <p id="restore-choice-summary" class="text-sm text-zinc-400 mt-2 whitespace-pre-line max-h-[40vh] overflow-y-auto"></p>
       </div>
       <div class="p-5 flex flex-col gap-3">
         <button id="restore-replace-btn" class="w-full text-left px-4 py-3 rounded border border-[#F92672]/50 bg-[#F92672]/10 hover:bg-[#F92672]/20">
@@ -2367,20 +2367,25 @@
   </div>
 
   <div id="sync-conflict-modal" class="fixed inset-0 z-[9994] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg">
+    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
       <div class="p-5 border-b border-zinc-700">
         <h3 class="text-lg font-bold text-[#FD971F]">Sync Conflict</h3>
         <p class="text-sm text-zinc-400 mt-2">Both your local data and the sync file changed since the last sync. Choose which version to keep.</p>
       </div>
-      <div class="p-5 flex flex-col gap-3">
-        <button id="sync-conflict-file-btn" class="w-full text-left px-4 py-3 rounded border border-[#A6E22E]/50 bg-[#A6E22E]/10 hover:bg-[#A6E22E]/20">
-          <span class="block font-bold text-[#A6E22E]">Keep Sync File</span>
-          <span class="block text-xs text-zinc-400 mt-1">Replaces your local data with the file's contents.</span>
-        </button>
-        <button id="sync-conflict-local-btn" class="w-full text-left px-4 py-3 rounded border border-[#66D9EF]/50 bg-[#66D9EF]/10 hover:bg-[#66D9EF]/20">
-          <span class="block font-bold text-[#66D9EF]">Keep Local Data</span>
-          <span class="block text-xs text-zinc-400 mt-1">Overwrites the sync file with your local data.</span>
-        </button>
+      <div class="p-5 overflow-y-auto flex-1">
+        <!-- Comparison details will be inserted here -->
+        <div id="sync-conflict-details" class="text-sm text-zinc-300 mb-4"></div>
+        
+        <div class="flex flex-col gap-3">
+          <button id="sync-conflict-file-btn" class="w-full text-left px-4 py-3 rounded border border-[#A6E22E]/50 bg-[#A6E22E]/10 hover:bg-[#A6E22E]/20">
+            <span class="block font-bold text-[#A6E22E]">Keep Sync File</span>
+            <span class="block text-xs text-zinc-400 mt-1">Replaces your local data with the file's contents.</span>
+          </button>
+          <button id="sync-conflict-local-btn" class="w-full text-left px-4 py-3 rounded border border-[#66D9EF]/50 bg-[#66D9EF]/10 hover:bg-[#66D9EF]/20">
+            <span class="block font-bold text-[#66D9EF]">Keep Local Data</span>
+            <span class="block text-xs text-zinc-400 mt-1">Overwrites the sync file with your local data.</span>
+          </button>
+        </div>
       </div>
       <div class="p-4 border-t border-zinc-700 flex justify-end"><button onclick="closeSyncConflictModal()" class="px-4 py-2 text-sm text-zinc-400">Cancel</button></div>
     </div>
@@ -4063,6 +4068,120 @@
       _syncMetaCache = null;
     }
 
+    // ================= DATA FINGERPRINTING =================
+    // Generate a summary of the current data state for comparison
+    function generateDataFingerprint() {
+      const files = getAllFiles();
+      const folders = getAllFolders();
+      const teamSummary = files.map(f => ({
+        id: f.id,
+        name: f.name,
+        memberCount: (f.allMembers || []).length,
+        teamCount: (f.teams || []).length,
+        poolCount: (f.pool || []).length,
+        updatedAt: f.updatedAt || 0
+      }));
+
+      return {
+        timestamp: Date.now(),
+        teamCount: files.length,
+        folderCount: folders.length,
+        teams: teamSummary,
+        totalMembers: files.reduce((sum, f) => sum + (f.allMembers || []).length, 0),
+        totalTeams: files.reduce((sum, f) => sum + (f.teams || []).length, 0)
+      };
+    }
+
+    // Compare two fingerprints and return differences
+    function compareFingerprints(localFP, fileFP) {
+      if (!localFP || !fileFP) return null;
+
+      const differences = [];
+
+      // Compare team counts
+      if (localFP.teamCount !== fileFP.teamCount) {
+        differences.push({
+          type: 'teamCount',
+          local: localFP.teamCount,
+          file: fileFP.teamCount,
+          description: `Local has ${localFP.teamCount} team(s), file has ${fileFP.teamCount} team(s)`
+        });
+      }
+
+      // Compare folder counts
+      if (localFP.folderCount !== fileFP.folderCount) {
+        differences.push({
+          type: 'folderCount',
+          local: localFP.folderCount,
+          file: fileFP.folderCount,
+          description: `Local has ${localFP.folderCount} folder(s), file has ${fileFP.folderCount} folder(s)`
+        });
+      }
+
+      // Compare individual teams
+      const localTeamsMap = new Map(localFP.teams.map(t => [t.id, t]));
+      const fileTeamsMap = new Map(fileFP.teams.map(t => [t.id, t]));
+
+      // Find teams only in file (new teams)
+      const newTeams = fileFP.teams.filter(t => !localTeamsMap.has(t.id));
+      if (newTeams.length > 0) {
+        differences.push({
+          type: 'newTeams',
+          teams: newTeams,
+          description: `File has ${newTeams.length} new team(s): ${newTeams.map(t => t.name).join(', ')}`
+        });
+      }
+
+      // Find teams only in local (removed teams)
+      const removedTeams = localFP.teams.filter(t => !fileTeamsMap.has(t.id));
+      if (removedTeams.length > 0) {
+        differences.push({
+          type: 'removedTeams',
+          teams: removedTeams,
+          description: `File is missing ${removedTeams.length} team(s): ${removedTeams.map(t => t.name).join(', ')}`
+        });
+      }
+
+      // Find teams that exist in both but differ
+      const modifiedTeams = [];
+      localFP.teams.forEach(localTeam => {
+        const fileTeam = fileTeamsMap.get(localTeam.id);
+        if (fileTeam) {
+          const changes = [];
+          if (localTeam.memberCount !== fileTeam.memberCount) {
+            changes.push(`members: ${localTeam.memberCount} → ${fileTeam.memberCount}`);
+          }
+          if (localTeam.teamCount !== fileTeam.teamCount) {
+            changes.push(`teams: ${localTeam.teamCount} → ${fileTeam.teamCount}`);
+          }
+          if (localTeam.updatedAt !== fileTeam.updatedAt) {
+            changes.push(`modified at different times`);
+          }
+          if (changes.length > 0) {
+            modifiedTeams.push({
+              ...localTeam,
+              changes
+            });
+          }
+        }
+      });
+
+      if (modifiedTeams.length > 0) {
+        differences.push({
+          type: 'modifiedTeams',
+          teams: modifiedTeams,
+          description: `${modifiedTeams.length} team(s) differ between local and file`
+        });
+      }
+
+      return {
+        differences,
+        hasDifferences: differences.length > 0,
+        localTimestamp: localFP.timestamp,
+        fileTimestamp: fileFP.timestamp
+      };
+    }
+
     function openSyncDB() {
       return new Promise((resolve, reject) => {
         const req = indexedDB.open(SYNC_DB_NAME, 1);
@@ -4219,9 +4338,57 @@
       }
       pendingSyncConflict = null;
     }
-    function openSyncConflictModal(handler) {
+    function openSyncConflictModal(handler, comparisonData = null) {
       pendingSyncConflict = handler;
       const modal = document.getElementById("sync-conflict-modal");
+      const detailsEl = document.getElementById("sync-conflict-details");
+      
+      if (detailsEl) {
+        if (comparisonData && comparisonData.hasDifferences) {
+          let html = '';
+          
+          // Show timestamps if available
+          if (comparisonData.localTimestamp && comparisonData.fileTimestamp) {
+            const localDate = new Date(comparisonData.localTimestamp).toLocaleString();
+            const fileDate = new Date(comparisonData.fileTimestamp).toLocaleString();
+            html += `<div class="mb-3 p-3 bg-zinc-800 rounded-lg border border-zinc-700">
+              <div class="flex justify-between text-xs text-zinc-400">
+                <span>Local: ${localDate}</span>
+                <span>File: ${fileDate}</span>
+              </div>
+            </div>`;
+          }
+          
+          // Show each difference
+          comparisonData.differences.forEach(diff => {
+            html += `<div class="mb-2 p-2 bg-zinc-800/50 rounded border border-zinc-700/50">
+              <div class="text-xs text-zinc-300">${diff.description}</div>`;
+            
+            if (diff.type === 'newTeams' || diff.type === 'removedTeams') {
+              html += `<div class="mt-1 text-xs text-zinc-500">`;
+              diff.teams.forEach(team => {
+                html += `<div>• ${team.name} (${team.memberCount} members)</div>`;
+              });
+              html += `</div>`;
+            }
+            
+            if (diff.type === 'modifiedTeams') {
+              html += `<div class="mt-1 text-xs text-zinc-500">`;
+              diff.teams.forEach(team => {
+                html += `<div>• ${team.name}: ${team.changes.join(', ')}</div>`;
+              });
+              html += `</div>`;
+            }
+            
+            html += `</div>`;
+          });
+          
+          detailsEl.innerHTML = html;
+        } else {
+          detailsEl.innerHTML = '<div class="text-xs text-zinc-500">No detailed comparison available.</div>';
+        }
+      }
+      
       if (modal) {
         modal.classList.remove("hidden");
         modal.classList.add("flex");
@@ -4311,6 +4478,26 @@
       if (isFirstSetup) {
         const localHasData = getAllFiles().length > 0;
         if (fileHasData && localHasData) {
+          // Generate comparison data for the conflict modal
+          const localFP = generateDataFingerprint();
+          const fileFP = parsed ? {
+            timestamp: parsed.exportedAt ? new Date(parsed.exportedAt).getTime() : fileLastModified,
+            teamCount: parsed.files.length,
+            folderCount: Array.isArray(parsed.folders) ? parsed.folders.length : 0,
+            teams: (parsed.files || []).map(f => ({
+              id: f.id,
+              name: f.name,
+              memberCount: (f.allMembers || []).length,
+              teamCount: (f.teams || []).length,
+              poolCount: (f.pool || []).length,
+              updatedAt: f.updatedAt || 0
+            })),
+            totalMembers: (parsed.files || []).reduce((sum, f) => sum + (f.allMembers || []).length, 0),
+            totalTeams: (parsed.files || []).reduce((sum, f) => sum + (f.teams || []).length, 0)
+          } : null;
+          
+          const comparison = compareFingerprints(localFP, fileFP);
+          
           openSyncConflictModal(async (choice) => {
             if (choice === "file") {
               applySyncData(parsed);
@@ -4324,7 +4511,7 @@
               updateSyncButtonUI();
               showSyncToast(`Synced — saved your data to ${file.name}.`, "success");
             }
-          });
+          }, comparison);
         } else if (fileHasData) {
           applySyncData(parsed);
           const syncedAt = fileLastModified || Date.now();
@@ -4359,6 +4546,26 @@
       }
 
       if (localChanged && fileChanged) {
+        // Generate comparison data for the conflict modal
+        const localFP = generateDataFingerprint();
+        const fileFP = parsed ? {
+          timestamp: parsed.exportedAt ? new Date(parsed.exportedAt).getTime() : fileLastModified,
+          teamCount: parsed.files.length,
+          folderCount: Array.isArray(parsed.folders) ? parsed.folders.length : 0,
+          teams: (parsed.files || []).map(f => ({
+            id: f.id,
+            name: f.name,
+            memberCount: (f.allMembers || []).length,
+            teamCount: (f.teams || []).length,
+            poolCount: (f.pool || []).length,
+            updatedAt: f.updatedAt || 0
+          })),
+          totalMembers: (parsed.files || []).reduce((sum, f) => sum + (f.allMembers || []).length, 0),
+          totalTeams: (parsed.files || []).reduce((sum, f) => sum + (f.teams || []).length, 0)
+        } : null;
+        
+        const comparison = compareFingerprints(localFP, fileFP);
+        
         openSyncConflictModal(async (choice) => {
           if (choice === "file") {
             if (fileHasData) {
@@ -4376,7 +4583,7 @@
             updateSyncButtonUI();
             showSyncToast("Synced — kept your local version.", "success");
           }
-        });
+        }, comparison);
         return;
       }
 
@@ -4636,7 +4843,45 @@
       pendingRestoreBackup = data;
       const summary = document.getElementById("restore-choice-summary");
       const folderCount = Array.isArray(data.folders) ? data.folders.length : 0;
-      summary.textContent = `This backup contains ${data.files.length} team(s) and ${folderCount} folder(s). Each team's attached seating plan will be restored with it.`;
+      
+      // Generate comparison data
+      const localFP = generateDataFingerprint();
+      const backupFP = {
+        timestamp: data.exportedAt ? new Date(data.exportedAt).getTime() : 0,
+        teamCount: data.files.length,
+        folderCount: folderCount,
+        teams: (data.files || []).map(f => ({
+          id: f.id,
+          name: f.name,
+          memberCount: (f.allMembers || []).length,
+          teamCount: (f.teams || []).length,
+          poolCount: (f.pool || []).length,
+          updatedAt: f.updatedAt || 0
+        })),
+        totalMembers: (data.files || []).reduce((sum, f) => sum + (f.allMembers || []).length, 0),
+        totalTeams: (data.files || []).reduce((sum, f) => sum + (f.teams || []).length, 0)
+      };
+      
+      const comparison = compareFingerprints(localFP, backupFP);
+      
+      // Build summary text with comparison details
+      let summaryText = `This backup contains ${data.files.length} team(s) and ${folderCount} folder(s). Each team's attached seating plan will be restored with it.`;
+      
+      if (data.exportedAt) {
+        const backupDate = new Date(data.exportedAt).toLocaleString();
+        summaryText += `\n\nBackup created: ${backupDate}`;
+      }
+      
+      if (comparison && comparison.hasDifferences) {
+        summaryText += '\n\nDifferences from current data:';
+        comparison.differences.forEach(diff => {
+          summaryText += `\n• ${diff.description}`;
+        });
+      } else if (comparison) {
+        summaryText += '\n\nBackup appears identical to current data.';
+      }
+      
+      summary.textContent = summaryText;
       const modal = document.getElementById("restore-choice-modal");
       modal.classList.remove("hidden");
       modal.classList.add("flex");
@@ -4646,8 +4891,40 @@
       const data = pendingRestoreBackup;
       closeRestoreChoiceModal();
       if (!data) return;
+      
+      // Check if backup is older than current data
+      const localFP = generateDataFingerprint();
+      const backupFP = {
+        timestamp: data.exportedAt ? new Date(data.exportedAt).getTime() : 0,
+        teamCount: data.files.length,
+        folderCount: Array.isArray(data.folders) ? data.folders.length : 0,
+        teams: (data.files || []).map(f => ({
+          id: f.id,
+          name: f.name,
+          memberCount: (f.allMembers || []).length,
+          teamCount: (f.teams || []).length,
+          poolCount: (f.pool || []).length,
+          updatedAt: f.updatedAt || 0
+        })),
+        totalMembers: (data.files || []).reduce((sum, f) => sum + (f.allMembers || []).length, 0),
+        totalTeams: (data.files || []).reduce((sum, f) => sum + (f.teams || []).length, 0)
+      };
+      
+      const comparison = compareFingerprints(localFP, backupFP);
+      
+      let confirmMessage = `Replace all current data with ${data.files.length} team(s) and ${Array.isArray(data.folders) ? data.folders.length : 0} folder(s)? Current data will be permanently replaced.`;
+      
+      // Add warning if backup is older
+      if (data.exportedAt) {
+        const backupTime = new Date(data.exportedAt).getTime();
+        const localTime = localFP.timestamp;
+        if (backupTime < localTime) {
+          confirmMessage += `\n\n⚠️ Warning: This backup is older than your current data. You may be overwriting newer changes.`;
+        }
+      }
+      
       showModal(
-        `Replace all current data with ${data.files.length} team(s) and ${Array.isArray(data.folders) ? data.folders.length : 0} folder(s)? Current data will be permanently replaced.`,
+        confirmMessage,
         true,
         () => {
           saveAllFiles(data.files);
