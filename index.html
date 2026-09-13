@@ -451,12 +451,8 @@
       background: transparent !important;
     }
 
-    /* ===== HIDE SEATING TAB ON MOBILE ===== */
+    /* ===== HIDE EXPORT PREVIEW TOGGLE ON MOBILE ===== */
     @media (max-width: 767px) {
-      #nav-tab5 {
-        display: none !important;
-      }
-
       #export-preview-toggle {
         display: none !important;
       }
@@ -574,6 +570,102 @@
         opacity: 1;
         transform: scale(1);
       }
+    }
+
+    /* ===== MOBILE SEATING VIEW ===== */
+    #mobile-tab5-ui {
+      display: none;
+    }
+
+    @media (max-width: 767px) {
+      /* Hide the desktop seating sidebar & canvas on mobile */
+      #tab5 > #seat-sidebar,
+      #tab5 > #seating-canvas-container {
+        display: none !important;
+      }
+
+      /* Show the mobile seating UI */
+      #mobile-tab5-ui {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        inset: 0;
+        background: var(--canvas-bg);
+      }
+    }
+
+    /* Mobile seating top bar */
+    #mobile-seat-top-bar {
+      background: #1E1F1C;
+      border-bottom: 1px solid #3E3D32;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    /* Mobile seating canvas fills remaining space */
+    #mobile-seat-canvas-wrap {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      touch-action: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #mobile-seat-canvas-area {
+      transform-origin: 0 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      will-change: transform;
+    }
+
+    /* Mobile seat elements — read-only, no hover effects */
+    #mobile-seat-canvas-area .seat-el {
+      pointer-events: none;
+    }
+
+    #mobile-seat-canvas-area .seat-name-chip {
+      pointer-events: none;
+    }
+
+    #mobile-seat-canvas-area .seat-chip-del {
+      display: none !important;
+    }
+
+    #mobile-seat-canvas-area .x-btn {
+      display: none !important;
+    }
+
+    #mobile-seat-canvas-area .tb-el {
+      pointer-events: none;
+      border-color: transparent !important;
+    }
+
+    /* Landscape fullscreen mode */
+    #mobile-tab5-ui.landscape-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 9500 !important;
+      background: #272822 !important;
+    }
+
+    #mobile-tab5-ui.landscape-fullscreen #mobile-seat-top-bar {
+      display: none !important;
+    }
+
+    #mobile-seat-zoom-bar {
+      background: rgba(30, 31, 28, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Staging area list inside mobile seating */
+    #mobile-seat-staging {
+      background: #1E1F1C;
+      border-top: 1px solid #3E3D32;
+      flex-shrink: 0;
+      max-height: 35vh;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -1625,6 +1717,65 @@
       </div>
     </div>
     <!-- ===== END TAB 5 ===== -->
+
+    <!-- ===== MOBILE-ONLY SEATING UI ===== -->
+    <div id="mobile-tab5-ui">
+      <!-- Top bar (hidden in landscape fullscreen via CSS) -->
+      <div id="mobile-seat-top-bar" class="flex-shrink-0">
+        <div class="flex items-center gap-2 p-3">
+          <h2 class="text-xs font-bold text-[#FD971F] uppercase tracking-wider flex-shrink-0">Seating</h2>
+          <button id="mobile-seat-plan-btn" onclick="openSeatingPlansModal()"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-medium truncate max-w-[140px] flex-shrink-0">
+            <span id="mobile-seat-plan-label" class="truncate">No Plan</span>
+            <svg class="w-3 h-3 flex-shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="ml-auto flex items-center gap-1.5 flex-shrink-0">
+            <!-- Fit to screen -->
+            <button onclick="mobileFitSeats()" title="Fit to screen"
+              class="bg-zinc-800 border border-zinc-700 text-[#A6E22E] h-9 w-9 rounded flex items-center justify-center active:bg-zinc-700">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7V5a2 2 0 012-2h2" /><path d="M17 3h2a2 2 0 012 2v2" />
+                <path d="M21 17v2a2 2 0 01-2 2h-2" /><path d="M7 21H5a2 2 0 01-2-2v-2" />
+                <rect x="7" y="7" width="10" height="10" rx="1" />
+              </svg>
+            </button>
+            <!-- Rotate -->
+            <button onclick="mobileRotateSeats()" title="Rotate 90°"
+              class="bg-zinc-800 border border-zinc-700 text-[#66D9EF] h-9 w-9 rounded flex items-center justify-center active:bg-zinc-700">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 8A9 9 0 1 0 20.5 13" /><polyline points="20 2 20 8 14 8" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <!-- Zoom bar -->
+        <div id="mobile-seat-zoom-bar" class="flex items-center justify-center gap-2 px-3 pb-2">
+          <button onclick="mobileSeatZoom(-0.15)"
+            class="bg-zinc-800 border border-zinc-700 text-zinc-300 w-9 h-9 rounded flex items-center justify-center text-lg font-bold active:bg-zinc-700">&minus;</button>
+          <span id="mobile-seat-zoom-label" class="text-xs font-mono text-zinc-400 w-12 text-center">100%</span>
+          <button onclick="mobileSeatZoom(0.15)"
+            class="bg-zinc-800 border border-zinc-700 text-zinc-300 w-9 h-9 rounded flex items-center justify-center text-lg font-bold active:bg-zinc-700">&plus;</button>
+        </div>
+      </div>
+
+      <!-- Canvas (pannable, pinchable) -->
+      <div id="mobile-seat-canvas-wrap">
+        <div id="mobile-seat-canvas-area" class="relative bg-grid" style="width:2400px;height:2400px;"></div>
+      </div>
+
+      <!-- Staging area (unassigned members, compact) -->
+      <div id="mobile-seat-staging">
+        <div class="px-3 py-2 flex items-center gap-2 border-b border-zinc-700/50">
+          <span class="text-[10px] font-bold text-[#FD971F] uppercase tracking-wider">Unassigned</span>
+          <span id="mobile-seat-staging-count" class="text-[10px] text-zinc-500 bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-700 font-mono">0</span>
+        </div>
+        <div id="mobile-seat-staging-list" class="p-2 flex flex-wrap gap-1.5">
+          <span class="text-zinc-500 text-xs">None</span>
+        </div>
+      </div>
+    </div>
 
     <!-- ================= TAB 3: EXPORT ================= -->
     <div id="tab3" class="tab-content hide absolute inset-0 overflow-y-auto p-4 sm:p-6 flex flex-col">
@@ -5262,6 +5413,357 @@
       } catch { showModal("Error reading backup file."); }
     }
 
+    // ================= MOBILE SEATING VIEW =================
+    // View-only seating plan for mobile with touch pan/pinch-zoom
+    // and automatic landscape fullscreen.
+
+    let _mobileSeatScale = 1;
+    let _mobileSeatPanX = 0;
+    let _mobileSeatPanY = 0;
+    let _mobileSeatLandscapeFS = false;
+    let _mobileSeatTouchState = null; // { type: 'pan'|'pinch', ... }
+    let _orientationListenerActive = false;
+
+    function isMobileDevice() {
+      return window.matchMedia("(max-width: 767px)").matches ||
+        ("ontouchstart" in window && navigator.maxTouchPoints > 0);
+    }
+
+    function initMobileSeatingView() {
+      if (!isMobileDevice()) return;
+      setupMobileSeatTouchHandlers();
+      setupOrientationListener();
+      renderMobileSeats();
+      renderMobileSeatStaging();
+      mobileFitSeats();
+    }
+
+    // ---- Render seats into the mobile canvas (read-only clone) ----
+    function renderMobileSeats() {
+      const area = document.getElementById("mobile-seat-canvas-area");
+      if (!area) return;
+      area.innerHTML = "";
+      seats.forEach(seat => {
+        const el = buildMobileSeatEl(seat);
+        area.appendChild(el);
+      });
+      // Also render textboxes
+      textboxes.filter(t => t.canvas === "seating").forEach(box => {
+        area.appendChild(buildMobileTbEl(box));
+      });
+      // Resize canvas to fit
+      fitMobileCanvasToSeats();
+    }
+
+    function fitMobileCanvasToSeats() {
+      const area = document.getElementById("mobile-seat-canvas-area");
+      if (!area) return;
+      let maxX = 800, maxY = 600;
+      seats.forEach(s => {
+        maxX = Math.max(maxX, s.x + s.w);
+        maxY = Math.max(maxY, s.y + s.h);
+      });
+      textboxes.filter(t => t.canvas === "seating").forEach(t => {
+        maxX = Math.max(maxX, t.x + (t.w || 200));
+        maxY = Math.max(maxY, t.y + (t.minH || 60) + (t.size || 16) * 2);
+      });
+      area.style.width = (maxX + 160) + "px";
+      area.style.height = (maxY + 160) + "px";
+    }
+
+    function buildMobileSeatEl(seat) {
+      const C = SEAT_COLORS[seat.shape] || SEAT_COLORS.square;
+      const isCircle = seat.shape === "circle" || seat.shape === "manCi";
+      const isOccupied = seat.occupantId || (seat.sectionOccupants && seat.sectionOccupants.some(Boolean));
+      const hasSections = (seat.sections || 1) > 1;
+
+      const el = document.createElement("div");
+      el.className = "seat-el";
+      el.style.cssText = [
+        `width:${seat.w}px`, `height:${seat.h}px`,
+        `left:${seat.x}px`, `top:${seat.y}px`,
+        `transform:rotate(${seat.rotation || 0}deg)`,
+        `box-sizing:border-box`,
+        `border:2px ${isOccupied || seat.manual || hasSections ? "solid" : "dashed"} ${C.border}`,
+        `background:${isOccupied ? C.bg : C.empty}`,
+        `border-radius:${isCircle ? "50%" : "6px"}`,
+        `display:flex`, `align-items:center`, `justify-content:center`,
+        `flex-direction:column`, `overflow:visible`, `position:absolute`,
+        `pointer-events:none`, `z-index:1`,
+      ].join(";");
+
+      if (hasSections) {
+        const n = seat.sections;
+        const occ = seat.sectionOccupants || new Array(n).fill(null);
+        for (let i = 0; i < n; i++) {
+          if (!occ[i]) continue;
+          const name = getMemberName(occ[i]);
+          const off = (seat.chipOffsets && seat.chipOffsets[i]) || { x: seat.w / 2, y: seat.h / 2 };
+          const chip = document.createElement("div");
+          chip.style.cssText = [
+            `position:absolute`, `left:${off.x}px`, `top:${off.y}px`,
+            `transform:translate(-50%,-50%) rotate(${seat.nameRotation || 0}deg)`,
+            `background:rgba(0,0,0,0.28)`, `border:1.5px solid rgba(255,255,255,0.22)`,
+            `border-radius:4px`, `padding:3px 6px`, `color:${C.text}`,
+            `font-size:12px`, `font-weight:600`, `text-align:center`,
+            `line-height:1.4`, `white-space:pre-line`, `pointer-events:none`,
+          ].join(";");
+          setChipText(chip, occ[i]);
+          el.appendChild(chip);
+        }
+      } else if (seat.occupantId) {
+        const name = getMemberName(seat.occupantId);
+        const fs = Math.min(14, Math.max(9, Math.min(seat.w, seat.h) / 10));
+        const chip = document.createElement("div");
+        chip.style.cssText = [
+          `color:${C.text}`, `font-size:${fs}px`, `font-weight:600`,
+          `text-align:center`, `line-height:1.3`, `pointer-events:none`,
+          `word-break:break-word`, `padding:4px`, `max-width:100%`,
+        ].join(";");
+        setChipText(chip, seat.occupantId);
+        el.appendChild(chip);
+      } else if (seat.manual && seat.label) {
+        const fs = Math.min(13, Math.max(9, Math.min(seat.w, seat.h) / 11));
+        const lbl = document.createElement("div");
+        lbl.style.cssText = [
+          `color:${C.text}`, `font-size:${fs}px`, `font-weight:500`,
+          `text-align:center`, `line-height:1.3`, `pointer-events:none`,
+          `word-break:break-word`, `padding:4px`, `opacity:0.85`,
+        ].join(";");
+        lbl.textContent = seat.label;
+        el.appendChild(lbl);
+      }
+
+      return el;
+    }
+
+    function buildMobileTbEl(box) {
+      const el = document.createElement("div");
+      el.className = "tb-el";
+      el.style.cssText = [
+        `position:absolute`, `left:${box.x}px`, `top:${box.y}px`,
+        `width:${box.w || 200}px`, `min-height:${box.minH || 40}px`,
+        `color:${box.color || "#F8F8F2"}`, `font-size:${box.size || 16}px`,
+        `font-weight:${box.bold ? "700" : "400"}`,
+        `font-style:${box.italic ? "italic" : "normal"}`,
+        `text-decoration:${box.underline ? "underline" : "none"}`,
+        `white-space:pre-wrap`, `word-break:break-word`,
+        `pointer-events:none`, `border:1px solid transparent`,
+      ].join(";");
+      el.textContent = box.text || "";
+      return el;
+    }
+
+    // ---- Staging area ----
+    function renderMobileSeatStaging() {
+      const list = document.getElementById("mobile-seat-staging-list");
+      const count = document.getElementById("mobile-seat-staging-count");
+      if (!list || !count) return;
+      count.textContent = staging.length;
+      if (staging.length === 0) {
+        list.innerHTML = '<span class="text-zinc-500 text-xs">All assigned</span>';
+        return;
+      }
+      list.innerHTML = "";
+      staging.forEach(id => {
+        const name = getMemberName(id);
+        const chip = document.createElement("div");
+        chip.className = "px-2.5 py-1.5 rounded text-xs font-medium bg-zinc-800 border border-zinc-700 text-zinc-300";
+        chip.textContent = name;
+        list.appendChild(chip);
+      });
+    }
+
+    // ---- Touch handlers (pan + pinch-zoom) ----
+    function setupMobileSeatTouchHandlers() {
+      const wrap = document.getElementById("mobile-seat-canvas-wrap");
+      if (!wrap || wrap._touchHandlersAttached) return;
+      wrap._touchHandlersAttached = true;
+
+      let lastTouchDist = 0;
+      let lastTouchCenter = null;
+      let isPanning = false;
+      let panStartX = 0, panStartY = 0, panStartPanX = 0, panStartPanY = 0;
+
+      wrap.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          isPanning = true;
+          panStartX = e.touches[0].clientX;
+          panStartY = e.touches[0].clientY;
+          panStartPanX = _mobileSeatPanX;
+          panStartPanY = _mobileSeatPanY;
+        } else if (e.touches.length === 2) {
+          isPanning = false;
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          lastTouchDist = Math.hypot(dx, dy);
+          lastTouchCenter = {
+            x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+            y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+          };
+        }
+        e.preventDefault();
+      }, { passive: false });
+
+      wrap.addEventListener("touchmove", (e) => {
+        if (e.touches.length === 1 && isPanning) {
+          const dx = e.touches[0].clientX - panStartX;
+          const dy = e.touches[0].clientY - panStartY;
+          _mobileSeatPanX = panStartPanX + dx;
+          _mobileSeatPanY = panStartPanY + dy;
+          applyMobileSeatTransform();
+        } else if (e.touches.length === 2) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const dist = Math.hypot(dx, dy);
+          const center = {
+            x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+            y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+          };
+          if (lastTouchDist > 0) {
+            const ratio = dist / lastTouchDist;
+            const newScale = Math.min(3, Math.max(0.15, _mobileSeatScale * ratio));
+            // Zoom toward pinch center
+            const rect = wrap.getBoundingClientRect();
+            const cx = center.x - rect.left;
+            const cy = center.y - rect.top;
+            _mobileSeatPanX = cx - (cx - _mobileSeatPanX) * (newScale / _mobileSeatScale);
+            _mobileSeatPanY = cy - (cy - _mobileSeatPanY) * (newScale / _mobileSeatScale);
+            _mobileSeatScale = newScale;
+            applyMobileSeatTransform();
+          }
+          lastTouchDist = dist;
+          lastTouchCenter = center;
+        }
+        e.preventDefault();
+      }, { passive: false });
+
+      wrap.addEventListener("touchend", (e) => {
+        if (e.touches.length < 2) {
+          lastTouchDist = 0;
+          lastTouchCenter = null;
+        }
+        if (e.touches.length === 1) {
+          isPanning = true;
+          panStartX = e.touches[0].clientX;
+          panStartY = e.touches[0].clientY;
+          panStartPanX = _mobileSeatPanX;
+          panStartPanY = _mobileSeatPanY;
+        }
+        if (e.touches.length === 0) {
+          isPanning = false;
+        }
+      }, { passive: false });
+    }
+
+    function applyMobileSeatTransform() {
+      const area = document.getElementById("mobile-seat-canvas-area");
+      if (!area) return;
+      area.style.transform = `translate(${_mobileSeatPanX}px, ${_mobileSeatPanY}px) scale(${_mobileSeatScale})`;
+      const lbl = document.getElementById("mobile-seat-zoom-label");
+      if (lbl) lbl.textContent = Math.round(_mobileSeatScale * 100) + "%";
+    }
+
+    function mobileSeatZoom(delta) {
+      const wrap = document.getElementById("mobile-seat-canvas-wrap");
+      if (!wrap) return;
+      const cx = wrap.clientWidth / 2;
+      const cy = wrap.clientHeight / 2;
+      const newScale = Math.min(3, Math.max(0.15, _mobileSeatScale + delta));
+      _mobileSeatPanX = cx - (cx - _mobileSeatPanX) * (newScale / _mobileSeatScale);
+      _mobileSeatPanY = cy - (cy - _mobileSeatPanY) * (newScale / _mobileSeatScale);
+      _mobileSeatScale = newScale;
+      applyMobileSeatTransform();
+    }
+
+    function mobileFitSeats() {
+      const wrap = document.getElementById("mobile-seat-canvas-wrap");
+      if (!wrap || seats.length === 0) return;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      seats.forEach(s => {
+        minX = Math.min(minX, s.x); minY = Math.min(minY, s.y);
+        maxX = Math.max(maxX, s.x + s.w); maxY = Math.max(maxY, s.y + s.h);
+      });
+      textboxes.filter(t => t.canvas === "seating").forEach(t => {
+        minX = Math.min(minX, t.x); minY = Math.min(minY, t.y);
+        maxX = Math.max(maxX, t.x + (t.w || 200)); maxY = Math.max(maxY, t.y + (t.minH || 60) + (t.size || 16) * 2);
+      });
+      if (!isFinite(minX)) return;
+      const cw = wrap.clientWidth;
+      const ch = wrap.clientHeight;
+      const boundsW = maxX - minX;
+      const boundsH = maxY - minY;
+      const pad = 30;
+      const newScale = Math.min((cw - pad * 2) / boundsW, (ch - pad * 2) / boundsH, 2);
+      _mobileSeatScale = newScale;
+      _mobileSeatPanX = (cw - boundsW * newScale) / 2 - minX * newScale;
+      _mobileSeatPanY = (ch - boundsH * newScale) / 2 - minY * newScale;
+      applyMobileSeatTransform();
+    }
+
+    function mobileRotateSeats() {
+      rotateSeatMapCW(true);
+      renderMobileSeats();
+      setTimeout(mobileFitSeats, 50);
+    }
+
+    // ---- Orientation listener (portrait ↔ landscape) ----
+    function setupOrientationListener() {
+      if (_orientationListenerActive) return;
+      _orientationListenerActive = true;
+      const mql = window.matchMedia("(orientation: landscape) and (max-height: 550px)");
+
+      function checkLandscape() {
+        const ui = document.getElementById("mobile-tab5-ui");
+        if (!ui || currentActiveTabId !== "tab5") return;
+
+        if (mql.matches && !_mobileSeatLandscapeFS) {
+          // Entered landscape → go fullscreen
+          _mobileSeatLandscapeFS = true;
+          ui.classList.add("landscape-fullscreen");
+          if (ui.requestFullscreen) {
+            ui.requestFullscreen().catch(() => {});
+          }
+          setTimeout(mobileFitSeats, 200);
+        } else if (!mql.matches && _mobileSeatLandscapeFS) {
+          // Back to portrait → exit fullscreen
+          _mobileSeatLandscapeFS = false;
+          ui.classList.remove("landscape-fullscreen");
+          if (document.fullscreenElement === ui) {
+            document.exitFullscreen().catch(() => {});
+          }
+          setTimeout(mobileFitSeats, 200);
+        }
+      }
+
+      mql.addEventListener("change", checkLandscape);
+
+      // Also handle fullscreen exit (e.g. user swipes down on iOS)
+      document.addEventListener("fullscreenchange", () => {
+        const ui = document.getElementById("mobile-tab5-ui");
+        if (!ui) return;
+        if (!document.fullscreenElement && _mobileSeatLandscapeFS) {
+          _mobileSeatLandscapeFS = false;
+          ui.classList.remove("landscape-fullscreen");
+          setTimeout(mobileFitSeats, 200);
+        }
+      });
+    }
+
+    function exitMobileSeatLandscapeFS() {
+      _mobileSeatLandscapeFS = false;
+      const ui = document.getElementById("mobile-tab5-ui");
+      if (ui) ui.classList.remove("landscape-fullscreen");
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function updateMobileSeatPlanLabel() {
+      const lbl = document.getElementById("mobile-seat-plan-label");
+      if (lbl) lbl.textContent = currentSeatingPlanName || "No Plan";
+    }
+
     // ================= UI & UTILS =================
     function showModal(message, isConfirm = false, onConfirm = null) {
       const modal = document.getElementById("custom-modal");
@@ -5672,6 +6174,7 @@
       if (hasUnsavedChanges) saveData();
 
       const fromTab = currentActiveTabId;
+      const onMobile = isMobileDevice();
 
       // If navigating to Seating tab and team has NO seating plan attached
       if (tabId === "tab5" && !currentSeatingPlanName && !currentSeatingPlanId) {
@@ -5683,11 +6186,13 @@
           .forEach((el) => el.classList.add("hide"));
         document.getElementById(tabId).classList.remove("hide");
 
-        initSeatCanvas();
-        renderSeats();
-        syncSeatConstraintSelects();
-        syncSeatConstraintList();
-        updateActiveSeatingPlanLabel();
+        if (!onMobile) {
+          initSeatCanvas();
+          renderSeats();
+          syncSeatConstraintSelects();
+          syncSeatConstraintList();
+          updateActiveSeatingPlanLabel();
+        }
 
         document.querySelectorAll(".editor-tab").forEach((btn) => {
           btn.className =
@@ -5698,7 +6203,13 @@
           }
         });
 
-        openSeatingSetupModal();
+        if (onMobile) {
+          // On mobile, show seating in view-only mode even without a plan
+          initMobileSeatingView();
+          updateMobileSeatPlanLabel();
+        } else {
+          openSeatingSetupModal();
+        }
         return;
       }
 
@@ -5721,11 +6232,16 @@
       }
 
       if (tabId === "tab5") {
-        initSeatCanvas();
-        renderSeats();
-        syncSeatConstraintSelects();
-        syncSeatConstraintList();
-        updateActiveSeatingPlanLabel();
+        if (onMobile) {
+          initMobileSeatingView();
+          updateMobileSeatPlanLabel();
+        } else {
+          initSeatCanvas();
+          renderSeats();
+          syncSeatConstraintSelects();
+          syncSeatConstraintList();
+          updateActiveSeatingPlanLabel();
+        }
       }
 
       document.querySelectorAll(".editor-tab").forEach((btn) => {
@@ -8561,16 +9077,23 @@
     // ---- Render ----
     function renderSeats() {
       const canvas = document.getElementById("seating-canvas-area");
-      if (!canvas) return;
-      canvas.querySelectorAll(".seat-el,.tb-el").forEach((el) => el.remove());
-      seats.forEach((seat) => canvas.appendChild(buildSeatEl(seat)));
-      textboxes
-        .filter((t) => t.canvas === "seating")
-        .forEach((box) =>
-          canvas.appendChild(buildTbEl(box, "seating-canvas-area")),
-        );
-      updateSeatStagingArea();
-      fitCanvasToSeats();
+      if (canvas) {
+        canvas.querySelectorAll(".seat-el,.tb-el").forEach((el) => el.remove());
+        seats.forEach((seat) => canvas.appendChild(buildSeatEl(seat)));
+        textboxes
+          .filter((t) => t.canvas === "seating")
+          .forEach((box) =>
+            canvas.appendChild(buildTbEl(box, "seating-canvas-area")),
+          );
+        updateSeatStagingArea();
+        fitCanvasToSeats();
+      }
+      // Also update mobile view if on mobile
+      if (isMobileDevice() && currentActiveTabId === "tab5") {
+        renderMobileSeats();
+        renderMobileSeatStaging();
+        updateMobileSeatPlanLabel();
+      }
     }
 
     function buildSeatEl(seat) {
@@ -10753,6 +11276,7 @@
       if (label) {
         label.textContent = currentSeatingPlanName || "No Plan";
       }
+      updateMobileSeatPlanLabel();
     }
 
     function renameSeatingPlanFromManager() {
@@ -10835,6 +11359,7 @@
       saveData();
       renderSeats();
       updateActiveSeatingPlanLabel();
+      updateMobileSeatPlanLabel();
 
       document.getElementById("seating-setup-modal")?.classList.add("hide");
     }
@@ -10906,6 +11431,7 @@
       saveData();
       renderSeats();
       updateActiveSeatingPlanLabel();
+      updateMobileSeatPlanLabel();
 
       document.getElementById("seating-setup-modal")?.classList.add("hide");
       document.getElementById("seating-pick-plan-modal")?.classList.add("hide");
