@@ -577,20 +577,19 @@
       display: none;
     }
 
+    #mobile-tab5-ui.mobile-visible {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      inset: 0;
+      background: var(--canvas-bg);
+    }
+
     @media (max-width: 767px) {
       /* Hide the desktop seating sidebar & canvas on mobile */
       #tab5 > #seat-sidebar,
       #tab5 > #seating-canvas-container {
         display: none !important;
-      }
-
-      /* Show the mobile seating UI */
-      #mobile-tab5-ui {
-        display: flex;
-        flex-direction: column;
-        position: absolute;
-        inset: 0;
-        background: var(--canvas-bg);
       }
     }
 
@@ -6175,6 +6174,16 @@
 
       const fromTab = currentActiveTabId;
       const onMobile = isMobileDevice();
+
+      // Hide/show mobile seating UI
+      const mobileSeatUI = document.getElementById("mobile-tab5-ui");
+      if (mobileSeatUI) {
+        if (tabId === "tab5" && onMobile) {
+          mobileSeatUI.classList.add("mobile-visible");
+        } else {
+          mobileSeatUI.classList.remove("mobile-visible");
+        }
+      }
 
       // If navigating to Seating tab and team has NO seating plan attached
       if (tabId === "tab5" && !currentSeatingPlanName && !currentSeatingPlanId) {
