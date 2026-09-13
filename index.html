@@ -669,6 +669,8 @@
             <span class="text-[11px] sm:text-xs text-[#F92672] font-mono mt-1 font-bold leading-none">&gt; Jonathan
               Kung</span>
           </div>
+          <button onclick="openChangelogModal()" title="What's new"
+            class="text-[10px] font-mono text-zinc-500 hover:text-[#66D9EF] border border-zinc-700 hover:border-[#66D9EF]/40 rounded px-1.5 py-0.5 transition leading-none flex-shrink-0">v2.0</button>
           <a href="https://ko-fi.com/coolpuddytat" target="_blank" rel="noopener" title="Support me on Ko-fi"
             class="flex items-center gap-1 px-2 py-1 rounded-md border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:border-zinc-600 transition text-zinc-400 hover:text-[#F8F8F2] text-[11px] font-medium whitespace-nowrap flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline-block align-middle" viewBox="0 0 256 256">
@@ -1856,7 +1858,7 @@
           <p class="text-zinc-400 text-base sm:text-lg mb-10 leading-relaxed">
             Quickly make random teams, manage rosters, and design seating
             arrangements — great for teachers, coaches, and event planners.
-            Teams work on desktop and mobile. Seating is desktop only.
+            Teams work on desktop and mobile. Seating editing is desktop only; mobile can view plans in read-only mode.
           </p>
 
           <div class="space-y-10">
@@ -1993,7 +1995,7 @@
                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
                 3. Create a Seating Plan
-                <span class="text-sm font-normal text-zinc-500 ml-1">(desktop only)</span>
+                <span class="text-sm font-normal text-zinc-500 ml-1">(editing desktop only — view-only on mobile)</span>
               </h3>
               <div class="pl-4 sm:pl-6 text-zinc-300 leading-relaxed space-y-3 text-sm sm:text-base">
                 <p>
@@ -2273,7 +2275,7 @@
                 </p>
                 <ul class="text-sm text-zinc-300 space-y-1 list-disc pl-4">
                   <li><strong>First click</strong> — choose where to store the sync file (e.g. your Google Drive folder). The app remembers it.</li>
-                  <li><strong>Every click after that</strong> — the app compares timestamps and syncs automatically: file newer → pulls the latest; local newer → pushes your changes; both changed → asks which to keep.</li>
+                  <li><strong>Every click after that</strong> — the app compares timestamps and syncs automatically: file newer → pulls the latest; local newer → pushes your changes; both changed → asks which to keep, showing a side-by-side comparison of what's different.</li>
                   <li><strong>Reminder</strong> — after any change the Sync button turns <span class="text-[#FD971F] font-medium">orange with a pulsing dot</span> so you remember to click it before leaving. Closing the tab with unsynced changes also asks you to confirm.</li>
                 </ul>
                 <p class="text-zinc-400 text-sm">
@@ -5645,6 +5647,89 @@
           setTimeout(mobileFitSeats, 200);
         }
       });
+    }
+
+    // ================= CHANGELOG =================
+    const CHANGELOG = [
+      { v: "2.0", date: "Sep 2025", changes: [
+        "View-only seating plan on mobile with touch pan & pinch-zoom",
+        "Landscape fullscreen seating view on mobile — just the plan, no UI",
+        "Sync conflict detection with data fingerprinting and visual diff",
+        "Mobile sync modal (Pull from File / Download Backup)",
+        "Backup restore safeguards — timestamp comparison before overwriting",
+        "Data fingerprinting to compare local vs. backup before sync",
+        "Memory leak fix — reused AudioContext for celebration sounds",
+      ]},
+      { v: "1.5", date: "Aug 2025", changes: [
+        "Sync feature — one-click sync to a file on Google Drive",
+        "Auto Sync header button with orange pulsing indicator for unsaved changes",
+        "Sync conflict modal when both sides have changed",
+        "Mobile sync fallback for browsers without File System Access API",
+      ]},
+      { v: "1.4", date: "Jul 2025", changes: [
+        "Text boxes on the seating canvas — free-floating labels and notes",
+        "Text box formatting toolbar (font size, bold, italic, underline)",
+        "Seat count badge popover on seats with sections",
+        "Seating plan auto-save when switching tabs",
+      ]},
+      { v: "1.3", date: "Jun 2025", changes: [
+        "Seating plan manager redesign — team-scoped plans with rename",
+        "Import seating plans from other teams, backups, or .json files",
+        "File manager with drag-and-drop reordering and folder creation",
+        "Export individual teams as .json for sharing with colleagues",
+      ]},
+      { v: "1.2", date: "May 2025", changes: [
+        "Constraints — Together & Apart rules for team generation",
+        "Constraint algorithm tries up to 500 arrangements to satisfy all rules",
+        "Projector Mode for seating plans with rotate, pan, zoom, and fit",
+        "Split seat into sections (right-click menu)",
+        "Snap toggle and Alt/Shift modifier keys for precision placement",
+        "Keyboard shortcuts for all seating tools (V, S, C, U, O, T, D)",
+      ]},
+      { v: "1.1", date: "Apr 2025", changes: [
+        "Seating plan canvas — draw square, circle, and label seats",
+        "Seat assignment with auto-assign and manual drag-and-drop",
+        "Undo/Redo for seating changes (Ctrl+Z / Ctrl+Y)",
+        "Export preview with Teams and Seating view toggle",
+        "Touch panning and pinch-zoom on export preview",
+      ]},
+      { v: "1.0", date: "Mar 2025", changes: [
+        "Initial release — build rosters, generate random teams",
+        "Multiple team files with folder organisation",
+        "CSV import and smart name parsing",
+        "Projector Mode for team display with pan and zoom",
+        "Export to JPG, PDF, and JSON backup",
+        "Mobile-responsive team generation and editing",
+        "Random member picker with optional pool removal",
+        "Auto-save to localStorage",
+      ]},
+    ];
+
+    function openChangelogModal() {
+      const modal = document.getElementById("changelog-modal");
+      const list = document.getElementById("changelog-list");
+      if (!modal || !list) return;
+      list.innerHTML = CHANGELOG.map(entry => `
+        <div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-[#A6E22E] font-bold font-mono text-base">v${entry.v}</span>
+            <span class="text-zinc-500 text-xs">${entry.date}</span>
+          </div>
+          <ul class="space-y-1 pl-0">
+            ${entry.changes.map(c => `<li class="text-zinc-300 text-sm leading-relaxed flex gap-2"><span class="text-zinc-600 flex-shrink-0">•</span><span>${c}</span></li>`).join("")}
+          </ul>
+        </div>
+      `).join("");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeChangelogModal() {
+      const modal = document.getElementById("changelog-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
     }
 
     // ================= UI & UTILS =================
@@ -12647,6 +12732,21 @@
       );
     })();
   </script>
+
+  <!-- Changelog Modal -->
+  <div id="changelog-modal" class="fixed inset-0 z-[9995] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+    onclick="if(event.target===this)closeChangelogModal()">
+    <div class="bg-zinc-900 rounded-xl border border-zinc-700 shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between p-5 border-b border-zinc-700 flex-shrink-0">
+        <div>
+          <h3 class="text-lg font-bold text-[#66D9EF]">Changelog</h3>
+          <p class="text-xs text-zinc-500 mt-0.5">Team Maker — version history</p>
+        </div>
+        <button onclick="closeChangelogModal()" class="text-zinc-500 hover:text-[#F8F8F2] transition text-lg">&times;</button>
+      </div>
+      <div id="changelog-list" class="overflow-y-auto p-5 space-y-6 text-sm"></div>
+    </div>
+  </div>
 </body>
 
 </html>
